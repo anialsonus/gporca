@@ -20,7 +20,6 @@ using namespace gpos;
 
 #if (GPOS_sparc)
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CStackDescriptor::GetStackFrames
@@ -154,6 +153,17 @@ CStackDescriptor::BackTrace
 		// move to next frame
 		next_frame = (void**)*next_frame;
 	}
+}
+
+#elif (GPOS_ppc64le)
+
+void
+CStackDescriptor::BackTrace
+	(
+	ULONG
+	)
+{
+	// pass
 }
 
 #else // unsupported platform

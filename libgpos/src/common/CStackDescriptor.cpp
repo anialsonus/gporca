@@ -20,7 +20,6 @@ using namespace gpos;
 
 #if (GPOS_sparc)
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CStackDescriptor::IGetStackFrames
@@ -156,6 +155,17 @@ CStackDescriptor::BackTrace
 	}
 }
 
+#elif (GPOS_ppc64le)
+
+void
+CStackDescriptor::BackTrace
+	(
+	ULONG
+	)
+{
+	// pass
+}
+
 #else // unsupported platform
 
 void
@@ -200,7 +210,7 @@ CStackDescriptor::AppendSymbolInfo
 		// demangle C++ symbol
 		CHAR *pcDemangled = clib::SzDemangle(szSymbol, szDemangleBuf, &size, &iStatus);
 		GPOS_ASSERT(size <= GPOS_STACK_SYMBOL_SIZE);
-		
+
 		if (0 == iStatus)
 		{
 			// skip args and template info
@@ -258,7 +268,7 @@ CStackDescriptor::AppendTrace
 
 	// buffer for symbol demangling
 	CHAR szDemangleBuf[GPOS_STACK_SYMBOL_SIZE];
-	
+
 	// print info for frames in stack
 	for (ULONG i = 0; i < m_ulDepth && i < ulDepth; i++)
 	{

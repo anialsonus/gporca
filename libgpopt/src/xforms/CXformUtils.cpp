@@ -2063,6 +2063,8 @@ CXformUtils::FApplyOnce
 		CXform::ExfInnerJoin2PartialDynamicIndexGetApply,
 		CXform::ExfLeftOuter2InnerUnionAllLeftAntiSemiJoin,
 		CXform::ExfInnerJoinWithInnerSelect2PartialDynamicIndexGetApply,
+		CXform::ExfInnerJoinWithInnerSelect2DynamicBitmapIndexGetApply,
+		CXform::ExfInnerJoinWithInnerSelect2DynamicIndexGetApply,
 		CXform::ExfGbAggWithMDQA2Join,
 	};
 
@@ -2276,7 +2278,7 @@ CXformUtils::PdrgpcrIndexColumns
 
 	for (ULONG ul = 0; ul < ulLength; ul++)
 	{
-		ULONG ulPos = ULONG_MAX;
+		ULONG ulPos = gpos::ulong_max;
 		if (EicIncluded == eic)
 		{
 			ulPos = pmdindex->UlIncludedCol(ul);
@@ -2286,8 +2288,8 @@ CXformUtils::PdrgpcrIndexColumns
 			ulPos = pmdindex->UlKey(ul);
 		}
 		ULONG ulPosNonDropped = pmdrel->UlPosNonDropped(ulPos);
-		
-		GPOS_ASSERT(ULONG_MAX != ulPosNonDropped);
+
+		GPOS_ASSERT(gpos::ulong_max != ulPosNonDropped);
 		GPOS_ASSERT(ulPosNonDropped < pdrgpcr->UlLength());
 
 		CColRef *pcr = (*pdrgpcr)[ulPosNonDropped];
@@ -2824,10 +2826,10 @@ CXformUtils::PexprBuildIndexPlan
 	CTableDescriptor *ptabdesc = NULL;
 	DrgPcr *pdrgpcrOutput = NULL;
 	CWStringConst *pstrAlias = NULL;
-	ULONG ulPartIndex = ULONG_MAX;
+	ULONG ulPartIndex = gpos::ulong_max;
 	DrgDrgPcr *pdrgpdrgpcrPart = NULL;
 	BOOL fPartialIndex = pmdrel->FPartialIndex(pmdindex->Pmdid());
-	ULONG ulSecondaryPartIndex = ULONG_MAX;
+	ULONG ulSecondaryPartIndex = gpos::ulong_max;
 	CPartConstraint *ppartcnstrRel = NULL;
 
 	if (!fAllowPartialIndex && fPartialIndex)

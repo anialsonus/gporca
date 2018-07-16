@@ -62,7 +62,7 @@ Correlated-LASJ-With-Outer-Const Correlated-LASJ-With-Outer-Expr;
 CPredicateTest:
 InferPredicatesForLimit OR-WithIsNullPred Int2Predicate IN-Numeric DeduplicatePredicates
 AddEqualityPredicates AddPredsInSubqueries ExtractPredicateFromDisjWithComputedColumns
-Join-With-Subq-Preds-1 Non-Hashjoinable-Pred Non-Hashjoinable-Pred-2 Factorized-Preds IN OR;
+Join-With-Subq-Preds-1 Non-Hashjoinable-Pred Non-Hashjoinable-Pred-2 Factorized-Preds IN OR AvoidConstraintDerivationForLike;
 
 CLikeIDFTest:
 LIKE-Pattern-green LIKE-Pattern-green-2 LIKE-Pattern-Empty Nested-Or-Predicates Join-IDF
@@ -90,7 +90,8 @@ IndexApply-IndexCondSupersetOfHashedDistr IndexApply-IndexOnMasterOnlyTable
 IndexApply-PartTable IndexApply-Heterogeneous-NoDTS IndexApply-Heterogeneous-DTS
 IndexApply-No-Motion-Below-Join IndexApply-Redistribute-Const-Table IndexApply-PartResolverExpand
 IndexApply-InnerSelect-Basic IndexApply-InnerSelect-PartTable IndexApply-PartKey-Is-IndexKey
-IndexApply-InnerSelect-Heterogeneous-DTS IndexApply-Heterogeneous-BothSidesPartitioned;
+IndexApply-InnerSelect-Heterogeneous-DTS IndexApply-Heterogeneous-BothSidesPartitioned
+IndexApply-InnerSelect-PartTable2;
 
 CDynamicIndexScanTest:
 DynamicIndexScan-Homogenous DynamicIndexScan-BoolTrue DynamicIndexScan-BoolFalse
@@ -194,7 +195,8 @@ Intersect-Volatile-Func Except-Volatile-Func;
 CSetop4Test:
 PushSelectDownUnionAllOfCTG Push-Subplan-Below-Union Intersect-OuterRefs
 PushSelectWithOuterRefBelowUnion PushGbBelowUnion UnionGbSubquery MS-UnionAll-4
-AnyPredicate-Over-UnionOfConsts EquivClassesUnion EquivClassesIntersect;
+AnyPredicate-Over-UnionOfConsts EquivClassesUnion EquivClassesIntersect
+IndexScanWithNestedCTEAndSetOp;
 
 CEquivClassTest:
 Equiv-HashedDistr-1 Equiv-HashedDistr-2 EquivClassesAndOr EquivClassesLimit IndexNLJoin_Cast_NoMotion;
@@ -216,7 +218,7 @@ MotionHazard-NoMaterializeSortUnderResult  MotionHazard-NoMaterializeGatherUnder
 MotionHazard-NoMaterializeHashAggUnderResult;
 
 CConstraintNegationTest:
-AggregatesConstraintDeriveNegation CTEConstraintDeriveNegation;
+AggregatesConstraintDeriveNegation CTEConstraintDeriveNegation Union-NOT-Plus-OR-Constraint;
 
 CNonRedistributableColTest:
 JOIN-NonRedistributableCol DQA-NonRedistributableCol

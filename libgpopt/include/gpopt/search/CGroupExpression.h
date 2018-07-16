@@ -24,7 +24,7 @@
 #include "gpopt/search/CGroup.h"
 #include "gpopt/xforms/CXform.h"
 
-#define GPOPT_INVALID_GEXPR_ID	ULONG_MAX
+#define GPOPT_INVALID_GEXPR_ID gpos::ulong_max
 
 namespace gpopt
 {
@@ -154,7 +154,8 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CXform *pxform,
 				CExpression *pexpr,
-				CXformResult *pxfres
+				CXformResult *pxfres,
+				ULONG ulNumResults
 				);
 
 			// preprocessing before applying transformation

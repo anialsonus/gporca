@@ -91,7 +91,7 @@ IndexApply-PartTable IndexApply-Heterogeneous-NoDTS IndexApply-Heterogeneous-DTS
 IndexApply-No-Motion-Below-Join IndexApply-Redistribute-Const-Table IndexApply-PartResolverExpand
 IndexApply-InnerSelect-Basic IndexApply-InnerSelect-PartTable IndexApply-PartKey-Is-IndexKey
 IndexApply-InnerSelect-Heterogeneous-DTS IndexApply-Heterogeneous-BothSidesPartitioned
-IndexApply-InnerSelect-PartTable2;
+IndexApply-InnerSelect-PartTable2 IndexApply-ForPartialIndex;
 
 CDynamicIndexScanTest:
 DynamicIndexScan-Homogenous DynamicIndexScan-BoolTrue DynamicIndexScan-BoolFalse
@@ -212,6 +212,9 @@ LOJ_IDF_no_convert_outer_ref_predicate_with_NULL
 LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_inner_predicate_IDF
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const;
+
+CJoinOrderGreedyTest:
+GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins;
 
 CMotionHazardTest:
 MotionHazard-NoMaterializeSortUnderResult  MotionHazard-NoMaterializeGatherUnderResult MotionHazard-MaterializeUnderResult

@@ -259,6 +259,7 @@ CBitSet *CXform::PbsJoinOrderInQueryXforms
 	(void) pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfExpandNAryJoinMinCard));
 	(void) pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfJoinAssociativity));
 	(void) pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfJoinCommutativity));
+	(void) pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfExpandNAryJoinGreedy));
 
 	return pbs;
 }
@@ -275,6 +276,12 @@ CBitSet *CXform::PbsJoinOrderOnGreedyXforms
 	(void) pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfJoinCommutativity));
 
 	return pbs;
+}
+
+BOOL
+CXform::IsApplyOnce()
+{
+	return false;
 }
 // EOF
 

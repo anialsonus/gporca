@@ -36,41 +36,10 @@ namespace gpopt
 			enum ESubqueryCtxt
 			{
 				EsqctxtValue,		// subquery appears in a project list
-				EsqctxtNullTest,	// subquery appears in a null check
 				EsqctxtFilter		// subquery appears in a comparison predicate
 			};
 
 		private:
-
-			// definition of scalar operator handler
-			typedef BOOL(FnHandler)
-				(
-				CSubqueryHandler &sh,
-				CExpression *pexprOuter,
-				CExpression *pexprScalar,
-				BOOL fDisjunctionOrNegation,
-				ESubqueryCtxt esqctxt,
-				CExpression **ppexprNewOuter,
-				CExpression **ppexprResidualScalar
-				);
-
-			//---------------------------------------------------------------------------
-			//	@struct:
-			//		SOperatorHandler
-			//
-			//	@doc:
-			//		Mapping of a scalar operator to a handler function
-			//
-			//---------------------------------------------------------------------------
-			struct SOperatorHandler
-			{
-				// scalar operator id
-				COperator::EOperatorId m_eopid;
-
-				// pointer to handler function
-				FnHandler *m_pfnh;
-
-			}; // struct SOperatorHandler
 
 			//---------------------------------------------------------------------------
 			//	@struct:
@@ -123,9 +92,6 @@ namespace gpopt
 					m_fCorrelatedExecution(false)
 				{}
 
-				// set value-based subquery flag
-				void SetValueSubquery(BOOL fDisjunctionOrNegation, ESubqueryCtxt esqctxt);
-
 				// set correlated execution flag
 				void SetCorrelatedExecution();
 
@@ -136,10 +102,6 @@ namespace gpopt
 
 			// enforce using correlated apply for unnesting subqueries
 			BOOL m_fEnforceCorrelatedApply;
-
-			// array of mappings
-			static
-			const SOperatorHandler m_rgophdlr[];
 
 			// private copy ctor
 			CSubqueryHandler(const CSubqueryHandler &);
@@ -231,7 +193,6 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunction,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
@@ -244,7 +205,6 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunction,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
@@ -257,7 +217,6 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
@@ -265,7 +224,7 @@ namespace gpopt
 
 			// create subquery descriptor
 			static
-			SSubqueryDesc *Psd(IMemoryPool *pmp, CExpression *pexprSubquery, CExpression *pexprOuter, BOOL fDisjunctionOrNegation, ESubqueryCtxt esqctxt);
+			SSubqueryDesc *Psd(IMemoryPool *pmp, CExpression *pexprSubquery, CExpression *pexprOuter, ESubqueryCtxt esqctxt);
 
 			// detect subqueries with expressions over count aggregate similar to
 			// (SELECT 'abc' || (SELECT count(*) from X))
@@ -283,13 +242,10 @@ namespace gpopt
 				);
 
 			// remove a scalar subquery node from scalar tree
-			static
 			BOOL FRemoveScalarSubquery
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
@@ -302,7 +258,6 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CSubqueryHandler::SSubqueryDesc *psd,
 				BOOL fEnforceCorrelatedApply,
@@ -317,7 +272,6 @@ namespace gpopt
 				IMemoryPool *pmp,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				SSubqueryDesc *psd,
 				BOOL fEnforceCorrelatedApply,
@@ -326,26 +280,20 @@ namespace gpopt
 				);
 
 			// remove a subquery ANY node from scalar tree
-			static
 			BOOL FRemoveAnySubquery
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
 				);
 
 			// remove a subquery ALL node from scalar tree
-			static
 			BOOL FRemoveAllSubquery
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
@@ -359,59 +307,46 @@ namespace gpopt
 				COperator::EOperatorId eopid,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
 				);
 
 			// remove a subquery EXISTS from scalar tree
-			static
 			BOOL FRemoveExistsSubquery
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
 				);
 
 			// remove a subquery NOT EXISTS from scalar tree
-			static
 			BOOL FRemoveNotExistsSubquery
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprSubquery,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprResidualScalar
 				);
 
 			// handle subqueries in scalar tree recursively
-			static
 			BOOL FRecursiveHandler
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprScalar,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprNewScalar
 				);
 
 			// handle subqueries on a case-by-case basis
-			static
 			BOOL FProcessScalarOperator
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter,
 				CExpression *pexprScalar,
-				BOOL fDisjunctionOrNegation,
 				ESubqueryCtxt esqctxt,
 				CExpression **ppexprNewOuter,
 				CExpression **ppexprNewScalar
@@ -443,14 +378,19 @@ namespace gpopt
 				m_fEnforceCorrelatedApply(fEnforceCorrelatedApply)
 			{}
 
+			// build an expression for the quantified comparison of the subquery
+			CExpression *PexprSubqueryPred
+				(
+				CExpression *pexprOuter,
+				CExpression *pexprSubquery,
+				CExpression **ppexprResult
+				);
+
 			// main driver
-			static
 			BOOL FProcess
 				(
-				CSubqueryHandler &sh,
 				CExpression *pexprOuter, // logical child of a SELECT node
 				CExpression *pexprScalar, // scalar child of a SELECT node
-				BOOL fDisjunctionOrNegation, // did we encounter a disjunction/negation on the way here
 				ESubqueryCtxt esqctxt,	// context in which subquery occurs
 				CExpression **ppexprNewOuter, // an Apply logical expression produced as output
 				CExpression **ppexprResidualScalar // residual scalar expression produced as output

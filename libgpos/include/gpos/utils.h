@@ -37,6 +37,10 @@
 #define GPOS_ASMFP asm volatile ("stx %%fp, %0" : "=g" (ulp));
 #define GPOS_ASMSP asm volatile ("stx %%sp, %0" : "=g" (ulp));
 
+#elif (GPOS_ppc64le)
+// stack and frame pointer on PPC are the same
+#define GPOS_ASMFP asm volatile ("stx %%gpr1, %0" : "=g" (ulp));
+#define GPOS_ASMSP asm volatile ("stx %%gpr1, %0" : "=g" (ulp));
 #endif
 
 #define ALIGNED_16(x) (((ULONG_PTR) x >> 1) << 1 == (ULONG_PTR) x)	// checks 16-bit alignment
@@ -69,6 +73,7 @@ namespace gpos
 	void Print(WCHAR *wsz);
 
 	// generic memory dumper routine
+
 	IOstream& HexDump(IOstream &os, const void *pv, ULLONG size);
 	
 	// generic hash function for byte strings
@@ -129,7 +134,7 @@ namespace gpos
 	{
 		return key_left == key_right;
 	}
-	
+
 	// yield and sleep (time in muSec)
 	// note that in some platforms the minimum sleep interval is 1ms
 	void USleep(ULONG);

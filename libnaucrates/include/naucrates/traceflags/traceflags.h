@@ -166,6 +166,9 @@ namespace gpos
 		// create constraint intervals from array expressions in preprocessing
 		EopttraceArrayConstraints = 103026,
 
+		// enable motion hazard handling during NLJ optimization
+		EopttraceMotionHazardHandling = 103027,
+
 		///////////////////////////////////////////////////////
 		///////////////////// statistics flags ////////////////
 		//////////////////////////////////////////////////////
@@ -197,6 +200,9 @@ namespace gpos
 		// do not use the built-in evaluators for integers in constraint derivation
 		EopttraceUseExternalConstantExpressionEvaluationForInts = 105001,
 
+		// is nestloop params enabled, it is only enabled in GPDB 6.x onwards.
+		EopttraceIndexedNLJOuterRefAsParams = 106000,
+
 		// max
 		EopttraceSentinel = 199999
 	};
@@ -208,10 +214,10 @@ extern "C"
 #endif // __cplusplus
 
 // set trace flags based on given bit set, and return two output bit sets of old trace flags values
-void SetTraceflags(gpos::IMemoryPool *pmp, const gpos::CBitSet *pbsInput, gpos::CBitSet **ppbsEnabled, gpos::CBitSet **ppbsDisabled);
+void SetTraceflags(gpos::IMemoryPool *mp, const gpos::CBitSet *input_bitset, gpos::CBitSet **enable_bitset, gpos::CBitSet **disabled_bitset);
 
 // restore trace flags values based on given bit sets
-void ResetTraceflags(gpos::CBitSet *pbsEnabled, gpos::CBitSet *pbsDisabled);
+void ResetTraceflags(gpos::CBitSet *enable_bitset, gpos::CBitSet *disabled_bitset);
 
 #ifdef __cplusplus
 }

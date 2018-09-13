@@ -48,7 +48,7 @@ explain select * from foo left join bar on (foo.a=bar.b and foo.b = bar.a and ba
         </dxl:CostParams>
       </dxl:CostModelConfig>
       <dxl:Hint MinNumOfPartsToRequireSortOnInsert="2147483647" JoinArityForAssociativityCommutativity="18" ArrayExpansionThreshold="25" JoinOrderDynamicProgThreshold="10" BroadcastThreshold="10000000" EnforceConstraintsOnDML="false"/>
-      <dxl:TraceFlags Value="101013,102029,102046,102048,102053,102054,102120,103001,103014,103015,103022,104003,104004,104005,105000"/>
+      <dxl:TraceFlags Value="103027,101013,102029,102046,102048,102053,102054,102120,103001,103014,103015,103022,104003,104004,104005,105000"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
       <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
@@ -427,7 +427,7 @@ explain select * from foo left join bar on (foo.a=bar.b and foo.b = bar.a and ba
     <dxl:Plan Id="0" SpaceSize="4">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="1295.002115" Rows="3.000000" Width="48"/>
+          <dxl:Cost StartupCost="0" TotalCost="1299.002115" Rows="3.000000" Width="48"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="0" Alias="a">
@@ -453,7 +453,7 @@ explain select * from foo left join bar on (foo.a=bar.b and foo.b = bar.a and ba
         <dxl:SortingColumnList/>
         <dxl:NestedLoopJoin JoinType="Left" IndexNestedLoopJoin="true">
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="1295.001579" Rows="3.000000" Width="48"/>
+            <dxl:Cost StartupCost="0" TotalCost="1299.001579" Rows="3.000000" Width="48"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="0" Alias="a">
@@ -481,7 +481,7 @@ explain select * from foo left join bar on (foo.a=bar.b and foo.b = bar.a and ba
           </dxl:JoinFilter>
           <dxl:NestedLoopJoin JoinType="Left" IndexNestedLoopJoin="true">
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="433.000482" Rows="2.000000" Width="32"/>
+              <dxl:Cost StartupCost="0" TotalCost="437.000482" Rows="2.000000" Width="32"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="0" Alias="a">
@@ -552,7 +552,7 @@ explain select * from foo left join bar on (foo.a=bar.b and foo.b = bar.a and ba
             </dxl:RedistributeMotion>
             <dxl:IndexScan IndexScanDirection="Forward">
               <dxl:Properties>
-                <dxl:Cost StartupCost="0" TotalCost="2.000143" Rows="1.000000" Width="16"/>
+                <dxl:Cost StartupCost="0" TotalCost="6.000143" Rows="1.000000" Width="16"/>
               </dxl:Properties>
               <dxl:ProjList>
                 <dxl:ProjElem ColId="9" Alias="a">

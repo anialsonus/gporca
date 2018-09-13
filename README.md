@@ -330,6 +330,7 @@ Follow the steps below to open a PR:
 1. Fork the project’s repository
 1. Create your own feature branch (e.g. `git checkout -b better_orca`) and make changes on this branch.
     * Follow the previous sections on this page to setup and build in your environment.
+1. Follow the naming and formatting style guide described [here](StyleGuide.md).
 1. Run through all the [tests](#test) in your feature branch and ensure they are successful.
     * Follow the [Add tests](#addtest) section to add new tests.
 1. Push your local branch to your fork (e.g. `git push origin better_orca`) and [submit a pull request](https://help.github.com/articles/creating-a-pull-request)
@@ -340,3 +341,8 @@ Note: All contributions must be sent using GitHub Pull Requests.
 **Your pull request is much more likely to be accepted if it is small and focused with a clear message that conveys the intent of your change.**
 
 Overall we follow GPDB's comprehensive contribution policy. Please refer to it [here](https://github.com/greenplum-db/gpdb#contributing) for details.
+
+### Bumping ORCA version
+
+Bump the `GPORCA_VERSION_MINOR` in `CMakeLists.txt` whenever your changes affect the ORCA functionality. `GPORCA_VERSION_PATCH` is bumped only in case where
+the changes do not affect ORCA functionality e.g. updating the `README.md`, adding a test case, fixing comments etc.

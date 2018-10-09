@@ -516,6 +516,14 @@ CTranslatorDXLToExpr::PexprLogicalTVF
 	// construct the mapping between the DXL ColId and CColRef
 	ConstructDXLColId2ColRefMapping(dxl_op->GetDXLColumnDescrArray(), popTVF->PdrgpcrOutput());
 
+	const IMDFunction *pmdfunc = m_pmda->RetrieveFunc(mdid_func);
+
+	if(IMDFunction::EfsVolatile == pmdfunc->GetFuncStability() ||
+	   IMDFunction::EfdaNoSQL != pmdfunc->GetFuncDataAccess())
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasVolatileOrSQLFunc();
+	}
+
 	return pexpr;
 }
 
@@ -2165,6 +2173,11 @@ CTranslatorDXLToExpr::Ptabdesc
 	phmiulAttnoColMapping->Release();
 	phmululColMapping->Release();
 
+	if(IMDRelation::EreldistrMasterOnly == rel_distr_policy)
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasMasterOnlyTables();
+	}
+
 	return ptabdesc;
 }
 
@@ -2952,7 +2965,13 @@ CTranslatorDXLToExpr::PexprScalarFunc
 	{
 		pexprFunc = GPOS_NEW(m_mp) CExpression(m_mp, pop);
 	}
-	
+
+	if(IMDFunction::EfsVolatile == pmdfunc->GetFuncStability() ||
+	   IMDFunction::EfdaNoSQL != pmdfunc->GetFuncDataAccess())
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasVolatileOrSQLFunc();
+	}
+
 	return pexprFunc;
 }
 

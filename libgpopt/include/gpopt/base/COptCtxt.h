@@ -19,6 +19,7 @@
 #include "gpopt/base/CCTEInfo.h"
 #include "gpopt/base/IComparator.h"
 #include "gpopt/mdcache/CMDAccessor.h"
+#include "naucrates/traceflags/traceflags.h"
 
 namespace gpopt
 {
@@ -91,6 +92,13 @@ namespace gpopt
 			static
 			ULONG m_ulFirstValidPartId;
 
+			// if there are master only tables in the query
+			BOOL m_has_master_only_tables;
+
+			// does the query contain any volatile functions or
+			// functions that read/modify SQL data
+			BOOL m_has_volatile_or_SQL_func;
+
 		public:
 
 			// ctor
@@ -132,6 +140,42 @@ namespace gpopt
 				)
 			{
 				m_fDMLQuery = fDMLQuery;
+			}
+
+			void SetHasMasterOnlyTables()
+			{
+				m_has_master_only_tables = true;
+			}
+
+			void SetHasVolatileOrSQLFunc()
+			{
+				m_has_volatile_or_SQL_func = true;
+			}
+
+			BOOL HasMasterOnlyTables() const
+			{
+				return m_has_master_only_tables;
+			}
+
+			BOOL HasVolatileOrSQLFunc() const
+			{
+				return m_has_volatile_or_SQL_func;
+			}
+
+			BOOL OptimizeDMLQueryWithSingletonSegment() const
+			{
+				// A DML statement can be optimized by enforcing a gather motion on segment instead of master,
+				// whenever a singleton execution is needed.
+				// This optmization can not be applied if the query contains any of the following:
+				// (1). master-only tables
+				// (2). a volatile function
+				// (3). a function SQL dataaccess: EfdaContainsSQL or EfdaReadsSQLData or EfdaModifiesSQLData
+				//      In such cases, it is safe to *always* enforce gather motion on master as there is no way to determine
+				//      if the SQL contains any master-only tables.
+				return !GPOS_FTRACE(EopttraceDisableNonMasterGatherForDML) &&
+					FDMLQuery() &&
+					!HasMasterOnlyTables() &&
+					!HasVolatileOrSQLFunc();
 			}
 
 			// column factory accessor

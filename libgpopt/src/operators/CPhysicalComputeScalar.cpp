@@ -182,8 +182,8 @@ CPhysicalComputeScalar::PdsRequired
 	GPOS_ASSERT(0 == child_index);
 	GPOS_ASSERT(2 > ulOptReq);
 
-	// check if master-only/replicated distribution needs to be requested
-	CDistributionSpec *pds = PdsMasterOnlyOrReplicated(mp, exprhdl, pdsRequired, child_index, ulOptReq);
+	// check if singleton/replicated distribution needs to be requested
+	CDistributionSpec *pds = PdsRequireSingletonOrReplicated(mp, exprhdl, pdsRequired, child_index, ulOptReq);
 	if (NULL != pds)
 	{
 		return pds;
@@ -227,6 +227,21 @@ CPhysicalComputeScalar::PdsRequired
 		{
 			return GPOS_NEW(mp) CDistributionSpecAny(this->Eopid());
 		}
+	}
+
+	// in case of DML Insert on randomly distributed table, a motion operator
+	// must be enforced on top of compute scalar if the children does not provide
+	// strict random spec. strict random request is not pushed
+	// down through the physical childs of compute scalar as the scalar
+	// project list of the compute scalar can have TVF and if the request
+	// was pushed down through physical child, data projected by the scalar
+	// project list will not be redistributed and will be inserted into a single
+	// segment. random motion with non universal child delivers strict random spec,
+	// so in case a motion node was added it will satisfy the strict random
+	// requested by DML insert
+	if (CDistributionSpec::EdtStrictRandom == pdsRequired->Edt())
+	{
+		return GPOS_NEW(mp) CDistributionSpecRandom();
 	}
 
 	if (0 == ulOptReq)
@@ -399,6 +414,10 @@ CPhysicalComputeScalar::PdsDerive
 	if (CDistributionSpec::EdtUniversal == pds->Edt() && 
 		IMDFunction::EfsVolatile == exprhdl.GetDrvdScalarProps(1 /*child_index*/)->Pfp()->Efs())
 	{
+		if (COptCtxt::PoctxtFromTLS()->OptimizeDMLQueryWithSingletonSegment())
+		{
+			return GPOS_NEW(mp) CDistributionSpecStrictSingleton(CDistributionSpecSingleton::EstSegment);
+		}
 		return GPOS_NEW(mp) CDistributionSpecStrictSingleton(CDistributionSpecSingleton::EstMaster);
 	}
 	
@@ -516,6 +535,5 @@ CPhysicalComputeScalar::EpetRewindability
 	// rewindability is enforced on operator's output
 	return CEnfdProp::EpetRequired;
 }
-
 // EOF
 

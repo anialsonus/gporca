@@ -5141,4 +5141,66 @@ CUtils::PcrExtractFromScExpression
 	return NULL;
 }
 
+
+// search the given array of predicates for predicates with equality or IS NOT
+// DISTINCT FROM operators that has one side equal to the given expression, if
+// found, return the other side of equality, otherwise return NULL
+CExpression *
+CUtils::PexprMatchEqualityOrINDF
+	(
+	CExpression *pexprToMatch,
+	CExpressionArray *pdrgpexpr // array of predicates to inspect
+	)
+{
+	GPOS_ASSERT(NULL != pexprToMatch);
+	GPOS_ASSERT(NULL != pdrgpexpr);
+
+	CExpression *pexprMatching = NULL;
+	const ULONG ulSize = pdrgpexpr->Size();
+	for (ULONG ul = 0; ul < ulSize; ul++)
+	{
+		CExpression *pexprPred = (*pdrgpexpr)[ul];
+		CExpression *pexprPredOuter, *pexprPredInner;
+
+
+		if (CPredicateUtils::IsEqualityOp(pexprPred))
+		{
+			pexprPredOuter = (*pexprPred)[0];
+			pexprPredInner = (*pexprPred)[1];
+		}
+		else if (CPredicateUtils::FINDF(pexprPred))
+		{
+			pexprPredOuter = (*(*pexprPred)[0])[0];
+			pexprPredInner = (*(*pexprPred)[0])[1];
+		}
+		else
+		{
+			continue;
+		}
+
+		IMDId *pmdidTypeOuter = CScalar::PopConvert(pexprPredOuter->Pop())->MdidType();
+		IMDId *pmdidTypeInner = CScalar::PopConvert(pexprPredInner->Pop())->MdidType();
+		if (!pmdidTypeOuter->Equals(pmdidTypeInner))
+		{
+			// only consider equality of identical types
+			continue;
+		}
+
+		pexprToMatch = CCastUtils::PexprWithoutBinaryCoercibleCasts(pexprToMatch);
+		if (CUtils::Equals(CCastUtils::PexprWithoutBinaryCoercibleCasts(pexprPredOuter), pexprToMatch))
+		{
+			pexprMatching = pexprPredInner;
+			break;
+		}
+
+		if (CUtils::Equals(CCastUtils::PexprWithoutBinaryCoercibleCasts(pexprPredInner), pexprToMatch))
+		{
+			pexprMatching = pexprPredOuter;
+			break;
+		}
+	}
+
+	return pexprMatching;
+}
+
 // EOF

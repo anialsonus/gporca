@@ -516,6 +516,14 @@ CTranslatorDXLToExpr::PexprLogicalTVF
 	// construct the mapping between the DXL ColId and CColRef
 	ConstructDXLColId2ColRefMapping(dxl_op->GetDXLColumnDescrArray(), popTVF->PdrgpcrOutput());
 
+	const IMDFunction *pmdfunc = m_pmda->RetrieveFunc(mdid_func);
+
+	if(IMDFunction::EfsVolatile == pmdfunc->GetFuncStability() ||
+	   IMDFunction::EfdaNoSQL != pmdfunc->GetFuncDataAccess())
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasVolatileOrSQLFunc();
+	}
+
 	return pexpr;
 }
 
@@ -1448,6 +1456,12 @@ CTranslatorDXLToExpr::PexprLogicalDelete
 
 	CTableDescriptor *ptabdesc = Ptabdesc(pdxlopDelete->GetDXLTableDescr());
 
+	if (COptCtxt::PoctxtFromTLS()->HasReplicatedTables())
+	{
+		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiUnsupportedOp,
+				   GPOS_WSZ_LIT("Delete on replicated tables"));
+	}
+
 	ULONG ctid_colid = pdxlopDelete->GetCtIdColId();
 	ULONG segid_colid = pdxlopDelete->GetSegmentIdColId();
 
@@ -1487,6 +1501,12 @@ CTranslatorDXLToExpr::PexprLogicalUpdate
 	CExpression *pexprChild = PexprLogical(child_dxlnode);
 
 	CTableDescriptor *ptabdesc = Ptabdesc(pdxlopUpdate->GetDXLTableDescr());
+
+	if (COptCtxt::PoctxtFromTLS()->HasReplicatedTables())
+	{
+		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiUnsupportedOp,
+				   GPOS_WSZ_LIT("Update on replicated tables"));
+	}
 
 	ULONG ctid_colid = pdxlopUpdate->GetCtIdColId();
 	ULONG segid_colid = pdxlopUpdate->GetSegmentIdColId();
@@ -2164,6 +2184,16 @@ CTranslatorDXLToExpr::Ptabdesc
 	phmiulAttnoPosMapping->Release();
 	phmiulAttnoColMapping->Release();
 	phmululColMapping->Release();
+
+	if(IMDRelation::EreldistrMasterOnly == rel_distr_policy)
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasMasterOnlyTables();
+	}
+
+	if(IMDRelation::EreldistrReplicated == rel_distr_policy)
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasReplicatedTables();
+	}
 
 	return ptabdesc;
 }
@@ -2952,7 +2982,13 @@ CTranslatorDXLToExpr::PexprScalarFunc
 	{
 		pexprFunc = GPOS_NEW(m_mp) CExpression(m_mp, pop);
 	}
-	
+
+	if(IMDFunction::EfsVolatile == pmdfunc->GetFuncStability() ||
+	   IMDFunction::EfdaNoSQL != pmdfunc->GetFuncDataAccess())
+	{
+		COptCtxt::PoctxtFromTLS()->SetHasVolatileOrSQLFunc();
+	}
+
 	return pexprFunc;
 }
 

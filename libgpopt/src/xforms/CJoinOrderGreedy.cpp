@@ -44,7 +44,7 @@ CJoinOrderGreedy::CJoinOrderGreedy
 	CExpressionArray *pdrgpexprConjuncts
 	)
 	:
-	CJoinOrder(pmp, pdrgpexprComponents, pdrgpexprConjuncts),
+	CJoinOrder(pmp, pdrgpexprComponents, pdrgpexprConjuncts, true /* m_include_loj_childs */),
 	m_pcompResult(NULL)
 {
 #ifdef GPOS_DEBUG
@@ -71,52 +71,6 @@ CJoinOrderGreedy::~CJoinOrderGreedy()
 }
 
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CJoinOrder::MarkUsedEdges
-//
-//	@doc:
-//		Mark edges used by result component
-//
-//---------------------------------------------------------------------------
-void
-CJoinOrderGreedy::MarkUsedEdges()
-{
-	GPOS_ASSERT(NULL != m_pcompResult);
-
-	CExpression *pexpr = m_pcompResult->m_pexpr;
-	COperator::EOperatorId eopid = pexpr->Pop()->Eopid();
-	if (0 == pexpr->Arity() ||
-		(COperator::EopLogicalSelect != eopid && COperator::EopLogicalInnerJoin != eopid))
-	{
-		// result component does not have a scalar child, e.g. a Get node
-		return;
-	}
-
-	CExpression *pexprScalar = (*pexpr) [pexpr->Arity() - 1];
-	CExpressionArray *pdrgpexpr = CPredicateUtils::PdrgpexprConjuncts(m_mp, pexprScalar);
-	const ULONG ulSize = pdrgpexpr->Size();
-
-	for (ULONG ulEdge = 0; ulEdge < m_ulEdges; ulEdge++)
-	{
-		SEdge *pedge = m_rgpedge[ulEdge];
-		if (pedge->m_fUsed)
-		{
-			continue;
-		}
-
-		for (ULONG ulPred = 0; ulPred < ulSize; ulPred++)
-		{
-			if ((*pdrgpexpr)[ulPred] == pedge->m_pexpr)
-			{
-				pedge->m_fUsed = true;
-			}
-		}
-	}
-	pdrgpexpr->Release();
-}
-
-
 // function to get the minimal cardinality join pair as the starting pair
 CJoinOrder::SComponent *
 CJoinOrderGreedy::GetStartingJoins()
@@ -131,25 +85,34 @@ CJoinOrderGreedy::GetStartingJoins()
 	{
 		for (ULONG ul2 = ul1+1; ul2 < m_ulComps; ul2++)
 		{
-			CJoinOrder::SComponent *pcompTemp = PcompCombine(m_rgpcomp[ul1], m_rgpcomp[ul2]);
-			// exclude cross joins to be considered as late as possible in the join order
-			if(CUtils::FCrossJoin(pcompTemp->m_pexpr))
+			SComponent *comp1 = m_rgpcomp[ul1];
+			SComponent *comp2 = m_rgpcomp[ul2];
+
+			if (!IsValidJoinCombination(comp1, comp2))
 			{
-				pcompTemp->Release();
 				continue;
 			}
-			DeriveStats(pcompTemp->m_pexpr);
-			CDouble dRows = pcompTemp->m_pexpr->Pstats()->Rows();
+
+			CJoinOrder::SComponent *compTemp = PcompCombine(comp1,comp2);
+
+			// exclude cross joins to be considered as late as possible in the join order
+			if(CUtils::FCrossJoin(compTemp->m_pexpr))
+			{
+				compTemp->Release();
+				continue;
+			}
+			DeriveStats(compTemp->m_pexpr);
+			CDouble dRows = compTemp->m_pexpr->Pstats()->Rows();
 			if (dMinRows <= 0 || dRows < dMinRows)
 			{
 				ul1Counter = ul1;
 				ul2Counter = ul2;
 				dMinRows = dRows;
-				pcompTemp->AddRef();
+				compTemp->AddRef();
 				CRefCount::SafeRelease(pcompBest);
-				pcompBest = pcompTemp;
+				pcompBest = compTemp;
 			}
-			pcompTemp->Release();
+			compTemp->Release();
 		}
 	}
 
@@ -187,7 +150,7 @@ CJoinOrderGreedy::PexprExpand()
 	if(NULL != m_pcompResult)
 	{
 		// found atleast one non cross join
-		MarkUsedEdges();
+		MarkUsedEdges(m_pcompResult);
 	}
 	else
 	{
@@ -217,20 +180,18 @@ CJoinOrderGreedy::PexprExpand()
 		// avoiding cross joins
 		if (candidate_comp_set->Size() > 0)
 		{
-			// continue iterating over all the candidate components until the
-			// entire set is evaluated
-			while (candidate_comp_set->Size() > 0)
-			{
-				best_comp_idx = PickBestJoin(candidate_comp_set);
-				
-				// remove the component picked in this iteration from the
-				// candidate component set
-				candidate_comp_set->ExchangeClear(best_comp_idx);
-				
-				// also remove the component from the unused component set so that
-				// it will not be considered for cross joins
-				unused_components_set->ExchangeClear(best_comp_idx);
-			}
+			// find the best join component.
+			// once we find a best_comp_idx, we should re-evaluate the
+			// candidate_component_set, which is done in GetAdjacentComponentsToJoinCandidate.
+			// GetAdjacentComponentsToJoinCandidate identifies the connected
+			// components of the last m_pcompResult which is updated in PickBestJoin.
+			// also, it is guaranteed that PickBestJoin will find atleast one component
+			// with which the starting join can be combined, as we come here if
+			// there is atleast one component in candidate_comp_set
+			best_comp_idx = PickBestJoin(candidate_comp_set);
+
+			// remove the best component from the unused component set
+			unused_components_set->ExchangeClear(best_comp_idx);
 		}
 		else
 		{
@@ -274,8 +235,12 @@ CJoinOrderGreedy::PickBestJoin
 	while (iter.Advance())
 	{
 		SComponent *pcompCurrent = m_rgpcomp[iter.Bit()];
-		SComponent *pcompTemp = PcompCombine(m_pcompResult, pcompCurrent);
+		if (!IsValidJoinCombination(m_pcompResult, pcompCurrent))
+		{
+			continue;
+		}
 
+		SComponent *pcompTemp = PcompCombine(m_pcompResult, pcompCurrent);
 		DeriveStats(pcompTemp->m_pexpr);
 		CDouble dRows = pcompTemp->m_pexpr->Pstats()->Rows();
 
@@ -292,13 +257,22 @@ CJoinOrderGreedy::PickBestJoin
 		pcompTemp->Release();
 	}
 
+#ifndef GPOS_DEBUG
+	if (gpos::ulong_max == best_comp_idx)
+	{
+		// ideally we should always find a best component, but fallback
+		// if not found.
+		GPOS_RAISE(CException::ExmaInvalid, CException::ExmiInvalid);
+	}
+#endif
+
 	GPOS_ASSERT(gpos::ulong_max != best_comp_idx);
 	GPOS_ASSERT(NULL != pcompBest);
 	GPOS_ASSERT(!pcompBestComponent->m_fUsed);
 	pcompBestComponent->m_fUsed = true;
 	m_pcompResult->Release();
 	m_pcompResult = pcompBest;
-	MarkUsedEdges();
+	MarkUsedEdges(m_pcompResult);
 
 	return best_comp_idx;
 }

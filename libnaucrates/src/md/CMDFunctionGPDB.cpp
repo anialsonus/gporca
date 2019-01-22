@@ -17,6 +17,8 @@
 #include "naucrates/dxl/xml/CXMLSerializer.h"
 #include "naucrates/dxl/CDXLUtils.h"
 
+#include <stdio.h>
+
 using namespace gpmd;
 using namespace gpdxl;
 
@@ -214,22 +216,28 @@ void
 CMDFunctionGPDB::Serialize
 	(
 	CXMLSerializer *xml_serializer
-	) 
+	)
 	const
 {
-	xml_serializer->OpenElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix), 
+	FILE* elf = fopen("/tmp/orcae.log", "a");
+	xml_serializer->OpenElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix),
 						CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFunc));
-	
+
 	m_mdid->Serialize(xml_serializer, CDXLTokens::GetDXLTokenStr(EdxltokenMdid));
 
+	fprintf(elf, "AddAttribute by Serialize call: 1");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenName), m_mdname->GetMDName());
-	
+
+	fprintf(elf, "AddAttribute by Serialize calls: 2-3");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncReturnsSet), m_returns_set);
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncStability), GetFuncStabilityStr());
+	fprintf(elf, "AddAttribute by Serialize calls: 4-5");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncDataAccess), GetFuncDataAccessStr());
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncStrict), m_is_strict);
 
+	fprintf(elf, "SerializeMDIdAsElem by Serialize call");
 	SerializeMDIdAsElem(xml_serializer, CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncResultTypeId), m_mdid_type_result);
+	fclose(elf);
 
 	if (NULL != m_mdid_types_array)
 	{
@@ -244,7 +252,7 @@ CMDFunctionGPDB::Serialize
 							CDXLTokens::GetDXLTokenStr(EdxltokenOutputCols));
 
 	}
-	xml_serializer->CloseElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix), 
+	xml_serializer->CloseElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix),
 						CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFunc));
 }
 
@@ -288,52 +296,52 @@ CMDFunctionGPDB::GetFuncDataAccessStr() const
 	return NULL;
 }
 
-#ifdef GPOS_DEBUG
+// #ifdef GPOS_DEBUG
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CMDFunctionGPDB::DebugPrint
-//
-//	@doc:
-//		Prints a metadata cache relation to the provided output
-//
-//---------------------------------------------------------------------------
-void
-CMDFunctionGPDB::DebugPrint
-	(
-	IOstream &os
-	)
-	const
-{
-	os << "Function id: ";
-	MDId()->OsPrint(os);
-	os << std::endl;
-	
-	os << "Function name: " << (Mdname()).GetMDName()->GetBuffer() << std::endl;
-	
-	os << "Result type id: ";
-	GetResultTypeMdid()->OsPrint(os);
-	os << std::endl;
-	
-	const CWStringConst *return_set_str = ReturnsSet() ?
-			CDXLTokens::GetDXLTokenStr(EdxltokenTrue): 
-			CDXLTokens::GetDXLTokenStr(EdxltokenFalse); 
+// //---------------------------------------------------------------------------
+// //	@function:
+// //		CMDFunctionGPDB::DebugPrint
+// //
+// //	@doc:
+// //		Prints a metadata cache relation to the provided output
+// //
+// //---------------------------------------------------------------------------
+// void
+// CMDFunctionGPDB::DebugPrint
+// 	(
+// 	IOstream &os
+// 	)
+// 	const
+// {
+// 	os << "Function id: ";
+// 	MDId()->OsPrint(os);
+// 	os << std::endl;
 
-	os << "Returns set: " << return_set_str->GetBuffer() << std::endl;
+// 	os << "Function name: " << (Mdname()).GetMDName()->GetBuffer() << std::endl;
 
-	os << "Function is " << GetFuncStabilityStr()->GetBuffer() << std::endl;
-	
-	os << "Data access: " << GetFuncDataAccessStr()->GetBuffer() << std::endl;
+// 	os << "Result type id: ";
+// 	GetResultTypeMdid()->OsPrint(os);
+// 	os << std::endl;
 
-	const CWStringConst *is_strict = IsStrict() ?
-			CDXLTokens::GetDXLTokenStr(EdxltokenTrue): 
-			CDXLTokens::GetDXLTokenStr(EdxltokenFalse); 
+// 	const CWStringConst *return_set_str = ReturnsSet() ?
+// 			CDXLTokens::GetDXLTokenStr(EdxltokenTrue):
+// 			CDXLTokens::GetDXLTokenStr(EdxltokenFalse);
 
-	os << "Is strict: " << is_strict->GetBuffer() << std::endl;
-	
-	os << std::endl;	
-}
+// 	os << "Returns set: " << return_set_str->GetBuffer() << std::endl;
 
-#endif // GPOS_DEBUG
+// 	os << "Function is " << GetFuncStabilityStr()->GetBuffer() << std::endl;
+
+// 	os << "Data access: " << GetFuncDataAccessStr()->GetBuffer() << std::endl;
+
+// 	const CWStringConst *is_strict = IsStrict() ?
+// 			CDXLTokens::GetDXLTokenStr(EdxltokenTrue):
+// 			CDXLTokens::GetDXLTokenStr(EdxltokenFalse);
+
+// 	os << "Is strict: " << is_strict->GetBuffer() << std::endl;
+
+// 	os << std::endl;
+// }
+
+// #endif // GPOS_DEBUG
 
 // EOF

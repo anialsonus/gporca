@@ -17,7 +17,7 @@
 #include "naucrates/dxl/xml/CXMLSerializer.h"
 #include "naucrates/dxl/CDXLUtils.h"
 
-#include <stdio.h>
+#include "naucrates/adlog.h"
 
 using namespace gpmd;
 using namespace gpdxl;
@@ -219,25 +219,23 @@ CMDFunctionGPDB::Serialize
 	)
 	const
 {
-	FILE* elf = fopen("/tmp/orcae.log", "a");
 	xml_serializer->OpenElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix),
 						CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFunc));
 
 	m_mdid->Serialize(xml_serializer, CDXLTokens::GetDXLTokenStr(EdxltokenMdid));
 
-	fprintf(elf, "AddAttribute by Serialize call: 1");
+	adlog("AddAttribute by Serialize call: 1");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenName), m_mdname->GetMDName());
 
-	fprintf(elf, "AddAttribute by Serialize calls: 2-3");
+	adlog("AddAttribute by Serialize calls: 2-3");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncReturnsSet), m_returns_set);
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncStability), GetFuncStabilityStr());
-	fprintf(elf, "AddAttribute by Serialize calls: 4-5");
+	adlog("AddAttribute by Serialize calls: 4-5");
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncDataAccess), GetFuncDataAccessStr());
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncStrict), m_is_strict);
 
-	fprintf(elf, "SerializeMDIdAsElem by Serialize call");
+	adlog("SerializeMDIdAsElem by Serialize call");
 	SerializeMDIdAsElem(xml_serializer, CDXLTokens::GetDXLTokenStr(EdxltokenGPDBFuncResultTypeId), m_mdid_type_result);
-	fclose(elf);
 
 	if (NULL != m_mdid_types_array)
 	{

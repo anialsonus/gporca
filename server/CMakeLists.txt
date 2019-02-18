@@ -144,7 +144,8 @@ NoPartConstraint-WhenNoDefaultPartsAndIndices
 PartConstraint-WhenIndicesAndNoDefaultParts PartConstraint-WithOnlyDefaultPartInfo
 PartConstraint-WhenDefaultPartsAndIndices CorrelatedNLJ-PartSelector-Subplan
 DonotPushPartConstThruLimit PartTbl-DPE-Correlated-NLOuter Select-Over-PartTbl
-PartTbl-DPE PartTbl-DPE-WindowFunction PartTbl-DPE-GroupBy PartTbl-DPE-Limit;
+PartTbl-DPE PartTbl-DPE-WindowFunction PartTbl-DPE-GroupBy PartTbl-DPE-Limit
+PartSelectorOnJoinSide PartSelectorOnJoinSide2;
 
 CPartTbl2Test:
 DPE-SemiJoin DPE-IN DPE-NOT-IN HJN-DPE-Bitmap-Outer-Child
@@ -217,7 +218,9 @@ LeftJoin-UnsupportedFilter-Cardinality LeftOuter2InnerUnionAllAntiSemiJoin
 LOJ_IDF_no_convert_outer_ref_predicate_with_NULL
 LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_inner_predicate_IDF
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
-LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg;
+LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
+LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
+LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -369,7 +372,6 @@ add_orca_test(CBucketTest)
 add_orca_test(CHistogramTest)
 add_orca_test(CMCVTest)
 add_orca_test(CJoinCardinalityTest)
-add_orca_test(CJoinCardinalityNDVBasedEqPredTest)
 add_orca_test(CFilterCardinalityTest)
 add_orca_test(CTranslatorDXLToExprTest)
 add_orca_test(CTranslatorExprToDXLTest)

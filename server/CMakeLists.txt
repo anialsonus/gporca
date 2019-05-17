@@ -83,7 +83,7 @@ CTypeModifierTest:
 TypeModifierColumn TypeModifierCast TypeModifierConst TypeModifierDoubleMappableConst TypeModifierArrayRef;
 
 CIndexScanTest:
-BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery BitmapIndex-Against-InList
+IndexedNLJBitmap BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery BitmapIndex-Against-InList
 IndexScan-AOTable IndexScan-DroppedColumns IndexScan-BoolTrue IndexScan-BoolFalse
 IndexScan-Relabel IndexGet-OuterRefs LogicalIndexGetDroppedCols NewBtreeIndexScanCost;
 
@@ -222,7 +222,8 @@ LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
-LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter;
+LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
+FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -341,6 +342,7 @@ update_file(${mdp_tests_inl} ${mdp_tests})
 
 # Naucrates tests.
 add_orca_test(CCostTest)
+add_orca_test(CExternalTableTest)
 add_orca_test(CDatumTest)
 add_orca_test(CDXLMemoryManagerTest)
 add_orca_test(CDXLUtilsTest)

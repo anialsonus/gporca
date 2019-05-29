@@ -28,6 +28,7 @@
 #include "gpopt/operators/CScalarAggFunc.h"
 #include "naucrates/md/CMDTypeInt4GPDB.h"
 #include "naucrates/statistics/IStatistics.h"
+#include "gpopt/base/CDistributionSpecHashed.h"
 
 // fwd declarations
 namespace gpmd
@@ -112,15 +113,6 @@ namespace gpopt
 			// raises an exception if CTE Producer and CTE Consumer does not have the same locality
 			static
 			void ValidateCTEProducerConsumerLocality(IMemoryPool *mp, CExpression *pexpr, EExecLocalityType edt, UlongToUlongMap *phmulul);
-
-			// check is a comparison between given types or a comparison after casting
-			// one side to an another exists
-			static
-			BOOL FCmpOrCastedCmpExists(IMDId *left_mdid, IMDId *right_mdid, IMDType::ECmpType cmp_type);
-
-			// return the mdid of the given scalar comparison between the two types
-			static
-			IMDId *GetScCmpMdId(IMemoryPool *mp, CMDAccessor *md_accessor, IMDId *left_mdid, IMDId *right_mdid, IMDType::ECmpType cmp_type);
 			
 			// generate a comparison expression for two column references
 			static
@@ -1085,6 +1077,25 @@ namespace gpopt
 				CExpression *pexprToMatch,
 				CExpressionArray *pdrgpexpr // array of predicates to inspect
 				);
+
+			static
+			CExpression *MakeJoinWithoutInferredPreds(IMemoryPool *mp, CExpression *join_expr);
+
+			static
+			BOOL Contains(const CExpressionArray *exprs, CExpression *expr_to_match);
+
+			static
+			BOOL Equals(const CExpressionArrays *exprs_arr, const CExpressionArrays *other_exprs_arr);
+
+			static
+			BOOL CanRemoveInferredPredicates(COperator::EOperatorId op_id);
+
+			static
+			CExpressionArrays *
+			GetCombinedExpressionArrays(IMemoryPool *mp, CExpressionArrays *exprs_array, CExpressionArrays *exprs_array_other);
+
+			static
+			void AddExprs(CExpressionArrays *results_exprs, CExpressionArrays *input_exprs);
 	}; // class CUtils
 
 	// hash set from expressions

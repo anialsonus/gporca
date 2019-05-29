@@ -32,6 +32,8 @@ def install_dependency(dependency_name, output_dir):
         ["tar -xzf " + dependency_name + "/*.tar.gz -C " + output_dir], shell=True)
 
 def cmake_configure(src_dir, build_type, output_dir, cxx_compiler = None, cxxflags = None, thirty_two_bit = False):
+    if os.path.exists("build"):
+        os.removedirs("build")
     os.mkdir("build")
     cmake_args = ["cmake",
                   "-D", "CMAKE_BUILD_TYPE=" + build_type,
@@ -47,7 +49,11 @@ def cmake_configure(src_dir, build_type, output_dir, cxx_compiler = None, cxxfla
         cmake_args.append("CMAKE_TOOLCHAIN_FILE=../" + src_dir + "/cmake/i386.toolchain.cmake")
 
     cmake_args.append("../" + src_dir)
-    return subprocess.call(cmake_args, cwd="build")
+    cmake_command = " ".join(cmake_args)
+    if os.path.exists('/opt/gcc_env.sh'):
+        cmake_command = "source /opt/gcc_env.sh && " + cmake_command
+    print cmake_command
+    return subprocess.call(cmake_command, cwd="build", shell=True)
 
 def make():
     return subprocess.call(["make",
@@ -83,6 +89,7 @@ def main():
     parser.add_option("--cxxflags", dest="cxxflags")
     parser.add_option("--output_dir", dest="output_dir", default="install")
     parser.add_option("--32", dest="thirty_two_bit", default=False)
+    parser.add_option("--skiptests", dest="skiptests", action="store_true", default=False)
 
     (options, args) = parser.parse_args()
     # install deps for building
@@ -100,9 +107,10 @@ def main():
     status = make()
     if status:
         return status
-    status = run_tests()
-    if status:
-        return status
+    if not options.skiptests:
+        status = run_tests()
+        if status:
+            return status
     status = install()
     if status:
         return status

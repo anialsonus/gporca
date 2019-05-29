@@ -62,11 +62,13 @@ Correlated-LASJ-With-Outer-Const Correlated-LASJ-With-Outer-Expr;
 
 CPredicateTest:
 TranslateOneTimeFilterConjunctQuals TranslateFilterDisjunctQuals TranslateFilterWithCTEAndTableScanIntoFilterAndOneTimeFilter
-InferPredicates InferPredicatesForLimit OR-WithIsNullPred Int2Predicate IN-Numeric DeduplicatePredicates
+InferPredicates InferPredicatesForLimit InferPredicatesBCC-vc-vc InferPredicatesBCC-vc-txt
+InferPredicatesBCC-txt-txt InferPredicatesBCC-oid-oid InferPredicatesBCC-vcpart-txt
+OR-WithIsNullPred Int2Predicate IN-Numeric DeduplicatePredicates
 AddEqualityPredicates AddPredsInSubqueries ExtractPredicateFromDisjWithComputedColumns
 Join-With-Subq-Preds-1 Non-Hashjoinable-Pred Non-Hashjoinable-Pred-2 Factorized-Preds IN OR AvoidConstraintDerivationForLike
 NLJ-DistCol-No-Broadcast NLJ-EqAllCol-No-Broadcast NLJ-EqDistCol-InEqNonDistCol-No-Broadcast
-NLJ-InEqDistCol-EqNonDistCol-Redistribute CorrelatedNLJWithTrueCondition;
+NLJ-InEqDistCol-EqNonDistCol-Redistribute CorrelatedNLJWithTrueCondition InferPredicatesInnerOfLOJ;
 
 CLikeIDFTest:
 LIKE-Pattern-green LIKE-Pattern-green-2 LIKE-Pattern-Empty Nested-Or-Predicates Join-IDF
@@ -83,7 +85,7 @@ CTypeModifierTest:
 TypeModifierColumn TypeModifierCast TypeModifierConst TypeModifierDoubleMappableConst TypeModifierArrayRef;
 
 CIndexScanTest:
-BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery BitmapIndex-Against-InList
+IndexedNLJBitmap BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery BitmapIndex-Against-InList
 IndexScan-AOTable IndexScan-DroppedColumns IndexScan-BoolTrue IndexScan-BoolFalse
 IndexScan-Relabel IndexGet-OuterRefs LogicalIndexGetDroppedCols NewBtreeIndexScanCost;
 
@@ -179,7 +181,9 @@ CPartTbl6Test:
 PartTbl-PredicateWithCast PartTbl-IDFList PartTbl-IDFNull
 PartTbl-PredicateWithCast PartTbl-EqPredicateWithCastRange
 PartTbl-PredicateWithCastList PartTbl-IDFWithCast
-PartTbl-PredicateWithCastMultiLevelList;
+PartTbl-PredicateWithCastMultiLevelList PartTbl-WindowFuncPredPushDown
+PartTbl-WindowFuncPartialPredPushDown PartTbl-WindowFuncNoPredPushDown
+PartTbl-WindowFuncNoDisjunctPredPushDown PartTbl-WindowFuncSinglePredPushDown;
 
 CSetop1Test:
 ValueScanWithDuplicateAndSelfComparison PushGbBelowNaryUnionAll
@@ -194,7 +198,7 @@ Union-OuterRefs-Output Union-OuterRefs-Casting-Output
 Union-OuterRefs-InnerChild MS-UnionAll-2;
 
 CSetop3Test:
-UnionWithOuterRefs UnionAll Union-On-HJNs
+UnionWithOuterRefs UnionAll
 Union-Distributed-Table-With-Const-Table ExceptAllCompatibleDataType
 UnionAllCompatibleDataType UnionOfDQAQueries Union-Volatile-Func
 Intersect-Volatile-Func Except-Volatile-Func;
@@ -220,7 +224,8 @@ LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
-LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter;
+LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
+FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -339,6 +344,7 @@ update_file(${mdp_tests_inl} ${mdp_tests})
 
 # Naucrates tests.
 add_orca_test(CCostTest)
+add_orca_test(CExternalTableTest)
 add_orca_test(CDatumTest)
 add_orca_test(CDXLMemoryManagerTest)
 add_orca_test(CDXLUtilsTest)

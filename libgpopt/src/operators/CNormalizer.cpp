@@ -100,9 +100,11 @@ CNormalizer::FPushableThruSeqPrjChild
 	GPOS_ASSERT(CLogical::EopLogicalSequenceProject == pexprSeqPrj->Pop()->Eopid());
 
 	CDistributionSpec *pds = CLogicalSequenceProject::PopConvert(pexprSeqPrj->Pop())->Pds();
+
 	BOOL fPushable = false;
 	if (CDistributionSpec::EdtHashed == pds->Edt())
 	{
+		GPOS_ASSERT(NULL == CDistributionSpecHashed::PdsConvert(pds)->PdshashedEquiv());
 		CAutoMemoryPool amp;
 		IMemoryPool *mp = amp.Pmp();
 		CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprPred->PdpDerive())->PcrsUsed();
@@ -398,6 +400,71 @@ CNormalizer::FSimplifySelectOnOuterJoin
 	return false;
 }
 
+// A SELECT on top of FOJ, where SELECT's predicate is NULL-filtering and uses
+// columns from FOJ's outer child, is simplified as a SELECT on top of a
+// Left-Join
+// Example:
+//   select * from lhs full join rhs on (lhs.a=rhs.a) where lhs.a = 5;
+// is converted to:
+//   select * from lhs left join rhs on (lhs.a=rhs.a) where lhs.a = 5;;
+BOOL
+CNormalizer::FSimplifySelectOnFullJoin
+	(
+	IMemoryPool *mp,
+	CExpression *pexprFullJoin,
+	CExpression *pexprPred, // selection predicate
+	CExpression **ppexprResult
+	)
+{
+	GPOS_ASSERT(NULL != mp);
+	GPOS_ASSERT(COperator::EopLogicalFullOuterJoin == pexprFullJoin->Pop()->Eopid());
+	GPOS_ASSERT(pexprPred->Pop()->FScalar());
+	GPOS_ASSERT(NULL != ppexprResult);
+
+	if (0 == pexprFullJoin->Arity())
+	{
+		// exit early for leaf patterns extracted from memo
+		*ppexprResult = NULL;
+		return false;
+	}
+
+	CExpression *pexprLeftChild = (*pexprFullJoin)[0];
+	CExpression *pexprRightChild = (*pexprFullJoin)[1];
+	CExpression *pexprJoinPred = (*pexprFullJoin)[2];
+
+	CColRefSet *pcrsOutputLeftChild = CDrvdPropRelational::GetRelationalProperties(pexprLeftChild->PdpDerive())->PcrsOutput();
+
+	if (CPredicateUtils::FNullRejecting(mp, pexprPred, pcrsOutputLeftChild))
+	{
+		// we have a predicate on top of FOJ that uses FOJ's outer child,
+		// if the predicate filters-out nulls, we can convert the FOJ to LOJ
+		pexprLeftChild->AddRef();
+		pexprRightChild->AddRef();
+		pexprJoinPred->AddRef();
+		pexprPred->AddRef();
+
+		*ppexprResult = GPOS_NEW(mp) CExpression
+					(
+					mp,
+					GPOS_NEW(mp) CLogicalSelect(mp),
+					GPOS_NEW(mp) CExpression
+							(
+							mp,
+							GPOS_NEW(mp) CLogicalLeftOuterJoin(mp),
+							pexprLeftChild,
+							pexprRightChild,
+							pexprJoinPred
+							),
+					pexprPred
+					);
+
+		return true;
+	}
+
+	// failed to convert FOJ to LOJ
+	return false;
+}
+
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -432,18 +499,26 @@ CNormalizer::PushThruSelect
 	}
 
 	COperator::EOperatorId op_id = pexprLogicalChild->Pop()->Eopid();
-	if (COperator::EopLogicalLeftOuterJoin == op_id)
+	CExpression *pexprSimplified = NULL;
+	if (COperator::EopLogicalLeftOuterJoin == op_id &&
+		FSimplifySelectOnOuterJoin(mp, pexprLogicalChild, pexprPred, &pexprSimplified))
 	{
-		CExpression *pexprSimplified = NULL;
-		if (FSimplifySelectOnOuterJoin(mp, pexprLogicalChild, pexprPred, &pexprSimplified))
-		{
-			// simplification succeeded, normalize resulting expression
-			*ppexprResult = PexprNormalize(mp, pexprSimplified);
-			pexprPred->Release();
-			pexprSimplified->Release();
+		// simplification succeeded, normalize resulting expression
+		*ppexprResult = PexprNormalize(mp, pexprSimplified);
+		pexprPred->Release();
+		pexprSimplified->Release();
 
-			return;
-		}
+		return;
+	}
+	if (COperator::EopLogicalFullOuterJoin == op_id &&
+		FSimplifySelectOnFullJoin(mp, pexprLogicalChild, pexprPred, &pexprSimplified))
+	{
+		// simplification succeeded, normalize resulting expression
+		*ppexprResult = PexprNormalize(mp, pexprSimplified);
+		pexprPred->Release();
+		pexprSimplified->Release();
+
+		return;
 	}
 
 	if (FPushThruOuterChild(pexprLogicalChild))
@@ -504,15 +579,21 @@ CNormalizer::PexprSelect
 
 	CExpression *pexprLogicalChild = (*pexprSelect)[0];
 	COperator::EOperatorId eopidChild = pexprLogicalChild->Pop()->Eopid();
-	if (COperator::EopLogicalLeftOuterJoin != eopidChild)
-	{
-		// child of Select is not an outer join, return created Select expression
-		return pexprSelect;
-	}
 
 	// we have a Select on top of Outer Join expression, attempt simplifying expression into InnerJoin
 	CExpression *pexprSimplified = NULL;
-	if (FSimplifySelectOnOuterJoin(mp, pexprLogicalChild, (*pexprSelect)[1], &pexprSimplified))
+	if (COperator::EopLogicalLeftOuterJoin == eopidChild &&
+		FSimplifySelectOnOuterJoin(mp, pexprLogicalChild, (*pexprSelect)[1], &pexprSimplified))
+	{
+		// simplification succeeded, normalize resulting expression
+		pexprSelect->Release();
+		CExpression *pexprResult = PexprNormalize(mp, pexprSimplified);
+		pexprSimplified->Release();
+
+		return pexprResult;
+	}
+	else if (COperator::EopLogicalFullOuterJoin == eopidChild &&
+			 FSimplifySelectOnFullJoin(mp, pexprLogicalChild, (*pexprSelect)[1], &pexprSimplified))
 	{
 		// simplification succeeded, normalize resulting expression
 		pexprSelect->Release();
@@ -871,7 +952,32 @@ CNormalizer::PushThruJoin
 
 	// create a new join expression
 	pop->AddRef();
-	*ppexprResult = GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+	CExpression *pexprJoinWithInferredPred = GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+	CExpression *pexprJoinWithoutInferredPred = NULL;
+
+	// remove inferred predicate from the join expression. inferred predicate can impact the cost
+	// of the join node as the node will have to project more columns even though they are not
+	// used by the above nodes. So, better to remove them from the join after all the inferred predicates
+	// are pushed down.
+	// We don't do this for CTE as removing inferred predicates from CTE with inlining enabled may
+	// cause the relational properties of two group to be same and can result in group merges,
+	// which can lead to circular derivations, we should fix the bug to avoid circular references
+	// before we enable it for Inlined CTEs.
+	if (CUtils::CanRemoveInferredPredicates(pop->Eopid()) && !COptCtxt::PoctxtFromTLS()->Pcteinfo()->FEnableInlining())
+	{
+		// Subqueries should be un-nested first so that we can infer any predicates if possible,
+		// if they are not un-nested, they don't have any inferred predicates to remove.
+		// ORCA only infers predicates for subqueries after they are un-nested.
+		BOOL has_subquery = CUtils::FHasSubqueryOrApply(pexprJoinWithInferredPred);
+		if (!has_subquery)
+		{
+			pexprJoinWithoutInferredPred = CUtils::MakeJoinWithoutInferredPreds(mp, pexprJoinWithInferredPred);
+			pexprJoinWithInferredPred->Release();
+			*ppexprResult = pexprJoinWithoutInferredPred;
+			return;
+		}
+	}
+	*ppexprResult = pexprJoinWithInferredPred;
 }
 
 //---------------------------------------------------------------------------

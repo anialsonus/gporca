@@ -45,7 +45,7 @@
         </dxl:CostParams>
       </dxl:CostModelConfig>
       <dxl:Hint MinNumOfPartsToRequireSortOnInsert="2147483647" JoinArityForAssociativityCommutativity="18" ArrayExpansionThreshold="100" JoinOrderDynamicProgThreshold="10" BroadcastThreshold="10000000" EnforceConstraintsOnDML="false"/>
-      <dxl:TraceFlags Value="102074,102120,103001,103014,103015,103022,103027,104003,104004,104005,105000,106000"/>
+      <dxl:TraceFlags Value="102074,102146,102120,103001,103014,103015,103022,103027,104003,104004,104005,105000,106000"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
       <dxl:RelationStatistics Mdid="2.57350.1.0" Name="t1" Rows="10002.000000" EmptyRelation="false"/>
@@ -2462,7 +2462,7 @@
         </dxl:LogicalGet>
       </dxl:LogicalSelect>
     </dxl:Query>
-    <dxl:Plan Id="0" SpaceSize="1722">
+    <dxl:Plan Id="0" SpaceSize="1734">
       <dxl:GatherMotion InputSegments="0,1,2" OutputSegments="-1">
         <dxl:Properties>
           <dxl:Cost StartupCost="0" TotalCost="1356710918.164982" Rows="10002.000000" Width="12"/>
@@ -2637,7 +2637,6 @@
                                 <dxl:TableDescriptor Mdid="0.57356.1.0" TableName="t2">
                                   <dxl:Columns>
                                     <dxl:Column ColId="10" Attno="1" ColName="a" TypeMdid="0.23.1.0" ColWidth="4"/>
-                                    <dxl:Column ColId="11" Attno="2" ColName="b" TypeMdid="0.23.1.0" ColWidth="4"/>
                                     <dxl:Column ColId="12" Attno="3" ColName="c" TypeMdid="0.23.1.0" ColWidth="4"/>
                                     <dxl:Column ColId="13" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0" ColWidth="6"/>
                                     <dxl:Column ColId="14" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0" ColWidth="4"/>
@@ -2688,8 +2687,6 @@
                                           <dxl:TableDescriptor Mdid="0.57359.1.0" TableName="t3">
                                             <dxl:Columns>
                                               <dxl:Column ColId="20" Attno="1" ColName="a" TypeMdid="0.23.1.0" ColWidth="4"/>
-                                              <dxl:Column ColId="21" Attno="2" ColName="b" TypeMdid="0.25.1.0" ColWidth="4"/>
-                                              <dxl:Column ColId="22" Attno="3" ColName="c" TypeMdid="0.23.1.0" ColWidth="4"/>
                                               <dxl:Column ColId="23" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0" ColWidth="6"/>
                                               <dxl:Column ColId="24" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0" ColWidth="4"/>
                                               <dxl:Column ColId="25" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0" ColWidth="4"/>

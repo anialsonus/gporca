@@ -132,7 +132,7 @@ CReqdPropPlan::~CReqdPropPlan()
 void
 CReqdPropPlan::ComputeReqdCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CReqdProp *prpInput,
 	ULONG child_index,
@@ -158,7 +158,7 @@ CReqdPropPlan::ComputeReqdCols
 void
 CReqdPropPlan::ComputeReqdCTEs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CReqdProp *prpInput,
 	ULONG child_index,
@@ -184,7 +184,7 @@ CReqdPropPlan::ComputeReqdCTEs
 void
 CReqdPropPlan::Compute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CReqdProp *prpInput,
 	ULONG child_index,
@@ -278,7 +278,7 @@ CReqdPropPlan::Compute
 CPartFilterMap *
 CReqdPropPlan::PpfmCombineDerived
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CReqdPropPlan *prppInput,
 	ULONG child_index,
@@ -350,7 +350,7 @@ CReqdPropPlan::PpfmCombineDerived
 void
 CReqdPropPlan::InitReqdPartitionPropagation
 	(
-	IMemoryPool *mp, 
+	CMemoryPool *mp, 
 	CPartInfo *ppartinfo
 	)
 {
@@ -451,7 +451,7 @@ CReqdPropPlan::Pps
 BOOL
 CReqdPropPlan::FProvidesReqdCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	ULONG ulOptReq
 	)
@@ -641,13 +641,13 @@ CReqdPropPlan::FCompatible
 CReqdPropPlan *
 CReqdPropPlan::PrppEmpty
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	CColRefSet *pcrs = GPOS_NEW(mp) CColRefSet(mp);
 	COrderSpec *pos = GPOS_NEW(mp) COrderSpec(mp);
 	CDistributionSpec *pds = GPOS_NEW(mp) CDistributionSpecAny(COperator::EopSentinel);
-	CRewindabilitySpec *prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, CRewindabilitySpec::EmhtNoMotion);
+	CRewindabilitySpec *prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, CRewindabilitySpec::EmhtNoMotion);
 	CEnfdOrder *peo = GPOS_NEW(mp) CEnfdOrder(pos, CEnfdOrder::EomSatisfy);
 	CEnfdDistribution *ped = GPOS_NEW(mp) CEnfdDistribution(pds, CEnfdDistribution::EdmExact);
 	CEnfdRewindability *per = GPOS_NEW(mp) CEnfdRewindability(prs, CEnfdRewindability::ErmSatisfy);
@@ -782,7 +782,7 @@ CReqdPropPlan::FEqualForCostBounding
 CReqdPropPlan *
 CReqdPropPlan::PrppRemap
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CReqdPropPlan *prppInput,
 	CDrvdPropPlan *pdpplanInput,
 	UlongToColRefMap *colref_mapping
@@ -833,7 +833,7 @@ CReqdPropPlan::PrppRemap
 void
 CReqdPropPlan::DbgPrint() const
 {
-	IMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
+	CMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
 	CAutoTrace at(mp);
 	(void) this->OsPrint(at.Os());
 }

@@ -32,7 +32,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalFilter::CPhysicalFilter
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp)
@@ -69,7 +69,7 @@ CPhysicalFilter::~CPhysicalFilter()
 CColRefSet *
 CPhysicalFilter::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -94,7 +94,7 @@ CPhysicalFilter::PcrsRequired
 COrderSpec *
 CPhysicalFilter::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
@@ -120,7 +120,7 @@ CPhysicalFilter::PosRequired
 CDistributionSpec *
 CPhysicalFilter::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -155,7 +155,7 @@ CPhysicalFilter::PdsRequired
 CRewindabilitySpec *
 CPhysicalFilter::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -165,16 +165,6 @@ CPhysicalFilter::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-
-	// If there are outer references in the Filter (but none coming from the
-	// child), we can optimize by adding a materialize in between. However, if
-	// there are outer references in the child, we should *not* add a materialize
-	// here.  Otherwise the child will not get rescanned leading to wrong
-	// results.
-	if (exprhdl.HasOuterRefs() && !exprhdl.HasOuterRefs(0))
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -191,7 +181,7 @@ CPhysicalFilter::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalFilter::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG 
@@ -292,7 +282,7 @@ CPhysicalFilter::PppsRequired
 CCTEReq *
 CPhysicalFilter::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -320,7 +310,7 @@ CPhysicalFilter::PcteRequired
 COrderSpec *
 CPhysicalFilter::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -340,7 +330,7 @@ CPhysicalFilter::PosDerive
 CDistributionSpec *
 CPhysicalFilter::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -360,7 +350,7 @@ CPhysicalFilter::PdsDerive
 CRewindabilitySpec *
 CPhysicalFilter::PrsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const

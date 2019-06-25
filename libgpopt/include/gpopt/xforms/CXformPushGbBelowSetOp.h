@@ -14,6 +14,7 @@
 #include "gpos/base.h"
 #include "gpopt/operators/ops.h"
 #include "gpopt/xforms/CXformExploration.h"
+#include "gpopt/optimizer/COptimizerConfig.h"
 
 namespace gpopt
 {
@@ -40,7 +41,7 @@ namespace gpopt
 
 			// ctor
 			explicit
-			CXformPushGbBelowSetOp(IMemoryPool *mp)
+			CXformPushGbBelowSetOp(CMemoryPool *mp)
                 :
                 CXformExploration
                 (
@@ -91,10 +92,16 @@ namespace gpopt
                 GPOS_ASSERT(FPromising(pxfctxt->Pmp(), this, pexpr));
                 GPOS_ASSERT(FCheckPattern(pexpr));
 
-                IMemoryPool *mp = pxfctxt->Pmp();
+                CMemoryPool *mp = pxfctxt->Pmp();
+				COptimizerConfig *optconfig = COptCtxt::PoctxtFromTLS()->GetOptimizerConfig();
 
                 CExpression *pexprSetOp = (*pexpr)[0];
-                CExpression *pexprPrjList = (*pexpr)[1];
+				if (pexprSetOp->Arity() > optconfig->GetHint()->UlPushGroupByBelowSetopThreshold())
+				{
+					// bail-out if set op has many children
+					return;
+				}
+				CExpression *pexprPrjList = (*pexpr)[1];
                 if (0 < pexprPrjList->Arity())
                 {
                     // bail-out if group-by has any aggregate functions

@@ -85,9 +85,7 @@ CMDAccessorTest::EresUnittest()
 		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_CheckConstraint),
 		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_IndexPartConstraint),
 		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_Cast),
-		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_ScCmp),
-		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_ConcurrentAccessSingleMDA),
-		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_ConcurrentAccessMultipleMDA)
+		GPOS_UNITTEST_FUNC(CMDAccessorTest::EresUnittest_ScCmp)
 		};
 
 	return CUnittest::EresExecute(rgut, GPOS_ARRAY_SIZE(rgut));
@@ -106,7 +104,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Basic()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -232,7 +230,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Datum()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -305,7 +303,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_DatumGeneric()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// Setup an MD cache with a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -331,7 +329,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Navigate()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -395,7 +393,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Indexes()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	
 	CAutoTrace at(mp);
 
@@ -469,7 +467,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_CheckConstraint()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTrace at(mp);
 
@@ -549,7 +547,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_IndexPartConstraint()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTrace at(mp);
 
@@ -624,7 +622,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Cast()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTrace at(mp);
 
@@ -687,7 +685,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_ScCmp()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTrace at(mp);
 
@@ -732,7 +730,7 @@ GPOS_RESULT
 CMDAccessorTest::EresUnittest_Negative()
 {
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcNone);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	
 	// Setup an MD cache with a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -747,151 +745,6 @@ CMDAccessorTest::EresUnittest_Negative()
 
 	pmdidNonExistingObject->Release();
 	
-	return GPOS_OK;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMDAccessorTest::EresUnittest_ConcurrentAccessSingleMDA
-//
-//	@doc:
-//		Test concurrent access through a single MD accessor from different threads
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMDAccessorTest::EresUnittest_ConcurrentAccessSingleMDA()
-{
-	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
-	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
-	
-	// task memory pool
-	CAutoMemoryPool ampTask;
-	IMemoryPool *pmpTask = ampTask.Pmp();
-	
-	// setup a file-based provider
-	// Setup an MD cache with a file-based provider
-	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
-	pmdp->AddRef();
-	CMDAccessor mda(mp, CMDCache::Pcache(), CTestUtils::m_sysidDefault, pmdp);
-
-	// task parameters
-	SMDCacheTaskParams mdtaskparams(pmpTask, &mda);
-
-	// scope for ATP
-	{
-		CAutoTaskProxy atp(mp, pwpm);
-	
-		CTask *rgPtsk[GPOPT_MDCACHE_LOOKUP_THREADS];
-	
-		TaskFuncPtr rgPfuncTask[] =
-			{
-			CMDAccessorTest::PvLookupSingleObj,
-			CMDAccessorTest::PvLookupMultipleObj
-			};
-	
-		const ULONG ulNumberOfTaskTypes = GPOS_ARRAY_SIZE(rgPfuncTask);
-	
-		// create tasks
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgPtsk); i++)
-		{
-			rgPtsk[i] = atp.Create
-						(
-						rgPfuncTask[i % ulNumberOfTaskTypes],
-						&mdtaskparams
-						);
-	
-			GPOS_CHECK_ABORT;
-		}
-			
-		for (ULONG i = 0; i < GPOPT_MDCACHE_LOOKUP_THREADS; i++)
-		{
-			atp.Schedule(rgPtsk[i]);
-		}
-			
-		GPOS_CHECK_ABORT;
-
-		// wait for completion
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgPtsk); i++)
-		{
-			atp.Wait(rgPtsk[i]);
-			GPOS_CHECK_ABORT;
-	
-		}
-	}
-	
-	return GPOS_OK;
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMDAccessorTest::EresUnittest_ConcurrentAccessMultipleMDA
-//
-//	@doc:
-//		Test concurrent access through multiple MD accessors from different threads
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMDAccessorTest::EresUnittest_ConcurrentAccessMultipleMDA()
-{
-	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
-	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
-
-#ifdef GPOS_DEBUG
-	BOOL fOld = IWorker::m_enforce_time_slices;
-	IWorker::m_enforce_time_slices = false;
-#endif
-
-	GPOS_TRY
-	{	
-		CAutoTaskProxy atp(mp, pwpm);
-	
-		// create multiple tasks eash of which will init a separate MD accessor and use it to
-		// lookup objects from the respective accessor using different threads
-		CTask *rgPtsk[GPOPT_MDCACHE_MDAS];
-		
-		// create tasks
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgPtsk); i++)
-		{
-			rgPtsk[i] = atp.Create
-						(
-						PvInitMDAAndLookup,
-						CMDCache::Pcache()	// task arg
-						);
-	
-			GPOS_CHECK_ABORT;
-		}
-			
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgPtsk); i++)
-		{
-			atp.Schedule(rgPtsk[i]);
-		}
-			
-		GPOS_CHECK_ABORT;
-
-		// wait for completion
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgPtsk); i++)
-		{
-			atp.Wait(rgPtsk[i]);
-			GPOS_CHECK_ABORT;
-	
-		}
-	}
-	GPOS_CATCH_EX(ex)
-	{
-#ifdef GPOS_DEBUG
-		IWorker::m_enforce_time_slices = fOld;
-#endif
-
-		GPOS_RETHROW(ex);
-	}
-	GPOS_CATCH_END;
-	
-#ifdef GPOS_DEBUG
-	IWorker::m_enforce_time_slices = fOld;
-#endif
-
 	return GPOS_OK;
 }
 
@@ -917,7 +770,7 @@ CMDAccessorTest::PvLookupSingleObj
 	
 	CMDAccessor *md_accessor = pmdtaskparams->m_pmda;
 
-	IMemoryPool *mp = pmdtaskparams->m_mp;
+	CMemoryPool *mp = pmdtaskparams->m_mp;
 	
 	GPOS_ASSERT(NULL != mp);
 	GPOS_ASSERT(NULL != md_accessor);
@@ -992,12 +845,12 @@ CMDAccessorTest::PvInitMDAAndLookup
 	CMDAccessor::MDCache *pcache = (CMDAccessor::MDCache *) pv;
 
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
 	
 	// task memory pool
 	CAutoMemoryPool ampTask;
-	IMemoryPool *pmpTask = ampTask.Pmp();
+	CMemoryPool *pmpTask = ampTask.Pmp();
 	
 	// scope for MD accessor
 	{			

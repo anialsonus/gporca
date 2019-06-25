@@ -6,7 +6,7 @@
       <dxl:StatisticsConfig DampingFactorFilter="0.750000" DampingFactorJoin="0.010000" DampingFactorGroupBy="0.750000"/>
       <dxl:CTEConfig CTEInliningCutoff="0"/> 
       <dxl:WindowOids RowNumber="7000" Rank="7001"/>
-      <dxl:TraceFlags Value="103027,101013,102053,103001"/>
+      <dxl:TraceFlags Value="103027,102146,101013,102053,103001"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
       <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
@@ -592,7 +592,6 @@
                                 <dxl:Columns>
                                   <dxl:Column ColId="3" Attno="1" ColName="c499" TypeMdid="0.23.1.0"/>
                                   <dxl:Column ColId="4" Attno="2" ColName="c500" TypeMdid="0.23.1.0"/>
-                                  <dxl:Column ColId="5" Attno="3" ColName="c501" TypeMdid="0.23.1.0"/>
                                   <dxl:Column ColId="6" Attno="4" ColName="c502" TypeMdid="0.23.1.0"/>
                                   <dxl:Column ColId="7" Attno="5" ColName="c503" TypeMdid="0.23.1.0"/>
                                   <dxl:Column ColId="8" Attno="6" ColName="c504" TypeMdid="0.23.1.0"/>

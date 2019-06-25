@@ -35,7 +35,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalSequenceProject::CPhysicalSequenceProject
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDistributionSpec *pds,
 	COrderSpecArray *pdrgpos,
 	CWindowFrameArray *pdrgpwf
@@ -73,7 +73,7 @@ CPhysicalSequenceProject::CPhysicalSequenceProject
 void
 CPhysicalSequenceProject::CreateOrderSpec
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL == m_pos);
@@ -145,7 +145,7 @@ CPhysicalSequenceProject::CreateOrderSpec
 void
 CPhysicalSequenceProject::ComputeRequiredLocalColumns
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL != m_pos);
@@ -256,7 +256,7 @@ CPhysicalSequenceProject::HashValue() const
 CColRefSet *
 CPhysicalSequenceProject::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -288,7 +288,7 @@ CPhysicalSequenceProject::PcrsRequired
 COrderSpec *
 CPhysicalSequenceProject::PosRequired
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &, // exprhdl
 	COrderSpec *, // posRequired
 	ULONG
@@ -319,7 +319,7 @@ CPhysicalSequenceProject::PosRequired
 CDistributionSpec *
 CPhysicalSequenceProject::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -371,7 +371,7 @@ CPhysicalSequenceProject::PdsRequired
 CRewindabilitySpec *
 CPhysicalSequenceProject::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -381,12 +381,6 @@ CPhysicalSequenceProject::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-
-	// if there are outer references, then we need a materialize
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -402,7 +396,7 @@ CPhysicalSequenceProject::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalSequenceProject::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG 
@@ -447,7 +441,7 @@ CPhysicalSequenceProject::PppsRequired
 CCTEReq *
 CPhysicalSequenceProject::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -509,7 +503,7 @@ CPhysicalSequenceProject::FProvidesReqdCols
 COrderSpec *
 CPhysicalSequenceProject::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -529,7 +523,7 @@ CPhysicalSequenceProject::PosDerive
 CDistributionSpec *
 CPhysicalSequenceProject::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -549,7 +543,7 @@ CPhysicalSequenceProject::PdsDerive
 CRewindabilitySpec *
 CPhysicalSequenceProject::PrsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const

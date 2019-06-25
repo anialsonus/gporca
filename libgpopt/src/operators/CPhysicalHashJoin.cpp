@@ -45,7 +45,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalHashJoin::CPhysicalHashJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexprOuterKeys,
 	CExpressionArray *pdrgpexprInnerKeys
 	)
@@ -91,7 +91,8 @@ CPhysicalHashJoin::CPhysicalHashJoin
 	// will not be created for the above query if we send only 1 request.
 	// Also, increasing the number of request increases the optimization time, so
 	// set 2 only when needed.
-	if (GPOPT_FDISABLED_XFORM(CXform::ExfExpandNAryJoinDP))
+	if (GPOPT_FDISABLED_XFORM(CXform::ExfExpandNAryJoinDP) &&
+		GPOPT_FDISABLED_XFORM(CXform::ExfExpandNAryJoinDPv2))
 		SetPartPropagateRequests(2);
 }
 
@@ -122,7 +123,7 @@ CPhysicalHashJoin::~CPhysicalHashJoin()
 void
 CPhysicalHashJoin::CreateHashRedistributeRequests
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL == m_pdrgpdsRedistributeRequests);
@@ -176,7 +177,7 @@ CPhysicalHashJoin::CreateHashRedistributeRequests
 COrderSpec *
 CPhysicalHashJoin::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &, //exprhdl
 	COrderSpec *, // posInput,
 	ULONG
@@ -209,7 +210,7 @@ CPhysicalHashJoin::PosRequired
 CRewindabilitySpec *
 CPhysicalHashJoin::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -221,16 +222,24 @@ CPhysicalHashJoin::PrsRequired
 	GPOS_ASSERT(child_index < 2 &&
 				"Required rewindability can be computed on the relational child only");
 
-	// if there are outer references, then we need a materialize on both children
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
-
 	if (1 == child_index)
 	{
-		// inner child does not have to be rewindable
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, prsRequired->Emht());
+		// If the inner child contains outer references, and the required
+		// rewindability is not ErtNone, we must ensure that the inner subtree is
+		// at least rescannable, even though a Hash op on the inner side
+		// materialized the subtree results.
+		if (exprhdl.HasOuterRefs(1) && (prsRequired->Ert() == CRewindabilitySpec::ErtRescannable ||
+										prsRequired->Ert() == CRewindabilitySpec::ErtRewindable))
+		{
+			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, prsRequired->Emht());
+		}
+		// Otherwise, the inner Hash op will take care of materializing the
+		// subtree, so no rewindability type is required
+		else
+		{
+			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, prsRequired->Emht());
+
+		}
 	}
 		
 	// pass through requirements to outer child
@@ -249,7 +258,7 @@ CPhysicalHashJoin::PrsRequired
 CDistributionSpec *
 CPhysicalHashJoin::PdsMatch
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDistributionSpec *pds,
 	ULONG ulSourceChildIndex
 	)
@@ -304,7 +313,7 @@ CPhysicalHashJoin::PdsMatch
 CDistributionSpecHashed *
 CPhysicalHashJoin::PdshashedMatching
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDistributionSpecHashed *pdshashed,
 	ULONG ulSourceChild // index of child that delivered the given hashed distribution
 	)
@@ -389,7 +398,7 @@ CPhysicalHashJoin::PdshashedMatching
 CDistributionSpec *
 CPhysicalHashJoin::PdsRequiredSingleton
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle  &, // exprhdl
 	CDistributionSpec *, // pdsInput
 	ULONG  child_index,
@@ -445,7 +454,7 @@ CPhysicalHashJoin::PdsRequiredSingleton
 CDistributionSpec *
 CPhysicalHashJoin::PdsRequiredReplicate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle  &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG  child_index,
@@ -511,7 +520,7 @@ CPhysicalHashJoin::PdsRequiredReplicate
 CDistributionSpecHashed *
 CPhysicalHashJoin::PdshashedPassThru
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle  &exprhdl,
 	CDistributionSpecHashed *pdshashedInput,
 	ULONG  , // child_index
@@ -589,7 +598,7 @@ CPhysicalHashJoin::PdshashedPassThru
 CDistributionSpec *
 CPhysicalHashJoin::PdsRequiredRedistribute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *, // pdsInput
 	ULONG  child_index,
@@ -667,7 +676,7 @@ CPhysicalHashJoin::PdsRequiredRedistribute
 CDistributionSpec *
 CPhysicalHashJoin::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
@@ -741,7 +750,7 @@ CPhysicalHashJoin::PdsRequired
 CDistributionSpecHashed *
 CPhysicalHashJoin::PdshashedRequired
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	ULONG, // child_index
 	ULONG ulReqIndex
 	)

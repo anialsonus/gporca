@@ -86,7 +86,7 @@ namespace gpopt
 		private:
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 			
 			// source system id
 			CSystemId m_sysid;
@@ -392,6 +392,8 @@ namespace gpopt
 			// construct the mapping between the DXL ColId and CColRef
 			void ConstructDXLColId2ColRefMapping(const CDXLColDescrArray *dxl_col_descr_array, const CColRefArray *colref_array);
 
+			void MarkUnknownColsAsUnused();
+
 			// look up the column reference in the hash map. We raise an exception if
 			// the column is not found
 			static
@@ -399,7 +401,7 @@ namespace gpopt
 
 		public:
 			// ctor
-			CTranslatorDXLToExpr(IMemoryPool *mp, CMDAccessor *md_accessor, BOOL fInitColumnFactory = true);
+			CTranslatorDXLToExpr(CMemoryPool *mp, CMDAccessor *md_accessor, BOOL fInitColumnFactory = true);
 
 			// dtor
 			~CTranslatorDXLToExpr();

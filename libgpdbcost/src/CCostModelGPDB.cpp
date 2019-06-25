@@ -106,7 +106,7 @@ const CCostModelGPDB::SCostMapping CCostModelGPDB::m_rgcm[] =
 //---------------------------------------------------------------------------
 CCostModelGPDB::CCostModelGPDB
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulSegments,
 	CCostModelParamsGPDB *pcp
 	)
@@ -200,7 +200,7 @@ CCostModelGPDB::CostTupleProcessing
 CCost
 CCostModelGPDB::CostScanOutput
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	DOUBLE rows,
 	DOUBLE width,
 	DOUBLE num_rebinds,
@@ -227,7 +227,7 @@ CCostModelGPDB::CostScanOutput
 CCost
 CCostModelGPDB::CostUnary
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const SCostingInfo *pci,
 	ICostModelParams *pcp
@@ -258,7 +258,7 @@ CCostModelGPDB::CostUnary
 CCost
 CCostModelGPDB::CostSpooling
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const SCostingInfo *pci,
 	ICostModelParams *pcp
@@ -317,7 +317,7 @@ CCostModelGPDB::FUnary
 CCost
 CCostModelGPDB::CostChildren
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const SCostingInfo *pci,
 	ICostModelParams *pcp
@@ -400,7 +400,7 @@ CCostModelGPDB::CostChildren
 CCost
 CCostModelGPDB::CostMaxChild
 (
-	IMemoryPool *,
+	CMemoryPool *,
 	CExpressionHandle &,
 	const SCostingInfo *pci,
 	ICostModelParams *
@@ -434,7 +434,7 @@ CCostModelGPDB::CostMaxChild
 CCost
 CCostModelGPDB::CostCTEProducer
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -486,7 +486,7 @@ CCostModelGPDB::CostCTEProducer
 CCost
 CCostModelGPDB::CostCTEConsumer
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &
 #ifdef GPOS_DEBUG
 	 exprhdl
@@ -521,7 +521,7 @@ CCostModelGPDB::CostCTEConsumer
 CCost
 CCostModelGPDB::CostConstTableGet
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &
 #ifdef GPOS_DEBUG
 	 exprhdl
@@ -550,7 +550,7 @@ CCostModelGPDB::CostConstTableGet
 CCost
 CCostModelGPDB::CostDML
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -584,7 +584,7 @@ CCostModelGPDB::CostDML
 CCost
 CCostModelGPDB::CostScalarAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -626,7 +626,7 @@ CCostModelGPDB::CostScalarAgg
 CCost
 CCostModelGPDB::CostStreamAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -671,7 +671,7 @@ CCostModelGPDB::CostStreamAgg
 CCost
 CCostModelGPDB::CostSequence
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -699,7 +699,7 @@ CCostModelGPDB::CostSequence
 CCost
 CCostModelGPDB::CostSort
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -736,7 +736,7 @@ CCostModelGPDB::CostSort
 CCost
 CCostModelGPDB::CostTVF
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &
 #ifdef GPOS_DEBUG
 	 exprhdl
@@ -765,7 +765,7 @@ CCostModelGPDB::CostTVF
 CCost
 CCostModelGPDB::CostUnionAll
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -798,7 +798,7 @@ CCostModelGPDB::CostUnionAll
 CCost
 CCostModelGPDB::CostHashAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -871,7 +871,7 @@ CCostModelGPDB::CostHashAgg
 CCost
 CCostModelGPDB::CostHashJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -991,7 +991,7 @@ CCostModelGPDB::CostHashJoin
 CCost
 CCostModelGPDB::CostIndexNLJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1063,7 +1063,7 @@ CCostModelGPDB::CostIndexNLJoin
 CCost
 CCostModelGPDB::CostNLJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1165,7 +1165,7 @@ CCostModelGPDB::CostNLJoin
 CCost
 CCostModelGPDB::CostMotion
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1271,7 +1271,7 @@ CCostModelGPDB::CostMotion
 CCost
 CCostModelGPDB::CostSequenceProject
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1315,7 +1315,7 @@ CCostModelGPDB::CostSequenceProject
 CCost
 CCostModelGPDB::CostIndexScan
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1376,7 +1376,7 @@ CCostModelGPDB::CostIndexScan
 CCost
 CCostModelGPDB::CostBitmapTableScan
 	(
-	IMemoryPool *,  // mp,
+	CMemoryPool * mp,
 	CExpressionHandle & exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1387,45 +1387,81 @@ CCostModelGPDB::CostBitmapTableScan
 	GPOS_ASSERT(COperator::EopPhysicalBitmapTableScan == exprhdl.Pop()->Eopid() ||
 		 COperator::EopPhysicalDynamicBitmapTableScan == exprhdl.Pop()->Eopid());
 
+	CCost result(0.0);
 	CExpression *pexprIndexCond = exprhdl.PexprScalarChild(1 /*child_index*/);
 	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprIndexCond->PdpDerive())->PcrsUsed();
+	CColRefSet *outerRefs = exprhdl.GetRelationalProperties()->PcrsOuter();
+	CColRefSet *pcrsLocalUsed = GPOS_NEW(mp) CColRefSet(mp, *pcrsUsed);
 
-	if (COperator::EopScalarBitmapIndexProbe != pexprIndexCond->Pop()->Eopid() || 1 < pcrsUsed->Size())
+	// subtract outer references from the used colrefs, so we can see
+	// how many colrefs are used for this table
+	pcrsLocalUsed->Exclude(outerRefs);
+
+	if (COperator::EopScalarBitmapIndexProbe != pexprIndexCond->Pop()->Eopid() || 1 < pcrsLocalUsed->Size())
 	{
 		// child is Bitmap AND/OR, or we use Multi column index
-		const CDouble dInitScan = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpInitScanFactor)->Get();
 		const CDouble dIndexFilterCostUnit = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpIndexFilterCostUnit)->Get();
 
 		GPOS_ASSERT(0 < dIndexFilterCostUnit);
-		GPOS_ASSERT(0 < dInitScan);
+
+		// check whether the user specified overriding values in gucs
+		CDouble dInitScan = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpInitScanFactor)->Get();
+		CDouble dInitRebind = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapScanRebindCost)->Get();
+
+		GPOS_ASSERT(dInitScan >= 0 && dInitRebind >= 0);
 
 		// For now we are trying to cost Bitmap Scan similar to Index Scan. dIndexFilterCostUnit is
 		// the dominant factor in costing Index Scan so we are using it in our model. Also we are giving
-		// Bitmap Scan a start up cost similar to Sequential Scan.
+		// Bitmap Scan a start up cost similar to Sequential Scan. Note that in this code path we add the
+		// relatively high dInitScan cost, while in the other code paths below (CostBitmapLargeNDV and
+		// CostBitmapSmallNDV) we don't. That's something we should look into.
 
-		// TODO: ; 2017-11-14; use proper start up cost value.
 		// Conceptually the cost of evaluating index qual is also linear in the
 		// number of index columns, but we're only accounting for the dominant cost
-		return CCost(pci->NumRebinds() * (pci->Rows() * pci->Width() * dIndexFilterCostUnit +  dInitScan));
-	}
 
-	// if the expression is const table get, the pcrsUsed is empty
-	// so we use minimum value MinDistinct for dNDV in that case.
-	CDouble dNDV = CHistogram::MinDistinct;
-	if (1 == pcrsUsed->Size())
+		result = CCost(// cost for each byte returned by the index scan plus cost for incremental rebinds
+					   pci->NumRebinds() * (pci->Rows() * pci->Width() * dIndexFilterCostUnit + dInitRebind) +
+					   // init cost
+					   dInitScan);
+	}
+	else
 	{
-		CColRef *pcrIndexCond =  pcrsUsed->PcrFirst();
-		GPOS_ASSERT(NULL != pcrIndexCond);
-		dNDV = pci->Pcstats()->GetNDVs(pcrIndexCond);
-	}
-	CDouble dNDVThreshold = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapNDVThreshold)->Get();
+		// if the expression is const table get, the pcrsUsed is empty
+		// so we use minimum value MinDistinct for dNDV in that case.
+		CDouble dNDV = CHistogram::MinDistinct;
+		if (1 == pcrsLocalUsed->Size())
+		{
+			CColRef *pcrIndexCond =  pcrsLocalUsed->PcrFirst();
+			GPOS_ASSERT(NULL != pcrIndexCond);
+			dNDV = pci->Pcstats()->GetNDVs(pcrIndexCond);
 
-	if (dNDVThreshold <= dNDV)
-	{
-		return CostBitmapLargeNDV(pcmgpdb, pci, dNDV);
+			if (1 < pcrsUsed->Size() && COperator::EopScalarBitmapIndexProbe == pexprIndexCond->Pop()->Eopid())
+			{
+				CExpression *pexprScalarCmp = (*pexprIndexCond)[0];
+				// The index condition contains an outer reference. Adjust
+				// the NDV to 1, if we compare the colref with a single value
+				if (CPredicateUtils::IsEqualityOp(pexprScalarCmp))
+				{
+					dNDV = 1.0;
+				}
+			}
+		}
+
+		CDouble dNDVThreshold = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapNDVThreshold)->Get();
+
+		if (dNDVThreshold <= dNDV)
+		{
+			result = CostBitmapLargeNDV(pcmgpdb, pci, dNDV);
+		}
+		else
+		{
+			result = CostBitmapSmallNDV(pcmgpdb, pci, dNDV);
+		}
 	}
 
-	return CostBitmapSmallNDV(pcmgpdb, pci, dNDV);
+	pcrsLocalUsed->Release();
+
+	return result;
 }
 
 
@@ -1453,8 +1489,15 @@ CCostModelGPDB::CostBitmapSmallNDV
 
 	CDouble dBitmapIO = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapIOCostSmallNDV)->Get();
 	CDouble dBitmapPageCost = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapPageCostSmallNDV)->Get();
+	CDouble effectiveNDV = dNDV;
 
-	return CCost(pci->NumRebinds() * (dBitmapIO * dSize + dBitmapPageCost * dNDV));
+	if (rows < 1.0)
+	{
+		// if we aren't accessing a row every rebind, then don't charge a cost for those cases where we don't have a row
+		effectiveNDV = rows;
+	}
+
+	return CCost(pci->NumRebinds() * (dBitmapIO * dSize + dBitmapPageCost * effectiveNDV));
 }
 
 
@@ -1495,7 +1538,7 @@ CCostModelGPDB::CostBitmapLargeNDV
 CCost
 CCostModelGPDB::CostScan
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci
@@ -1545,7 +1588,7 @@ CCostModelGPDB::CostScan
 CCost
 CCostModelGPDB::CostFilter
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CCostModelGPDB *pcmgpdb,
 	const SCostingInfo *pci

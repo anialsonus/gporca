@@ -3,11 +3,9 @@
   <dxl:Thread Id="0">
     <!--
 REPRO:  empty tables
-
 CREATE TABLE x(i smallint, j smallint);
 CREATE TABLE y(i smallint, j smallint);
 CREATE TABLE z(i int, j int, k int);
-
 SELECT z.*,x.* FROM x,y,z WHERE x.i=y.i AND x.i=z.i;
 -->
     <dxl:OptimizerConfig>
@@ -15,7 +13,7 @@ SELECT z.*,x.* FROM x,y,z WHERE x.i=y.i AND x.i=z.i;
       <dxl:StatisticsConfig DampingFactorFilter="0.750000" DampingFactorJoin="0.010000" DampingFactorGroupBy="0.750000"/>
       <dxl:CTEConfig CTEInliningCutoff="0"/> 
       <dxl:WindowOids RowNumber="7000" Rank="7001"/>
-      <dxl:TraceFlags Value="103027,101001,103001"/>
+      <dxl:TraceFlags Value="103027,101001,102146,103001"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
       <dxl:ColumnStatistics Mdid="1.15210488.1.1.5" Name="xmax" Width="4.000000" NullFreq="0.000000" NdvRemain="0.000000" FreqRemain="0.000000"/>
@@ -537,7 +535,6 @@ SELECT z.*,x.* FROM x,y,z WHERE x.i=y.i AND x.i=z.i;
                 <dxl:TableDescriptor Mdid="0.15210488.1.1" TableName="y">
                   <dxl:Columns>
                     <dxl:Column ColId="9" Attno="1" ColName="i" TypeMdid="0.21.1.0"/>
-                    <dxl:Column ColId="10" Attno="2" ColName="j" TypeMdid="0.21.1.0"/>
                     <dxl:Column ColId="11" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                     <dxl:Column ColId="12" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                     <dxl:Column ColId="13" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>

@@ -32,7 +32,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalJoin::CPhysicalJoin
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp)
@@ -85,7 +85,7 @@ CPhysicalJoin::Matches
 COrderSpec *
 CPhysicalJoin::PosPropagateToOuter
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired
 	)
@@ -115,7 +115,7 @@ CPhysicalJoin::PosPropagateToOuter
 CColRefSet *
 CPhysicalJoin::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -140,7 +140,7 @@ CPhysicalJoin::PcrsRequired
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -164,7 +164,7 @@ CPhysicalJoin::PppsRequired
 CCTEReq *
 CPhysicalJoin::PcteRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CCTEReq *pcter,
 	ULONG child_index,
@@ -225,7 +225,7 @@ CPhysicalJoin::FProvidesReqdCols
 BOOL
 CPhysicalJoin::FSortColsInOuterChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *pos
 	)
@@ -281,7 +281,7 @@ CPhysicalJoin::FOuterProvidesReqdCols
 CDistributionSpec *
 CPhysicalJoin::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -346,7 +346,7 @@ CPhysicalJoin::PdsRequired
 CDistributionSpec *
 CPhysicalJoin::PdsDerive
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *, // mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -379,7 +379,7 @@ CPhysicalJoin::PdsDerive
 CRewindabilitySpec *
 CPhysicalJoin::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -394,12 +394,29 @@ CPhysicalJoin::PrsDerive
 														  CRewindabilitySpec::EmhtMotion :
 														  CRewindabilitySpec::EmhtNoMotion;
 
-	if (!prsOuter->IsRewindable() || !prsInner->IsRewindable() || CUtils::FCorrelatedNLJoin(exprhdl.Pop()))
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
+	// TODO: shardikar; Implement a separate PrsDerive() for HashJoins since it
+	// is different from NLJ; the inner of a HJ child is rewindable (due to a
+	// Hash op on the inner side)
 
-	// else both the children are rewindable
-	GPOS_ASSERT(prsOuter->IsRewindable() && prsInner->IsRewindable());
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
+	// If both children are rewindable, the join is also rewinable
+	if (prsOuter->IsRewindable() && prsInner->IsRewindable())
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
+	}
+
+	// If either child is ErtNone (neither rewindable or rescannable), then the join is also ErtNone
+	else if (prsOuter->Ert() == CRewindabilitySpec::ErtNone ||
+			prsInner->Ert() == CRewindabilitySpec::ErtNone)
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, motion_hazard);
+	}
+
+	// If the children are in any other combination, e.g (rescannable, rewindable) etc,
+	// derive rescannable for the join
+	else
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, motion_hazard);
+	}
 }
 
 
@@ -645,7 +662,7 @@ CPhysicalJoin::AddHashKeys
 BOOL
 CPhysicalJoin::FHashJoinPossible
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpressionArray *pdrgpexprOuter,
 	CExpressionArray *pdrgpexprInner,
@@ -702,7 +719,7 @@ CPhysicalJoin::FHashJoinPossible
 void
 CPhysicalJoin::AddFilterOnPartKey
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	BOOL fNLJoin,
 	CExpression *pexprScalar,
 	CPartIndexMap *ppimSource,
@@ -802,7 +819,7 @@ CPhysicalJoin::FProcessingChildWithPartConsumer
 CExpression *
 CPhysicalJoin::PexprJoinPredOnPartKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CPartIndexMap *ppimSource,
 	ULONG part_idx_id,
@@ -889,7 +906,7 @@ CPhysicalJoin::UlDistrRequestsForCorrelatedJoin()
 CRewindabilitySpec *
 CPhysicalJoin::PrsRequiredCorrelatedJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -911,50 +928,12 @@ CPhysicalJoin::PrsRequiredCorrelatedJoin
 															   CRewindabilitySpec::EmhtMotion :
 															   CRewindabilitySpec::EmhtNoMotion;
 
-		// if there are outer references, then we need a materialize on inner child
-		if (exprhdl.HasOuterRefs())
-		{
-			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
-		}
-		else
-		{
-			// if inner child has no outer refs (i.e. subplan with no params) then we need a materialize
-			if (!exprhdl.HasOuterRefs(1))
-			{
-				return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
-			}
 
-			// inner child has no rewindability requirement. if there is something
-			// below that needs rewindability (e.g. filter, computescalar, agg), it
-			// will be requested where needed. Also we must warn the inner child
-			// about motion hazard, such that it can make appropriate rewindability
-			// request.
-			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
-		}
-
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, motion_hazard);
 	}
 
 	GPOS_ASSERT(0 == child_index);
 
-	return PrsRequiredForNLJoinOuterChild(mp, exprhdl, prsRequired);
-}
-
-// generate/pass through rewindability request to outer child
-CRewindabilitySpec *
-CPhysicalJoin::PrsRequiredForNLJoinOuterChild
-	(
-	IMemoryPool *mp,
-	CExpressionHandle &exprhdl,
-	CRewindabilitySpec *prsRequired
-	)
-{
-	// if there are outer references, then we need a materialize on outer child
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
-
-	// pass through requirements to outer child
 	return PrsPassThru(mp, exprhdl, prsRequired, 0 /*child_index*/);
 }
 
@@ -969,7 +948,7 @@ CPhysicalJoin::PrsRequiredForNLJoinOuterChild
 CDistributionSpec *
 CPhysicalJoin::PdsRequiredCorrelatedJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -1093,7 +1072,7 @@ CPhysicalJoin::CPartPropReq::Equals
 CPhysicalJoin::CPartPropReq *
 CPhysicalJoin::PpprCreate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index
@@ -1119,7 +1098,7 @@ CPhysicalJoin::PpprCreate
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequiredCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -1215,7 +1194,7 @@ CPhysicalJoin::PppsRequiredCompute
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequiredJoinChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,

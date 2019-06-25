@@ -29,7 +29,7 @@ CXformFactory* CXformFactory::m_pxff = NULL;
 //---------------------------------------------------------------------------
 CXformFactory::CXformFactory
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	m_mp(mp),
@@ -290,6 +290,7 @@ CXformFactory::Instantiate()
 	Add(GPOS_NEW(m_mp) CXformLeftOuterJoinWithInnerSelect2IndexGetApply(m_mp));
 	Add(GPOS_NEW(m_mp) CXformExpandNAryJoinGreedy(m_mp));
 	Add(GPOS_NEW(m_mp) CXformEagerAgg(m_mp));
+	Add(GPOS_NEW(m_mp) CXformExpandNAryJoinDPv2(m_mp));
 
 	GPOS_ASSERT(NULL != m_rgpxf[CXform::ExfSentinel - 1] &&
 				"Not all xforms have been instantiated");
@@ -354,7 +355,7 @@ CXformFactory::Init()
 	GPOS_RESULT eres = GPOS_OK;
 
 	// create xform factory memory pool
-	IMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->Create
+	CMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->Create
 							(
 							CMemoryPoolManager::EatTracker,
 							true /*fThreadSafe*/,
@@ -407,7 +408,7 @@ CXformFactory::Shutdown()
 	GPOS_ASSERT(NULL != pxff &&
 				"Xform factory has not been initialized");
 
-	IMemoryPool *mp = pxff->m_mp;
+	CMemoryPool *mp = pxff->m_mp;
 
 	// destroy xform factory
 	CXformFactory::m_pxff = NULL;

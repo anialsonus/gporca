@@ -25,7 +25,7 @@ CDXLTokens::m_pstrmap = NULL;
 CDXLTokens::SXMLStrMapElem *
 CDXLTokens::m_pxmlszmap = NULL;
 
-IMemoryPool *
+CMemoryPool *
 CDXLTokens::m_mp =  NULL;
 
 CDXLMemoryManager *
@@ -43,7 +43,7 @@ CDXLTokens::m_dxl_memory_manager = NULL;
 void
 CDXLTokens::Init
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL != mp);
@@ -86,6 +86,7 @@ CDXLTokens::Init
 			{EdxltokenJoinOrderDPThreshold, GPOS_WSZ_LIT("JoinOrderDynamicProgThreshold")},
 			{EdxltokenBroadcastThreshold, GPOS_WSZ_LIT("BroadcastThreshold")},
 			{EdxltokenEnforceConstraintsOnDML, GPOS_WSZ_LIT("EnforceConstraintsOnDML")},
+			{EdxltokenPushGroupByBelowSetopThreshold, GPOS_WSZ_LIT("PushGroupByBelowSetopThreshold")},
 			{EdxltokenWindowOids, GPOS_WSZ_LIT("WindowOids")},
 			{EdxltokenOidRowNumber, GPOS_WSZ_LIT("RowNumber")},
 			{EdxltokenOidRank, GPOS_WSZ_LIT("Rank")},

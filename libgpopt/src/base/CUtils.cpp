@@ -2513,6 +2513,27 @@ CUtils::FScalarConstBool
 	return false;
 }
 
+BOOL
+CUtils::FScalarConstBoolNull
+	(
+	CExpression *pexpr
+	)
+{
+	GPOS_ASSERT(NULL != pexpr);
+
+	COperator *pop = pexpr->Pop();
+	if (COperator::EopScalarConst == pop->Eopid())
+	{
+		CScalarConst *popScalarConst = CScalarConst::PopConvert(pop);
+		if (IMDType::EtiBool ==  popScalarConst->GetDatum()->GetDatumType())
+		{
+			return popScalarConst->GetDatum()->IsNull();
+		}
+	}
+
+	return false;
+}
+
 // checks to see if the expression is a scalar const TRUE
 BOOL
 CUtils::FScalarConstTrue
@@ -5014,6 +5035,22 @@ CUtils::FCrossJoin
 	}
 	return fCrossJoin;
 }
+
+// extract scalar ident column reference from scalar expression containing
+// only one scalar ident in the tree
+const CColRef *
+CUtils::PcrExtractFromScExpression
+	(
+ 	CExpression *pexpr
+	)
+{
+	CDrvdPropScalar *pdrvdPropScalar = CDrvdPropScalar::GetDrvdScalarProps(pexpr->PdpDerive());
+	if (pdrvdPropScalar->PcrsUsed()->Size() == 1)
+		return pdrvdPropScalar->PcrsUsed()->PcrFirst();
+
+	return NULL;
+}
+
 
 // search the given array of predicates for predicates with equality or IS NOT
 // DISTINCT FROM operators that has one side equal to the given expression, if

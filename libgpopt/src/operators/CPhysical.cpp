@@ -10,7 +10,6 @@
 //---------------------------------------------------------------------------
 
 #include "gpos/base.h"
-#include "gpos/sync/CAutoMutex.h"
 
 #include "gpopt/base/CDrvdPropPlan.h"
 #include "gpopt/base/CReqdPropPlan.h"
@@ -80,9 +79,6 @@ CPhysical::UpdateOptRequests
 	)
 {
 	GPOS_ASSERT(ulPropIndex < GPOPT_PLAN_PROPS);
-
-	CAutoMutex am(m_mutex);
-	am.Lock();
 
 	// update property requests
 	m_rgulOptReqs[ulPropIndex] = ulRequests;
@@ -530,11 +526,22 @@ CPhysical::PdsDerivePassThruOuter
 CRewindabilitySpec *
 CPhysical::PrsDerivePassThruOuter
 	(
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
 	CRewindabilitySpec *prs = exprhdl.Pdpplan(0 /*child_index*/)->Prs();
-	prs->AddRef();
+
+	// I cannot derive mark-restorable just because my child is mark-restorable.
+	// However, I am rewindable.
+	if (CRewindabilitySpec::ErtMarkRestore == prs->Ert())
+	{
+		prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prs->Emht());
+	}
+	else
+	{
+		prs->AddRef();
+	}
 
 	return prs;
 }
@@ -563,19 +570,14 @@ CPhysical::PcrsChildReqd
 	pcrsRequired->AddRef();
 	CReqdColsRequest *prcr = GPOS_NEW(mp) CReqdColsRequest(pcrsRequired, child_index, ulScalarIndex);
 	CColRefSet *pcrs = NULL;
-	{
-		// scope of AutoMutex
-		CAutoMutex am(m_mutex);
-		am.Lock();
 
-		// lookup required columns map first
-		pcrs = m_phmrcr->Find(prcr);
-		if (NULL != pcrs)
-		{
-			prcr->Release();
-			pcrs->AddRef();
-			return pcrs;
-		}
+	// lookup required columns map first
+	pcrs = m_phmrcr->Find(prcr);
+	if (NULL != pcrs)
+	{
+		prcr->Release();
+		pcrs->AddRef();
+		return pcrs;
 	}
 
 	// request was not found in map -- we need to compute it
@@ -590,33 +592,13 @@ CPhysical::PcrsChildReqd
 	// intersect computed column set with child's output columns
 	pcrs->Intersection(exprhdl.GetRelationalProperties(child_index)->PcrsOutput());
 
-	// lookup map again to handle concurrent map lookup/insertion
-	{
-		// scope of AutoMutex
-		CAutoMutex am(m_mutex);
-		am.Lock();
-
-		CColRefSet *pcrsFound = m_phmrcr->Find(prcr);
-		if (NULL != pcrsFound)
-		{
-			// request was found now -- release computed request and use the found request
-			prcr->Release();
-			pcrs->Release();
-
-			pcrsFound->AddRef();
-			pcrs = pcrsFound;
-		}
-		else
-		{
-			// new request -- insert request in map
-			pcrs->AddRef();
+	// insert request in map
+	pcrs->AddRef();
 #ifdef GPOS_DEBUG
-			BOOL fSuccess =
+	BOOL fSuccess =
 #endif // GPOS_DEBUG
-				m_phmrcr->Insert(prcr, pcrs);
-			GPOS_ASSERT(fSuccess);
-		}
-	}
+	m_phmrcr->Insert(prcr, pcrs);
+	GPOS_ASSERT(fSuccess);
 
 	return pcrs;
 }

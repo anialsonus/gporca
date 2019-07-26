@@ -112,6 +112,18 @@ namespace gpopt
 				return NULL;
 			}
 
+			virtual
+			CRewindabilitySpec *PrsDerive
+				(
+				CMemoryPool *mp,
+				CExpressionHandle & // exprhdl
+				)
+				const
+			{
+				// mark-restorability of output is always true
+				return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtMarkRestore, CRewindabilitySpec::EmhtNoMotion);
+			}
+
 
 	}; // class CPhysicalTableScan
 

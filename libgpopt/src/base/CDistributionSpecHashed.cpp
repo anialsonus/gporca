@@ -191,7 +191,9 @@ CDistributionSpecHashed::FMatchSubset
 	const ULONG ulOwnExprs = m_pdrgpexpr->Size();
 	const ULONG ulOtherExprs = pdsHashed->m_pdrgpexpr->Size();
 
-	if (ulOtherExprs < ulOwnExprs || !FNullsColocated(pdsHashed) || !FDuplicateSensitiveCompatible(pdsHashed))
+	if (ulOtherExprs < ulOwnExprs ||
+		!FNullsColocatedCompatible(pdsHashed) ||
+		!FDuplicateSensitiveCompatible(pdsHashed))
 	{
 		return false;
 	}
@@ -409,7 +411,7 @@ CDistributionSpecHashed::FMatchHashedDistribution
 	GPOS_ASSERT(NULL != pdshashed);
 
 	if (m_pdrgpexpr->Size() != pdshashed->m_pdrgpexpr->Size() ||
-		FNullsColocated() != pdshashed->FNullsColocated() ||
+		!FNullsColocatedCompatible(pdshashed) ||
 		IsDuplicateSensitive() != pdshashed->IsDuplicateSensitive())
 	{
 		return false;

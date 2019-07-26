@@ -12,17 +12,13 @@
 #define GPOPT_CGroup_H
 
 #include "gpos/base.h"
-#include "gpos/sync/CMutex.h"
 
 #include "naucrates/statistics/CStatistics.h"
 
 #include "gpos/common/CDynamicPtrArray.h"
 #include "gpos/common/CSyncHashtable.h"
 #include "gpos/common/CSyncList.h"
-#include "gpos/sync/atomic.h"
-#include "gpos/sync/CSpinlock.h"
 
-#include "gpopt/spinlock.h"
 #include "gpopt/search/CJobQueue.h"
 #include "gpopt/operators/CLogical.h"
 #include "gpopt/search/CTreeMap.h"
@@ -86,8 +82,7 @@ namespace gpopt
 			typedef
 				CSyncHashtable<
 					COptimizationContext, // entry
-					COptimizationContext, // search key
-					CSpinlockOC> ShtOC;
+					COptimizationContext  /* search key */> ShtOC;
 
 			// states of a group
 			enum EState
@@ -113,22 +108,19 @@ namespace gpopt
 			typedef
 				CSyncHashtableIter<
 					COptimizationContext, // entry
-					COptimizationContext , // search key
-					CSpinlockOC> ShtIter;
+					COptimizationContext> ShtIter;
 
 			// definition of hash table iter accessor
 			typedef
 				CSyncHashtableAccessByIter<
 					COptimizationContext, // entry
-					COptimizationContext, // search key
-					CSpinlockOC> ShtAccIter;
+					COptimizationContext> ShtAccIter;
 
 			// definition of hash table accessor
 			typedef
 				CSyncHashtableAccessByKey<
 					COptimizationContext, // entry
-					COptimizationContext, // search key
-					CSpinlockOC> ShtAcc;
+					COptimizationContext> ShtAcc;
 
 			//---------------------------------------------------------------------------
 			//	@class:
@@ -192,11 +184,11 @@ namespace gpopt
 			// true if group hold scalar expressions
 			BOOL m_fScalar;
 
-			// hash join keys for outer child (only for scalar groups)
-			CExpressionArray *m_pdrgpexprHashJoinKeysOuter;
+			// join keys for outer child (only for scalar groups) (used by hash & merge joins)
+			CExpressionArray *m_pdrgpexprJoinKeysOuter;
 
-			// hash join keys for inner child (only for scalar groups)
-			CExpressionArray *m_pdrgpexprHashJoinKeysInner;
+			// join keys for inner child (only for scalar groups) (used by hash & merge joins)
+			CExpressionArray *m_pdrgpexprJoinKeysInner;
 
 			// list of group expressions
 			CList<CGroupExpression> m_listGExprs;
@@ -226,15 +218,8 @@ namespace gpopt
 			// map of computed stats during costing
 			OptCtxtToIStatisticsMap *m_pstatsmap;
 
-			// mutex for locking stats map when adding a new entry
-			CMutex m_mutexStats;
-
-
 			// hashtable of optimization contexts
 			ShtOC m_sht;
-
-			// spin lock to protect operations on expression list
-			CSpinlockGroup m_lock;
 
 			// number of group expressions
 			ULONG m_ulGExprs;
@@ -243,7 +228,7 @@ namespace gpopt
 			ReqdPropPlanToCostMap *m_pcostmap;
 
 			// number of optimization contexts
-			volatile ULONG_PTR m_ulpOptCtxts;
+			ULONG_PTR m_ulpOptCtxts;
 
 			// current state
 			EState m_estate;
@@ -275,7 +260,7 @@ namespace gpopt
 			// increment number of optimization contexts
 			ULONG_PTR UlpIncOptCtxts()
 			{
-				return ExchangeAddUlongPtrWithInt(&m_ulpOptCtxts, 1);
+				return m_ulpOptCtxts++;
 			}
 
 			// the following functions are only accessed through group proxy
@@ -287,7 +272,7 @@ namespace gpopt
 			void SetState(EState estNewState);
 
 			// set hash join keys
-			void SetHashJoinKeys(CExpressionArray *pdrgpexprOuter, CExpressionArray *pdrgpexprInner);
+			void SetJoinKeys(CExpressionArray *pdrgpexprOuter, CExpressionArray *pdrgpexprInner);
 
 			// insert new group expression
 			void Insert(CGroupExpression *pgexpr);
@@ -405,16 +390,16 @@ namespace gpopt
 				return m_fScalar;
 			}
 
-			// hash join keys of outer child
-			CExpressionArray *PdrgpexprHashJoinKeysOuter() const
+			// join keys of outer child
+			CExpressionArray *PdrgpexprJoinKeysOuter() const
 			{
-				return m_pdrgpexprHashJoinKeysOuter;
+				return m_pdrgpexprJoinKeysOuter;
 			}
 
-			// hash join keys of inner child
-			CExpressionArray *PdrgpexprHashJoinKeysInner() const
+			// join keys of inner child
+			CExpressionArray *PdrgpexprJoinKeysInner() const
 			{
-				return m_pdrgpexprHashJoinKeysInner;
+				return m_pdrgpexprJoinKeysInner;
 			}
 
 			// return cached scalar expression

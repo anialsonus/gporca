@@ -53,7 +53,7 @@ InSubqWithPrjListOuterRefNoInnerRefColumnIn InSubqWithPrjListOuterRefNoInnerRefC
 NestedInSubqWithPrjListOuterRefNoInnerRef  InEqualityJoin Correlated-SemiJoin
 CorrelatedSemiJoin-True CorrelatedIN-LeftSemiJoin-True CorrelatedIN-LeftSemiNotIn-True
 InSubqWithPrjListOuterRefNoInnerRefColumnPlusConstIn CorrelatedIN-LeftSemiJoin-Limit
-CorrelatedLeftSemiNLJoinWithLimit PushFilterToSemiJoinLeftChild;
+CorrelatedLeftSemiNLJoinWithLimit PushFilterToSemiJoinLeftChild SubqOuterReferenceInClause;
 
 CAntiSemiJoinTest:
 AntiSemiJoin2Select-1 AntiSemiJoin2Select-2 NOT-IN-NotNullBoth NOT-IN-NullInner NOT-IN-NullOuter
@@ -215,7 +215,7 @@ CEquivClassTest:
 Equiv-HashedDistr-1 Equiv-HashedDistr-2 EquivClassesAndOr EquivClassesLimit IndexNLJoin_Cast_NoMotion;
 
 COuterJoinTest:
-ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False FOJ-Condition-False FullOuterJoin FullOuterJoin2
+ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False
 LeftJoin-With-Pred-On-Inner LeftJoin-With-Pred-On-Inner2
 LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred
 LOJ-IsNullPred Select-Proj-OuterJoin OuterJoin-With-OuterRefs Join-Disj-Subqs
@@ -226,8 +226,14 @@ LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
-LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
-FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2;
+LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter;
+
+
+CFullJoinTest:
+FOJ-Condition-False ExpandFullOuterJoin ExpandFullOuterJoin2 FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2
+FullJoin-InnerNotOnDistributionColumn FullJoin-NotOnDistributionColumn FullJoin-2PredicateOnDistColumns
+FullJoin-OnDistributionColumn FullJoin-SwappedPredicates FullJoin-Replicated 
+FullJoin-SubqueryWithRedistribute FullJoin-SubquerySingleton FullJoin-Subquery-CastedPredicates;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -422,7 +428,6 @@ add_orca_test(CPredicateUtilsTest)
 add_orca_test(CPartConstraintTest)
 
 if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "SunOS"))
-  add_orca_test(CSchedulerTest)
   add_orca_test(CSearchStrategyTest)
 endif()
 

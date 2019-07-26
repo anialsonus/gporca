@@ -12,7 +12,6 @@
 #define GPOPT_CPhysical_H
 
 #include "gpos/base.h"
-#include "gpos/sync/CMutex.h"
 
 #include "gpopt/operators/COperator.h"
 #include "gpopt/base/CDrvdPropPlan.h"
@@ -158,9 +157,6 @@ namespace gpopt
 
 			// hash map of child columns requests
 			ReqdColsReqToColRefSetMap *m_phmrcr;
-
-			// mutex for locking map of child columns requests during lookup/insertion
-			CMutex m_mutex;
 
 			// given an optimization context, the elements in this array represent is the
 			// number of requests that operator will create for its child,
@@ -358,7 +354,7 @@ namespace gpopt
 
 			// helper for common case of rewindability derivation
 			static
-			CRewindabilitySpec *PrsDerivePassThruOuter(CExpressionHandle &exprhdl);
+			CRewindabilitySpec *PrsDerivePassThruOuter(CMemoryPool *mp, CExpressionHandle &exprhdl);
 
 			// helper for checking if output columns of a unary operator
 			// that defines no new columns include the required columns

@@ -168,8 +168,8 @@ CGroup::CGroup
 	m_mp(mp),
 	m_id(GPOPT_INVALID_GROUP_ID),
 	m_fScalar(fScalar),
-	m_pdrgpexprHashJoinKeysOuter(NULL),
-	m_pdrgpexprHashJoinKeysInner(NULL),
+	m_pdrgpexprJoinKeysOuter(NULL),
+	m_pdrgpexprJoinKeysInner(NULL),
 	m_pdp(NULL),
 	m_pstats(NULL),
 	m_pexprScalar(NULL),
@@ -217,8 +217,8 @@ CGroup::CGroup
 //---------------------------------------------------------------------------
 CGroup::~CGroup()
 {
-	CRefCount::SafeRelease(m_pdrgpexprHashJoinKeysOuter);
-	CRefCount::SafeRelease(m_pdrgpexprHashJoinKeysInner);
+	CRefCount::SafeRelease(m_pdrgpexprJoinKeysOuter);
+	CRefCount::SafeRelease(m_pdrgpexprJoinKeysInner);
 	CRefCount::SafeRelease(m_pdp);
 	CRefCount::SafeRelease(m_pexprScalar);
 	CRefCount::SafeRelease(m_pccDummy);
@@ -286,10 +286,6 @@ CGroup::CleanupContexts()
 			}
 		}
 	}
-
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 }
 
 
@@ -487,7 +483,6 @@ CGroup::SetId
 	ULONG id
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
 	GPOS_ASSERT(GPOPT_INVALID_GROUP_ID == m_id &&
 				"Overwriting previously assigned group id");
 
@@ -509,7 +504,6 @@ CGroup::InitProperties
 	DrvdPropArray *pdp
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
 	GPOS_ASSERT(NULL == m_pdp);
 	GPOS_ASSERT(NULL != pdp);
 	GPOS_ASSERT_IMP(FScalar(), DrvdPropArray::EptScalar == pdp->Ept());
@@ -533,7 +527,6 @@ CGroup::InitStats
 	IStatistics *stats
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
 	GPOS_ASSERT(NULL == m_pstats);
 	GPOS_ASSERT(NULL != stats);
 
@@ -555,23 +548,14 @@ CGroup::SetState
 	EState estNewState
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
 	GPOS_ASSERT(estNewState == (EState) (m_estate + 1));
 
 	m_estate = estNewState;
 }
 
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CGroup::SetHashJoinKeys
-//
-//	@doc:
-//		Set group hash join keys;
-//
-//---------------------------------------------------------------------------
 void
-CGroup::SetHashJoinKeys
+CGroup::SetJoinKeys
 	(
 	CExpressionArray *pdrgpexprOuter,
 	CExpressionArray *pdrgpexprInner
@@ -580,21 +564,20 @@ CGroup::SetHashJoinKeys
 	GPOS_ASSERT(m_fScalar);
 	GPOS_ASSERT(NULL != pdrgpexprOuter);
 	GPOS_ASSERT(NULL != pdrgpexprInner);
-	GPOS_ASSERT(m_lock.IsOwned());
 
-	if (NULL != m_pdrgpexprHashJoinKeysOuter)
+	if (NULL != m_pdrgpexprJoinKeysOuter)
 	{
-		GPOS_ASSERT(NULL != m_pdrgpexprHashJoinKeysInner);
+		GPOS_ASSERT(NULL != m_pdrgpexprJoinKeysInner);
 
 		// hash join keys have been already set, exit here
 		return;
 	}
 
 	pdrgpexprOuter->AddRef();
-	m_pdrgpexprHashJoinKeysOuter = pdrgpexprOuter;
+	m_pdrgpexprJoinKeysOuter = pdrgpexprOuter;
 
 	pdrgpexprInner->AddRef();
-	m_pdrgpexprHashJoinKeysInner = pdrgpexprInner;
+	m_pdrgpexprJoinKeysInner = pdrgpexprInner;
 }
 
 
@@ -634,7 +617,6 @@ CGroup::Insert
 	CGroupExpression *pgexpr
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
 
 	m_listGExprs.Append(pgexpr);
 	COperator *pop = pgexpr->Pop();
@@ -674,8 +656,6 @@ CGroup::MoveDuplicateGExpr
 	CGroupExpression *pgexpr
 	)
 {
-	GPOS_ASSERT(m_lock.IsOwned());
-
 	m_listGExprs.Remove(pgexpr);
 	m_ulGExprs--;
 
@@ -738,8 +718,6 @@ CGroup::PgexprAnyCTEConsumer()
 CGroupExpression *
 CGroup::PgexprFirst()
 {
-	GPOS_ASSERT(m_lock.IsOwned());
-
 	return m_listGExprs.First();
 }
 
@@ -758,8 +736,6 @@ CGroup::PgexprNext
 	CGroupExpression *pgexpr
 	) 
 {
-	GPOS_ASSERT(m_lock.IsOwned());
-
 	return m_listGExprs.Next(pgexpr);
 }
 
@@ -959,18 +935,19 @@ CGroup::AddDuplicateGrp
 	}
 
 	// keep looping until we add link
-	while (pgroupSrc->m_pgroupDuplicate != pgroupDest &&
-	       !CompareSwap<CGroup>
-				(
-				(volatile CGroup**)&pgroupSrc->m_pgroupDuplicate,
-				NULL,
-				pgroupDest
-				))
+	while (pgroupSrc->m_pgroupDuplicate != pgroupDest)
 	{
-		pgroupSrc = pgroupSrc->m_pgroupDuplicate;
-		if (pgroupSrc->Id() > pgroupDest->Id())
+		if (NULL == pgroupSrc->m_pgroupDuplicate)
 		{
-			std::swap(pgroupSrc, pgroupDest);
+			pgroupSrc->m_pgroupDuplicate = pgroupDest;
+		}
+		else
+		{
+			pgroupSrc = pgroupSrc->m_pgroupDuplicate;
+			if (pgroupSrc->Id() > pgroupDest->Id())
+			{
+				std::swap(pgroupSrc, pgroupDest);
+			}
 		}
 	}
 }
@@ -1032,9 +1009,7 @@ CGroup::MergeGroup()
 		m_ulGExprs--;
 
 		pgexpr->Reset(pgroupTarget, pgroupTarget->m_ulGExprs++);
-		pgroupTarget->m_lock.Lock();
 		pgroupTarget->Insert(pgexpr);
-		pgroupTarget->m_lock.Unlock();
 
 		GPOS_CHECK_ABORT;
 	}
@@ -1780,27 +1755,27 @@ CGroup::OsPrintGrpScalarProps
 
 	GPOS_CHECK_ABORT;
 
-	if (NULL != m_pdrgpexprHashJoinKeysOuter)
+	if (NULL != m_pdrgpexprJoinKeysOuter)
 	{
-		os << szPrefix << "Outer Hash Join Keys: " << std::endl;
+		os << szPrefix << "Outer Join Keys: " << std::endl;
 
-		const ULONG size = m_pdrgpexprHashJoinKeysOuter->Size();
+		const ULONG size = m_pdrgpexprJoinKeysOuter->Size();
 		for (ULONG ul = 0; ul < size; ul++)
 		{
-			os << szPrefix << *(*m_pdrgpexprHashJoinKeysOuter)[ul]<< std::endl;
+			os << szPrefix << *(*m_pdrgpexprJoinKeysOuter)[ul]<< std::endl;
 		}
 	}
 
 	GPOS_CHECK_ABORT;
 
-	if (NULL != m_pdrgpexprHashJoinKeysInner)
+	if (NULL != m_pdrgpexprJoinKeysInner)
 	{
-		os << szPrefix << "Inner Hash Join Keys: " << std::endl;
+		os << szPrefix << "Inner Join Keys: " << std::endl;
 
-		const ULONG size = m_pdrgpexprHashJoinKeysInner->Size();
+		const ULONG size = m_pdrgpexprJoinKeysInner->Size();
 		for (ULONG ul = 0; ul < size; ul++)
 		{
-			os << szPrefix << *(*m_pdrgpexprHashJoinKeysInner)[ul]<< std::endl;
+			os << szPrefix << *(*m_pdrgpexprJoinKeysInner)[ul]<< std::endl;
 		}
 	}
 
@@ -2061,21 +2036,12 @@ CGroup::PstatsCompute
 	stats = CLogical::PopConvert(pgexpr->Pop())->PstatsDerive(m_mp, exprhdl, poc->Pdrgpstat());
 	GPOS_ASSERT(NULL != stats);
 
+	// add computed stats to local map
+	poc->AddRef();
 #ifdef GPOS_DEBUG
-	BOOL fSuccess = false;
+	BOOL fSuccess =
 #endif  // GPOS_DEBUG
-
-	// add computed stats to local map -- we can't use group proxy here due to potential memory allocation
-	// which is disallowed with spin locks
-	{
-		CAutoMutex am(m_mutexStats);
-		am.Lock();
-		poc->AddRef();
-#ifdef GPOS_DEBUG
-		fSuccess =
-#endif  // GPOS_DEBUG
-		m_pstatsmap->Insert(poc, stats);
-	}
+	m_pstatsmap->Insert(poc, stats);
 	GPOS_ASSERT(fSuccess);
 
 	return stats;

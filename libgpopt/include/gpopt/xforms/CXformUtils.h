@@ -14,6 +14,7 @@
 #include "gpos/base.h"
 
 #include "gpopt/base/CUtils.h"
+#include "gpopt/base/CCastUtils.h"
 #include "gpopt/base/CColRef.h"
 
 #include "gpopt/operators/ops.h"
@@ -221,13 +222,17 @@ namespace gpopt
 				EIndexCols eic
 				);
 
-			// lookup hash join keys in scalar child group
+			// lookup join keys in scalar child group
 			static
-			void LookupHashJoinKeys(CMemoryPool *mp, CExpression *pexpr, CExpressionArray **ppdrgpexprOuter, CExpressionArray **ppdrgpexprInner);
+			void LookupJoinKeys(CMemoryPool *mp, CExpression *pexpr,
+								CExpressionArray **ppdrgpexprOuter,
+								CExpressionArray **ppdrgpexprInner);
 
-			// cache hash join keys on scalar child group
+			// cache join keys on scalar child group
 			static
-			void CacheHashJoinKeys(CExpression *pexpr, CExpressionArray *pdrgpexprOuter, CExpressionArray *pdrgpexprInner);
+			void CacheJoinKeys(CExpression *pexpr,
+							   CExpressionArray *pdrgpexprOuter,
+							   CExpressionArray *pdrgpexprInner);
 
 			// helper to extract equality from a given expression
 			static
@@ -251,7 +256,7 @@ namespace gpopt
 			// helper function for adding hash join alternative
 			template <class T>
 			static
-			void AddHashJoinAlternative
+			void AddHashOrMergeJoinAlternative
 				(
 				CMemoryPool *mp,
 				CExpression *pexprJoin,
@@ -538,8 +543,17 @@ namespace gpopt
 				(
 				CXformContext *pxfctxt,
 				CXformResult *pxfres,
-				CExpression *pexpr,
-				BOOL fAntiSemiJoin = false
+				CExpression *pexpr
+				);
+
+			// helper function for implementation of merge joins
+			template <class T>
+			static
+			void ImplementMergeJoin
+				(
+				CXformContext *pxfctxt,
+				CXformResult *pxfres,
+				CExpression *pexpr
 				);
 
 			// helper function for implementation of nested loops joins
@@ -1189,18 +1203,9 @@ namespace gpopt
 		pxfres->Add(pexprBinary);
 	}
 
-	//---------------------------------------------------------------------------
-	//	@function:
-	//		CXformUtils::AddHashJoinAlternative
-	//
-	//	@doc:
-	//		Helper function for adding hash join alternative to given xform
-	///		results
-	//
-	//---------------------------------------------------------------------------
 	template <class T>
 	void
-	CXformUtils::AddHashJoinAlternative
+	CXformUtils::AddHashOrMergeJoinAlternative
 		(
 		CMemoryPool *mp,
 		CExpression *pexprJoin,
@@ -1242,8 +1247,7 @@ namespace gpopt
 		(
 		CXformContext *pxfctxt,
 		CXformResult *pxfres,
-		CExpression *pexpr,
-		BOOL fAntiSemiJoin // is the target hash join type an anti-semi join?
+		CExpression *pexpr
 		)
 	{
 		GPOS_ASSERT(NULL != pxfctxt);
@@ -1259,7 +1263,7 @@ namespace gpopt
 		CExpressionArray *pdrgpexprInner = NULL;
 
 		// check if we have already computed hash join keys for the scalar child
-		LookupHashJoinKeys(mp, pexpr, &pdrgpexprOuter, &pdrgpexprInner);
+		LookupJoinKeys(mp, pexpr, &pdrgpexprOuter, &pdrgpexprInner);
 		if (NULL != pdrgpexprOuter)
 		{
 			GPOS_ASSERT(NULL != pdrgpexprInner);
@@ -1275,26 +1279,57 @@ namespace gpopt
 			else
 			{
 				// we have computed hash join keys on scalar child before, reuse them
-				AddHashJoinAlternative<T>(mp, pexpr, pdrgpexprOuter, pdrgpexprInner, pxfres);
+				AddHashOrMergeJoinAlternative<T>(mp, pexpr, pdrgpexprOuter, pdrgpexprInner, pxfres);
 			}
 
 			return;
 		}
 
-		// first time to compute hash join keys on scalar child
+		CExpression *pexprOuter = (*pexpr)[0];
+		CExpression *pexprInner = (*pexpr)[1];
+		CExpression *pexprScalar = (*pexpr)[2];
 
+		// split the predicate into arrays of conjuncts based on if they are
+		// output from inner or outer child
 		pdrgpexprOuter = GPOS_NEW(mp) CExpressionArray(mp);
 		pdrgpexprInner = GPOS_NEW(mp) CExpressionArray(mp);
 
-		CExpression *pexprInnerJoin = NULL;
-		BOOL fHashJoinPossible = CPhysicalJoin::FHashJoinPossible(mp, pexpr, pdrgpexprOuter, pdrgpexprInner, &pexprInnerJoin);
+		CExpressionArray *pdrgpexpr = CCastUtils::PdrgpexprCastEquality(mp, pexprScalar);
+		ULONG ulPreds = pdrgpexpr->Size();
+		for (ULONG ul = 0; ul < ulPreds; ul++)
+		{
+			CExpression *pexprPred = (*pdrgpexpr)[ul];
+			if (CPhysicalJoin::FHashJoinCompatible(pexprPred, pexprOuter, pexprInner))
+			{
+				CExpression *pexprPredInner;
+				CExpression *pexprPredOuter;
+				CPhysicalJoin::AlignJoinKeyOuterInner(pexprPred, pexprOuter, pexprInner,
+													   &pexprPredOuter, &pexprPredInner);
+
+				pexprPredInner->AddRef();
+				pexprPredOuter->AddRef();
+				pdrgpexprOuter->Append(pexprPredOuter);
+				pdrgpexprInner->Append(pexprPredInner);
+
+			}
+		}
+		GPOS_ASSERT(pdrgpexprInner->Size() == pdrgpexprOuter->Size());
+
+		// construct new HashJoin expression using explicit casting, if needed
+		pexpr->Pop()->AddRef();
+		pexprOuter->AddRef();
+		pexprInner->AddRef();
+		CExpression *pexprResult =
+			GPOS_NEW(mp) CExpression(mp, pexpr->Pop(), pexprOuter, pexprInner,
+									 	CPredicateUtils::PexprConjunction(mp, pdrgpexpr));
 
 		// cache hash join keys on scalar child group
-		CacheHashJoinKeys(pexprInnerJoin, pdrgpexprOuter, pdrgpexprInner);
+		CacheJoinKeys(pexprResult, pdrgpexprOuter, pdrgpexprInner);
 
-		if (fHashJoinPossible)
+		// Add an alternative only if we found at least one hash-joinable predicate
+		if (0 != pdrgpexprOuter->Size())
 		{
-			AddHashJoinAlternative<T>(mp, pexprInnerJoin, pdrgpexprOuter, pdrgpexprInner, pxfres);
+			AddHashOrMergeJoinAlternative<T>(mp, pexprResult, pdrgpexprOuter, pdrgpexprInner, pxfres);
 		}
 		else
 		{
@@ -1303,18 +1338,116 @@ namespace gpopt
 			pdrgpexprInner->Release();
 		}
 
-		pexprInnerJoin->Release();
+		pexprResult->Release();
+	}
 
-		if (!fHashJoinPossible && fAntiSemiJoin)
+	template <class T>
+	void
+	CXformUtils::ImplementMergeJoin
+		(
+		CXformContext *pxfctxt,
+		CXformResult *pxfres,
+		CExpression *pexpr
+		)
+	{
+		GPOS_ASSERT(NULL != pxfctxt);
+
+		// if there are outer references, then we cannot build a merge join
+		if (CUtils::HasOuterRefs(pexpr))
 		{
-			CExpression *pexprProcessed = NULL;
-			if (FProcessGPDBAntiSemiHashJoin(mp, pexpr, &pexprProcessed))
+			return;
+		}
+
+		CMemoryPool *mp = pxfctxt->Pmp();
+		CExpressionArray *pdrgpexprOuter = NULL;
+		CExpressionArray *pdrgpexprInner = NULL;
+
+		// check if we have already computed join keys for the scalar child
+		LookupJoinKeys(mp, pexpr, &pdrgpexprOuter, &pdrgpexprInner);
+		if (NULL != pdrgpexprOuter)
+		{
+			GPOS_ASSERT(NULL != pdrgpexprInner);
+			if (0 == pdrgpexprOuter->Size())
 			{
-				// try again after simplifying join predicate
-				ImplementHashJoin<T>(pxfctxt, pxfres, pexprProcessed, false /*fAntiSemiJoin*/);
-				pexprProcessed->Release();
+				GPOS_ASSERT(0 == pdrgpexprInner->Size());
+
+				// we failed before to find join keys for scalar child,
+				// no reason to try to do the same again
+				pdrgpexprOuter->Release();
+				pdrgpexprInner->Release();
+			}
+			else
+			{
+				// we have computed join keys on scalar child before, reuse them
+				AddHashOrMergeJoinAlternative<T>(mp, pexpr, pdrgpexprOuter, pdrgpexprInner, pxfres);
+			}
+
+			return;
+		}
+
+		CExpression *pexprOuter = (*pexpr)[0];
+		CExpression *pexprInner = (*pexpr)[1];
+		CExpression *pexprScalar = (*pexpr)[2];
+
+		// split the predicate into arrays of conjuncts based on if they are
+		// output from inner or outer child
+		pdrgpexprOuter = GPOS_NEW(mp) CExpressionArray(mp);
+		pdrgpexprInner = GPOS_NEW(mp) CExpressionArray(mp);
+
+		CExpressionArray *pdrgpexpr = CPredicateUtils::PdrgpexprConjuncts(mp, pexprScalar);
+		ULONG ulPreds = pdrgpexpr->Size();
+		for (ULONG ul = 0; ul < ulPreds; ul++)
+		{
+			CExpression *pexprPred = (*pdrgpexpr)[ul];
+			if (CPhysicalJoin::FMergeJoinCompatible(pexprPred, pexprOuter, pexprInner))
+			{
+				CExpression *pexprPredInner;
+				CExpression *pexprPredOuter;
+				CPhysicalJoin::AlignJoinKeyOuterInner(pexprPred, pexprOuter, pexprInner,
+													   &pexprPredOuter, &pexprPredInner);
+
+				pexprPredInner->AddRef();
+				pexprPredOuter->AddRef();
+				pdrgpexprOuter->Append(pexprPredOuter);
+				pdrgpexprInner->Append(pexprPredInner);
+
+			}
+			else
+			{
+				// In case of FULL merge joins, all the merge clauses must be merge
+				// compatible or we cannot create a merge join.
+				pdrgpexpr->Release();
+				pdrgpexprOuter->Release();
+				pdrgpexprInner->Release();
+				return;
 			}
 		}
+		GPOS_ASSERT(pdrgpexprInner->Size() == pdrgpexprOuter->Size());
+
+		// construct new MergeJoin expression using explicit casting, if needed
+		pexpr->Pop()->AddRef();
+		pexprOuter->AddRef();
+		pexprInner->AddRef();
+		CExpression *pexprResult =
+			GPOS_NEW(mp) CExpression(mp, pexpr->Pop(), pexprOuter, pexprInner,
+									 	CPredicateUtils::PexprConjunction(mp, pdrgpexpr));
+
+		// cache hash join keys on scalar child group
+		CacheJoinKeys(pexprResult, pdrgpexprOuter, pdrgpexprInner);
+
+		// Add an alternative only if we found at least one merge-joinable predicate
+		if (0 != pdrgpexprOuter->Size())
+		{
+			AddHashOrMergeJoinAlternative<T>(mp, pexprResult, pdrgpexprOuter, pdrgpexprInner, pxfres);
+		}
+		else
+		{
+			// clean up
+			pdrgpexprOuter->Release();
+			pdrgpexprInner->Release();
+		}
+
+		pexprResult->Release();
 	}
 
 	//---------------------------------------------------------------------------

@@ -80,8 +80,12 @@ Join-INDF Join-INDF-NoBroadcast TimeTypeStatsNotComparable;
 
 CLeftOuterIndexApplyTest:
 IndexApply-LeftOuter-NLJoin LOJ-IndexApply-MultiIndexes LOJ-IndexApply-Negative-NonEqual-Predicate
-LOJ-IndexApply-DistKey-Multiple-Predicates LOJ-IndexApply-MasterOnly-Table LOJ-IndexApply-Negative-NonDistKey
-LOJ-IndexApply-CompsiteKey-Equiv LOJ-IndexApply-CompsiteKey-NoMotion LOJ-IndexApply-MultiDistKeys-IndexKeys;
+LOJ-IndexApply-DistKey-Multiple-Predicates LOJ-IndexApply-MasterOnly-Table LOJ-IndexApply-NonDistKey
+LOJ-IndexApply-CompsiteKey-Equiv LOJ-IndexApply-CompsiteKey-NoMotion LOJ-IndexApply-MultiDistKeys-IndexKeys
+LOJ-IndexApply-WithComplexPredicates LOJ-IndexApply-MultiDistKeys-WithComplexPreds
+LOJ-IndexApply-MultiDistKey-MultiIndexKey-NoExtraFilter LOJ-IndexApply-MultiDistKey-MultiIndexKey
+LOJ-IndexApply-MultiDistKeys-Bitmap LOJ-IndexApply-MultiDistKeys-Bitmap-WithComplexPreds
+LOJ-DynBitmapIndex LOJ-DynBitmapIndexWithSelect LOJ-DynBtreeIndex LOJ-DynBtreeIndexWithSelect;
 
 CTypeModifierTest:
 TypeModifierColumn TypeModifierCast TypeModifierConst TypeModifierDoubleMappableConst TypeModifierArrayRef;
@@ -101,7 +105,9 @@ IndexApply-PartTable IndexApply-Heterogeneous-NoDTS IndexApply-Heterogeneous-DTS
 IndexApply-No-Motion-Below-Join IndexApply-Redistribute-Const-Table IndexApply-PartResolverExpand
 IndexApply-InnerSelect-Basic IndexApply-InnerSelect-PartTable IndexApply-PartKey-Is-IndexKey
 IndexApply-InnerSelect-Heterogeneous-DTS IndexApply-Heterogeneous-BothSidesPartitioned
-IndexApply-InnerSelect-PartTable2 IndexApply-ForPartialIndex CastedScalarIf-On-Index-Key;
+IndexApply-InnerSelect-PartTable2 IndexApply-ForPartialIndex CastedScalarIf-On-Index-Key
+IndexApply-MultiDistKey-WithComplexPreds IndexApply-MultiDistKeys-Bitmap
+IndexApply-MultiDistKeys-Bitmap-WithComplexPreds;
 
 CDynamicIndexScanTest:
 DynamicIndexScan-Homogenous DynamicIndexScan-BoolTrue DynamicIndexScan-BoolFalse
@@ -214,26 +220,31 @@ IndexScanWithNestedCTEAndSetOp Blocking-Spool-Parallel-Union-All;
 CEquivClassTest:
 Equiv-HashedDistr-1 Equiv-HashedDistr-2 EquivClassesAndOr EquivClassesLimit IndexNLJoin_Cast_NoMotion;
 
-COuterJoinTest:
+COuterJoin1Test:
 ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False
 LeftJoin-With-Pred-On-Inner LeftJoin-With-Pred-On-Inner2
-LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred
+LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred;
+
+COuterJoin2Test:
 LOJ-IsNullPred Select-Proj-OuterJoin OuterJoin-With-OuterRefs Join-Disj-Subqs
 EffectOfLocalPredOnJoin EffectOfLocalPredOnJoin2 EffectOfLocalPredOnJoin3
-LeftJoin-UnsupportedFilter-Cardinality LeftOuter2InnerUnionAllAntiSemiJoin
+LeftJoin-UnsupportedFilter-Cardinality LeftOuter2InnerUnionAllAntiSemiJoin;
+
+COuterJoin3Test:
 LOJ_IDF_no_convert_outer_ref_predicate_with_NULL
 LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_inner_predicate_IDF
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
-LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter;
-
+LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
+LOJ-HashJoin-MultiDistKeys-WithComplexPreds;
 
 CFullJoinTest:
 FOJ-Condition-False ExpandFullOuterJoin ExpandFullOuterJoin2 FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2
 FullJoin-InnerNotOnDistributionColumn FullJoin-NotOnDistributionColumn FullJoin-2PredicateOnDistColumns
 FullJoin-OnDistributionColumn FullJoin-SwappedPredicates FullJoin-Replicated 
-FullJoin-SubqueryWithRedistribute FullJoin-SubquerySingleton FullJoin-Subquery-CastedPredicates;
+FullJoin-SubqueryWithRedistribute FullJoin-SubquerySingleton FullJoin-Subquery-CastedPredicates
+FullJoin-Caps;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -261,6 +272,9 @@ CGistIndexTest:
 Gist-AOCOTable-NonLossy-BitmapIndexPlan Gist-NonPart-Lossy-BitmapIndexPlan Gist-NonPart-Lossy-IndexPlan
 Gist-PartTable-Lossy-IndexPlan Gist-PartTable-NonLossy-BitmapIndexPlan Gist-PartialIndex-TableScan
 Gist-NestedLoopJoin-Lossy-IndexPlan Gist-NestedLoopJoin-Postgis-IndexPlan Gist-OrderBy-BitmapPlan Gist-OrderBy-IndexPlan;
+
+CGinIndexTest:
+GinIndex GinIndexPathOpClass GinIndexSearchModeAll;
 
 CReplicatedTableTest:
 ReplicatedTableSelect ReplicatedTableInsert ReplicatedTable-CTAS ReplicatedHashJoinReplicated ReplicatedJoinHashDistributedTable ReplicatedJoinRandomDistributedTable ReplicatedLOJHashDistributedTable ReplicatedLOJRandomDistributedTable ReplicatedLOJReplicated ReplicatedNLJReplicated ReplicatedTableAggregate ReplicatedTableCTE ReplicatedTableGroupBy ReplicatedJoinPartitionedTable ReplicatedTableInClause;

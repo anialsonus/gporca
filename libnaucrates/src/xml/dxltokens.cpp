@@ -25,7 +25,7 @@ CDXLTokens::m_pstrmap = NULL;
 CDXLTokens::SXMLStrMapElem *
 CDXLTokens::m_pxmlszmap = NULL;
 
-IMemoryPool *
+CMemoryPool *
 CDXLTokens::m_mp =  NULL;
 
 CDXLMemoryManager *
@@ -43,7 +43,7 @@ CDXLTokens::m_dxl_memory_manager = NULL;
 void
 CDXLTokens::Init
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL != mp);
@@ -86,6 +86,7 @@ CDXLTokens::Init
 			{EdxltokenJoinOrderDPThreshold, GPOS_WSZ_LIT("JoinOrderDynamicProgThreshold")},
 			{EdxltokenBroadcastThreshold, GPOS_WSZ_LIT("BroadcastThreshold")},
 			{EdxltokenEnforceConstraintsOnDML, GPOS_WSZ_LIT("EnforceConstraintsOnDML")},
+			{EdxltokenPushGroupByBelowSetopThreshold, GPOS_WSZ_LIT("PushGroupByBelowSetopThreshold")},
 			{EdxltokenWindowOids, GPOS_WSZ_LIT("WindowOids")},
 			{EdxltokenOidRowNumber, GPOS_WSZ_LIT("RowNumber")},
 			{EdxltokenOidRank, GPOS_WSZ_LIT("Rank")},
@@ -540,6 +541,7 @@ CDXLTokens::Init
 			{EdxltokenIndexTypeBtree, GPOS_WSZ_LIT("B-tree")},
 			{EdxltokenIndexTypeBitmap, GPOS_WSZ_LIT("Bitmap")},
 			{EdxltokenIndexTypeGist, GPOS_WSZ_LIT("Gist")},
+			{EdxltokenIndexTypeGin, GPOS_WSZ_LIT("Gin")},
 			{EdxltokenIndexItemType, GPOS_WSZ_LIT("IndexItemType")},
 
 			{EdxltokenOpClass, GPOS_WSZ_LIT("OpClass")},
@@ -561,6 +563,7 @@ CDXLTokens::Init
 			{EdxltokenMDType, GPOS_WSZ_LIT("Type")},
 			{EdxltokenMDTypeRedistributable, GPOS_WSZ_LIT("IsRedistributable")},
 			{EdxltokenMDTypeHashable, GPOS_WSZ_LIT("IsHashable")},
+			{EdxltokenMDTypeMergeJoinable, GPOS_WSZ_LIT("IsMergeJoinable")},
 			{EdxltokenMDTypeComposite, GPOS_WSZ_LIT("IsComposite")},
 			{EdxltokenMDTypeFixedLength, GPOS_WSZ_LIT("IsFixedLength")},
 			{EdxltokenMDTypeLength, GPOS_WSZ_LIT("Length")},

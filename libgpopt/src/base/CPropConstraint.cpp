@@ -28,7 +28,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPropConstraint::CPropConstraint
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefSetArray *pdrgpcrs,
 	CConstraint *pcnstr
 	)
@@ -52,7 +52,7 @@ CPropConstraint::CPropConstraint
 CPropConstraint::~CPropConstraint()
 {
 	m_pdrgpcrs->Release();
-	m_phmcrcrs->Release();
+	CRefCount::SafeRelease(m_phmcrcrs);
 	CRefCount::SafeRelease(m_pcnstr);
 }
 
@@ -67,12 +67,17 @@ CPropConstraint::~CPropConstraint()
 void
 CPropConstraint::InitHashMap
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL == m_phmcrcrs);
-	m_phmcrcrs = GPOS_NEW(mp) ColRefToColRefSetMap(mp);
 	const ULONG ulEquiv = m_pdrgpcrs->Size();
+
+	// m_phmcrcrs is only needed when storing equivalent columns
+	if (0 != ulEquiv)
+	{
+		m_phmcrcrs = GPOS_NEW(mp) ColRefToColRefSetMap(mp);
+	}
 	for (ULONG ul = 0; ul < ulEquiv; ul++)
 	{
 		CColRefSet *pcrs = (*m_pdrgpcrs)[ul];
@@ -117,16 +122,15 @@ const
 CExpression *
 CPropConstraint::PexprScalarMappedFromEquivCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRef *colref
 	)
 	const
 {
-	if(NULL == m_pcnstr)
+	if(NULL == m_pcnstr || NULL == m_phmcrcrs)
 	{
 		return NULL;
 	}
-
 	CColRefSet *pcrs = m_phmcrcrs->Find(colref);
 	if (NULL == pcrs || 1 == pcrs->Size())
 	{
@@ -197,7 +201,7 @@ CPropConstraint::OsPrint
 void
 CPropConstraint::DbgPrint() const
 {
-	IMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
+	CMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
 	CAutoTrace at(mp);
 	(void) this->OsPrint(at.Os());
 }

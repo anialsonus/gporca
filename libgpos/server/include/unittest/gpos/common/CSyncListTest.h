@@ -82,22 +82,11 @@ namespace gpos
 				{}
 			};
 
-			// stress functions
-			static void *RunPush(void *pv);
-			static void *RunPop(void *pv);
-
-			// task management functions
-			static void ConcurrentPush(IMemoryPool *mp, SArg *parg);
-			static void ConcurrentPushPop(IMemoryPool *mp, SArg *parg);
-			static void ConcurrentPop(IMemoryPool *mp, SArg *parg);
-			static void RunTasks(CAutoTaskProxy *patp, CTask **rgptsk, ULONG ulTasks);
-
 		public:
 
 			// unittests
 			static GPOS_RESULT EresUnittest();
 			static GPOS_RESULT EresUnittest_Basics();
-			static GPOS_RESULT EresUnittest_Concurrency();
 
 	}; // class CSyncListTest
 }

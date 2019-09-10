@@ -102,6 +102,9 @@ namespace gpdxl
 			// is type hashable
 			BOOL m_is_hashable;
 
+			// is type merge joinable on '='
+			BOOL m_is_merge_joinable;
+
 			// is type composite
 			BOOL m_is_composite;
 
@@ -143,7 +146,7 @@ namespace gpdxl
 			// ctor
 			CParseHandlerMDType
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CParseHandlerManager *parse_handler_mgr,
 				CParseHandlerBase *parse_handler_root
 				);		

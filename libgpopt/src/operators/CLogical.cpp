@@ -15,6 +15,7 @@
 #include "naucrates/md/IMDColumn.h"
 #include "naucrates/md/IMDCheckConstraint.h"
 
+#include "gpopt/base/CColRef.h"
 #include "gpopt/base/CColRefSet.h"
 #include "gpopt/base/CColRefSetIter.h"
 #include "gpopt/base/CConstraintConjunction.h"
@@ -55,7 +56,7 @@ using namespace gpmd;
 //---------------------------------------------------------------------------
 CLogical::CLogical
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	COperator(mp)
@@ -89,7 +90,7 @@ CLogical::~CLogical()
 CColRefArray *
 CLogical::PdrgpcrCreateMapping
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CColumnDescriptorArray *pdrgpcoldesc,
 	ULONG ulOpSourceId
 	)
@@ -105,8 +106,7 @@ CLogical::PdrgpcrCreateMapping
 	{
 		CColumnDescriptor *pcoldesc = (*pdrgpcoldesc)[ul];
 		CName name(mp, pcoldesc->Name());
-		
-		CColRef *colref = col_factory->PcrCreate(pcoldesc, name, ulOpSourceId);
+		CColRef *colref = col_factory->PcrCreate(pcoldesc, name, ulOpSourceId, false /* mark_as_used */ );
 		colref_array->Append(colref);
 	}
 	
@@ -124,7 +124,7 @@ CLogical::PdrgpcrCreateMapping
 CColRef2dArray *
 CLogical::PdrgpdrgpcrCreatePartCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const ULongPtrArray *pdrgpulPart
 	)
@@ -143,6 +143,10 @@ CLogical::PdrgpdrgpcrCreatePartCols
 		
 		CColRef *colref = (*colref_array)[ulCol];
 		CColRefArray * pdrgpcrCurr = GPOS_NEW(mp) CColRefArray(mp);
+		// The partition columns are not explicity referenced in the query but we
+		// still need to mark them as used since they are required during partition
+		// elimination
+		colref->MarkAsUsed();
 		pdrgpcrCurr->Append(colref);
 		pdrgpdrgpcrPart->Append(pdrgpcrCurr);
 	}
@@ -156,7 +160,7 @@ CLogical::PdrgpdrgpcrCreatePartCols
 COrderSpec *
 CLogical::PosFromIndex
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDIndex *pmdindex,
 	CColRefArray *colref_array,
 	const CTableDescriptor *ptabdesc
@@ -172,8 +176,8 @@ CLogical::PosFromIndex
 
 	COrderSpec *pos = GPOS_NEW(mp) COrderSpec(mp);
 
-	// GiST indexes have no order, so return an empty order spec
-	if (pmdindex->IndexType() == IMDIndex::EmdindGist)
+	// GiST & GIN indexes have no order, so return an empty order spec
+	if (pmdindex->IndexType() == IMDIndex::EmdindGist || pmdindex->IndexType() == IMDIndex::EmdindGin)
 		return pos;
 
 	const ULONG ulLenKeys = pmdindex->Keys();
@@ -268,7 +272,7 @@ CLogical::PcrsDeriveNotNullPassThruOuter
 CColRefSet *
 CLogical::PcrsDeriveOutputCombineLogical
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -300,7 +304,7 @@ CLogical::PcrsDeriveOutputCombineLogical
 CColRefSet *
 CLogical::PcrsDeriveNotNullCombineLogical
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -351,7 +355,7 @@ CLogical::PpartinfoPassThruOuter
 CKeyCollection *
 CLogical::PkcCombineKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -386,7 +390,7 @@ CLogical::PkcCombineKeys
 CKeyCollection *
 CLogical::PkcKeysBaseTable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CBitSetArray *pdrgpbsKeys,
 	const CColRefArray *pdrgpcrOutput
 	)
@@ -429,7 +433,7 @@ CLogical::PkcKeysBaseTable
 CPartInfo *
 CLogical::PpartinfoDeriveCombine
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -469,7 +473,7 @@ CLogical::PpartinfoDeriveCombine
 CColRefSet *
 CLogical::PcrsDeriveOuter
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsUsedAdditional
 	)
@@ -525,7 +529,7 @@ CLogical::PcrsDeriveOuter
 CColRefSet *
 CLogical::PcrsDeriveOuterIndexGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -564,7 +568,7 @@ CLogical::PcrsDeriveOuterIndexGet
 CColRefSet *
 CLogical::PcrsDeriveCorrelatedApply
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -632,7 +636,7 @@ CLogical::PkcDeriveKeysPassThru
 CKeyCollection *
 CLogical::PkcDeriveKeys
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle & // exprhdl
 	)
 	const
@@ -653,7 +657,7 @@ CLogical::PkcDeriveKeys
 CPropConstraint *
 CLogical::PpcDeriveConstraintFromPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -728,7 +732,7 @@ CLogical::PpcDeriveConstraintFromPredicates
 CPropConstraint *
 CLogical::PpcDeriveConstraintFromTable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CTableDescriptor *ptabdesc,
 	const CColRefArray *pdrgpcrOutput
 	)
@@ -756,7 +760,7 @@ CLogical::PpcDeriveConstraintFromTable
 
 		pdrgpcrNonSystem->Append(colref);
 
-		if (pcoldesc->IsNullable())
+		if (pcoldesc->IsNullable() || colref->GetUsage() == CColRef::EUnused)
 		{
 			continue;
 		}
@@ -821,7 +825,7 @@ CLogical::PpcDeriveConstraintFromTable
 CPropConstraint *
 CLogical::PpcDeriveConstraintFromTableWithPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	const CTableDescriptor *ptabdesc,
 	const CColRefArray *pdrgpcrOutput
@@ -898,7 +902,7 @@ CLogical::PpcDeriveConstraintPassThru
 CPropConstraint *
 CLogical::PpcDeriveConstraintRestrict
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsOutput
 	)
@@ -971,7 +975,7 @@ CLogical::PpcDeriveConstraintRestrict
 CFunctionProp *
 CLogical::PfpDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -992,7 +996,7 @@ CLogical::PfpDerive
 CFunctionProp *
 CLogical::PfpDeriveFromScalar
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	ULONG ulScalarIndex
 	)
@@ -1023,7 +1027,7 @@ CLogical::PfpDeriveFromScalar
 CMaxCard
 CLogical::Maxcard
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle & // exprhdl
 	)
 	const
@@ -1044,7 +1048,7 @@ CLogical::Maxcard
 ULONG
 CLogical::JoinDepth
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -1136,7 +1140,7 @@ CLogical::Maxcard
 CColRefSet *
 CLogical::PcrsReqdChildStats
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsInput,
 	CColRefSet *pcrsUsed, // columns used by scalar child(ren)
@@ -1212,7 +1216,7 @@ CLogical::PstatsPassThruOuter
 IStatistics *
 CLogical::PstatsBaseTable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CTableDescriptor *ptabdesc,
 	CColRefSet *pcrsHistExtra   // additional columns required for stats, not required by parent
@@ -1264,7 +1268,7 @@ CLogical::PstatsBaseTable
 IStatistics *
 CLogical::PstatsDeriveDummy
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDouble rows
 	)
@@ -1299,7 +1303,7 @@ CLogical::PstatsDeriveDummy
 CExpression *
 CLogical::PexprPartPred
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CExpression *, //pexprInput,
 	ULONG //child_index
@@ -1324,7 +1328,7 @@ CLogical::PexprPartPred
 DrvdPropArray *
 CLogical::PdpCreate
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -1343,7 +1347,7 @@ CLogical::PdpCreate
 CReqdProp *
 CLogical::PrpCreate
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -1443,7 +1447,7 @@ CLogical::NameFromLogicalGet
 CColRefSet *
 CLogical::PcrsDist
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CTableDescriptor *ptabdesc,
 	const CColRefArray *pdrgpcrOutput
 	)
@@ -1465,6 +1469,7 @@ CLogical::PcrsDist
 	{
 		CColumnDescriptor *pcoldesc = (*pdrgpcoldesc)[ul];
 		CColRef *colref = (*pdrgpcrOutput)[ul];
+
 		phmicr->Insert(GPOS_NEW(mp) INT(pcoldesc->AttrNum()), colref);
 	}
 
@@ -1475,6 +1480,10 @@ CLogical::PcrsDist
 		CColumnDescriptor *pcoldesc = (*pdrgpcoldescDist)[ul2];
 		const INT attno = pcoldesc->AttrNum();
 		CColRef *pcrMapped = phmicr->Find(&attno);
+		// The distribution columns are not explicity referenced in the query but we
+		// still need to mark distribution columns as used since they are required
+		// to add motions
+		pcrMapped->MarkAsUsed();
 		GPOS_ASSERT(NULL != pcrMapped);
 		pcrsDist->Include(pcrMapped);
 	}

@@ -50,7 +50,7 @@ namespace gpopt
 			{
 				private:
 					// memory pool
-					IMemoryPool *m_mp;
+					CMemoryPool *m_mp;
 
 					// metadata accessor
 					CMDAccessor *m_pmda;
@@ -65,7 +65,7 @@ namespace gpopt
 					// ctor
 					CDummyConstDXLNodeEvaluator
 						(
-						IMemoryPool *mp,
+						CMemoryPool *mp,
 						CMDAccessor *md_accessor,
 						INT val
 						)
@@ -100,10 +100,6 @@ namespace gpopt
 			// run unittests
 			static
 			GPOS_RESULT EresUnittest();
-
-			// test evaluation for a constant
-			static
-			GPOS_RESULT EresUnittest_Constants();
 
 			// test that evaluation fails for a non scalar input
 			static

@@ -71,7 +71,7 @@ XERCES_CPP_NAMESPACE_USE
 CParseHandlerDXL *
 CDXLUtils::GetParseHandlerForDXLString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -84,10 +84,6 @@ CDXLUtils::GetParseHandlerForDXLString
 	// setup own memory manager
 	CDXLMemoryManager *memory_manager = GPOS_NEW(mp) CDXLMemoryManager(mp);
 	SAX2XMLReader* sax_2_xml_reader = XMLReaderFactory::createXMLReader(memory_manager);
-
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 
 	XMLCh *xsd_path = NULL;
 
@@ -120,10 +116,6 @@ CDXLUtils::GetParseHandlerForDXLString
 				memory_manager
 	    	);
 
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-
 	try
 	{
 		sax_2_xml_reader->parse(*input_src_memory_buffer);
@@ -145,10 +137,6 @@ CDXLUtils::GetParseHandlerForDXLString
 	}
 
 
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-
 	GPOS_CHECK_ABORT;
 
 	// cleanup
@@ -157,11 +145,6 @@ CDXLUtils::GetParseHandlerForDXLString
 	GPOS_DELETE(parse_handler_mgr);
 	GPOS_DELETE(memory_manager);
 	delete xsd_path;
-
-	// reset time slice counter as unloading deleting Xerces SAX2 readers seems to take a lot of time (OPT-491)
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 
 	GPOS_CHECK_ABORT;
 
@@ -181,7 +164,7 @@ CDXLUtils::GetParseHandlerForDXLString
 CParseHandlerDXL *
 CDXLUtils::GetParseHandlerForDXLFile
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_filename,
 	const CHAR *xsd_file_path
 	)
@@ -229,10 +212,6 @@ CDXLUtils::GetParseHandlerForDXLFile
 
 		sax_2_xml_reader->parse(dxl_filename);
 
-		// reset time slice
-#ifdef GPOS_DEBUG
-	    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 	}
 	catch (const XMLException&)
 	{
@@ -268,11 +247,6 @@ CDXLUtils::GetParseHandlerForDXLFile
 	// cleanup
 	delete sax_2_xml_reader;
 	
-	// reset time slice counter as unloading deleting Xerces SAX2 readers seems to take a lot of time (OPT-491)
-#ifdef GPOS_DEBUG
-    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-    
 	delete[] xsd_path;
 	
 	return parse_handler_dxl;
@@ -292,7 +266,7 @@ CDXLUtils::GetParseHandlerForDXLFile
 CParseHandlerDXL *
 CDXLUtils::GetParseHandlerForDXLString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringBase *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -318,7 +292,7 @@ CDXLUtils::GetParseHandlerForDXLString
 CDXLNode *
 CDXLUtils::GetPlanDXLNode
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path,
 	ULLONG *plan_id,
@@ -366,7 +340,7 @@ CDXLUtils::GetPlanDXLNode
 CQueryToDXLResult *
 CDXLUtils::ParseQueryToQueryDXLTree
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -412,7 +386,7 @@ CDXLUtils::ParseQueryToQueryDXLTree
 CDXLNode *
 CDXLUtils::ParseDXLToScalarExprDXLNode
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -444,7 +418,7 @@ CDXLUtils::ParseDXLToScalarExprDXLNode
 IMDCacheObjectArray *
 CDXLUtils::ParseDXLToIMDObjectArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -473,7 +447,7 @@ CDXLUtils::ParseDXLToIMDObjectArray
 IMDId *
 CDXLUtils::ParseDXLToMDId
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringBase *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -508,7 +482,7 @@ CDXLUtils::ParseDXLToMDId
 CMDRequest *
 CDXLUtils::ParseDXLToMDRequest
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -539,7 +513,7 @@ CDXLUtils::ParseDXLToMDRequest
 CMDRequest *
 CDXLUtils::ParseDXLToMDRequest
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const WCHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -558,7 +532,7 @@ CDXLUtils::ParseDXLToMDRequest
 COptimizerConfig *
 CDXLUtils::ParseDXLToOptimizerConfig
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -595,7 +569,7 @@ CDXLUtils::ParseDXLToOptimizerConfig
 CDXLStatsDerivedRelationArray *
 CDXLUtils::ParseDXLToStatsDerivedRelArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringBase *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -626,7 +600,7 @@ CDXLUtils::ParseDXLToStatsDerivedRelArray
 CDXLStatsDerivedRelationArray *
 CDXLUtils::ParseDXLToStatsDerivedRelArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -655,7 +629,7 @@ CDXLUtils::ParseDXLToStatsDerivedRelArray
 CStatisticsArray *
 CDXLUtils::ParseDXLToOptimizerStatisticObjArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CDXLStatsDerivedRelationArray *dxl_derived_rel_stats_array
 	)
@@ -721,7 +695,7 @@ CDXLUtils::ParseDXLToOptimizerStatisticObjArray
 CBucketArray *
 CDXLUtils::ParseDXLToBucketsArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CDXLStatsDerivedColumn *dxl_derived_col_stats
 	)
@@ -768,7 +742,7 @@ CDXLUtils::ParseDXLToBucketsArray
 IDatum *
 CDXLUtils::GetDatum
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const CDXLDatum *dxl_datum
 	 )
@@ -790,7 +764,7 @@ CDXLUtils::GetDatum
 IMDCacheObjectArray *
 CDXLUtils::ParseDXLToIMDObjectArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringBase *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -823,7 +797,7 @@ CDXLUtils::ParseDXLToIMDObjectArray
 IMDCacheObject *
 CDXLUtils::ParseDXLToIMDIdCacheObj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringBase *dxl_string,
 	const CHAR *xsd_file_path
 	)
@@ -860,7 +834,7 @@ CDXLUtils::ParseDXLToIMDIdCacheObj
 void
 CDXLUtils::SerializeQuery
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IOstream &os,
 	const CDXLNode *dxl_query_node,
 						  const CDXLNodeArray *query_output_dxlnode_array,
@@ -925,7 +899,7 @@ CDXLUtils::SerializeQuery
 CWStringDynamic *
 CDXLUtils::SerializeULLONG
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULLONG value
 	)
 {
@@ -953,7 +927,7 @@ CDXLUtils::SerializeULLONG
 void
 CDXLUtils::SerializePlan
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IOstream& os,
 	const CDXLNode *node,
 	ULLONG plan_id,
@@ -1003,7 +977,7 @@ CDXLUtils::SerializePlan
 void
 CDXLUtils::SerializeMetadata
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDCacheObjectArray *imd_obj_array,
 	IOstream &os,
 	BOOL serialize_header_footer,
@@ -1051,7 +1025,7 @@ CDXLUtils::SerializeMetadata
 CWStringDynamic *
 CDXLUtils::SerializeMetadata
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDId *mdid,
 	BOOL serialize_header_footer,
 	BOOL indentation
@@ -1102,7 +1076,7 @@ CDXLUtils::SerializeMetadata
 CWStringDynamic *
 CDXLUtils::SerializeSamplePlans
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CEnumeratorConfig *enumerator_cfg,
 	BOOL indentation
 	)
@@ -1148,7 +1122,7 @@ CDXLUtils::SerializeSamplePlans
 CWStringDynamic *
 CDXLUtils::SerializeCostDistr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CEnumeratorConfig *enumerator_cfg,
 	BOOL indentation
 	)
@@ -1193,7 +1167,7 @@ CDXLUtils::SerializeCostDistr
 void
 CDXLUtils::SerializeMDRequest
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDRequest *md_request,
 	IOstream &os,
 	BOOL serialize_header_footer,
@@ -1232,7 +1206,7 @@ CDXLUtils::SerializeMDRequest
 CWStringDynamic *
 CDXLUtils::SerializeStatistics
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor, 
 	const CStatisticsArray *statistics_array,
 	BOOL serialize_header_footer,
@@ -1263,7 +1237,7 @@ CDXLUtils::SerializeStatistics
 void
 CDXLUtils::SerializeStatistics
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const CStatisticsArray *statistics_array,
 	IOstream &os,
@@ -1314,7 +1288,7 @@ CDXLUtils::SerializeStatistics
 CWStringDynamic *
 CDXLUtils::SerializeMetadata
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDCacheObjectArray *imd_obj_array,
 	BOOL serialize_header_footer,
 	BOOL indentation
@@ -1343,7 +1317,7 @@ CDXLUtils::SerializeMetadata
 CWStringDynamic *
 CDXLUtils::SerializeMDObj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDCacheObject *imd_cache_obj,
 	BOOL serialize_header_footer,
 	BOOL indentation
@@ -1391,7 +1365,7 @@ CDXLUtils::SerializeMDObj
 CWStringDynamic *
 CDXLUtils::SerializeScalarExpr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CDXLNode *node,
 	BOOL serialize_header_footer,
 	BOOL indentation
@@ -1432,7 +1406,7 @@ CDXLUtils::SerializeScalarExpr
 void
 CDXLUtils::SerializeHeader
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CXMLSerializer *xml_serializer
 	)
 {
@@ -1494,7 +1468,7 @@ CDXLUtils::CreateDynamicStringFromXMLChArray
 	GPOS_ASSERT(NULL != memory_manager);
 	GPOS_ASSERT(NULL != xml_string);
 	
-	IMemoryPool *mp = memory_manager->Pmp();
+	CMemoryPool *mp = memory_manager->Pmp();
 	
 	{
 		CAutoTraceFlag auto_trace_flg(EtraceSimulateOOM, false);
@@ -1531,7 +1505,7 @@ CDXLUtils::CreateStringFrom64XMLStr
 	GPOS_ASSERT(NULL != xml_string);
 
 	CAutoTraceFlag auto_trace_flg(EtraceSimulateOOM, false);
-	IMemoryPool *mp = memory_manager->Pmp();
+	CMemoryPool *mp = memory_manager->Pmp();
 
 	// find out xml string length
 	ULONG len = XMLString::stringLen(xml_string);
@@ -1569,7 +1543,7 @@ CDXLUtils::CreateStringFrom64XMLStr
 CWStringDynamic *
 CDXLUtils::CreateDynamicStringFromCharArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *c
 	)
 {
@@ -1593,7 +1567,7 @@ CDXLUtils::CreateDynamicStringFromCharArray
 CMDName *
 CDXLUtils::CreateMDNameFromCharArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *c
 	)
 {
@@ -1647,7 +1621,7 @@ CDXLUtils::CreateMDNameFromXMLChar
 CWStringDynamic *
 CDXLUtils::EncodeByteArrayToString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const BYTE *byte,
 	ULONG length
 	)
@@ -1708,7 +1682,7 @@ CDXLUtils::EncodeByteArrayToString
 BYTE *
 CDXLUtils::DecodeByteArrayFromString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CWStringDynamic *dxl_string,
 	ULONG *length
 	)
@@ -1756,7 +1730,7 @@ CDXLUtils::DecodeByteArrayFromString
 CWStringDynamic *
 CDXLUtils::Serialize
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const ULongPtr2dArray *array_2D
 	)
 {
@@ -1784,7 +1758,7 @@ CDXLUtils::Serialize
 CWStringDynamic *
 CDXLUtils::SerializeToCommaSeparatedString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CharPtrArray *char_ptr_array
 	)
 {
@@ -1819,7 +1793,7 @@ CDXLUtils::SerializeToCommaSeparatedString
 CHAR *
 CDXLUtils::CreateMultiByteCharStringFromWCString
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const WCHAR *wc
 	)
 {
@@ -1852,7 +1826,7 @@ CDXLUtils::CreateMultiByteCharStringFromWCString
 CHAR *
 CDXLUtils::Read
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *filename
 	)
 {

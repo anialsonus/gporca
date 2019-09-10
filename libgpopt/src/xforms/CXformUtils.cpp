@@ -132,7 +132,7 @@ CXformUtils::ExfpExpandJoinOrder
 		// to the Memo and we need to check if stats are derivable on child groups
 		CGroup *pgroup = exprhdl.Pgexpr()->Pgroup();
 		CAutoMemoryPool amp;
-		IMemoryPool *mp = amp.Pmp();
+		CMemoryPool *mp = amp.Pmp();
 		if (!pgroup->FStatsDerivable(mp))
 		{
 			// stats must be derivable before applying xforms
@@ -195,7 +195,7 @@ CXformUtils::FInlinableCTE
 CColRefSet *
 CXformUtils::PcrsFKey
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr, // array of scalar conjuncts
 	CColRefSet *prcsOutput, // output columns of outer expression
 	CColRefSet *pcrsKey // a primary key of a inner expression
@@ -259,7 +259,7 @@ CXformUtils::PcrsFKey
 CColRefSet *
 CXformUtils::PcrsFKey
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOuter,
 	CExpression *pexprInner,
 	CExpression *pexprScalar
@@ -316,7 +316,7 @@ CXformUtils::PcrsFKey
 CExpression *
 CXformUtils::PexprRedundantSelectForDynamicIndex
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr // input expression is a dynamic (bitmap) IndexGet with an optional Select on top
 	)
 {
@@ -399,7 +399,7 @@ CXformUtils::FSwapableJoinType
 CExpression *
 CXformUtils::PexprSwapJoins
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprTopJoin,
 	CExpression *pexprBottomJoin
 	)
@@ -485,7 +485,7 @@ CXformUtils::PexprSwapJoins
 CExpression *
 CXformUtils::PexprPushGbBelowJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -580,7 +580,7 @@ CXformUtils::PexprPushGbBelowJoin
 CLogicalGbAgg *
 CXformUtils::PopGbAggPushableBelowJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CLogicalGbAgg *popGbAggOld,
 	CColRefSet *pcrsOutputOuter,
 	CColRefSet *pcrsGrpCols
@@ -715,7 +715,7 @@ CXformUtils::FSameDatatype
 void
 CXformUtils::ExistentialToAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSubquery,
 	CExpression **ppexprNewSubquery, // output argument for new scalar subquery
 	CExpression **ppexprNewScalar   // output argument for new scalar expression
@@ -761,7 +761,7 @@ CXformUtils::ExistentialToAgg
 void
 CXformUtils::QuantifiedToAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSubquery,
 	CExpression **ppexprNewSubquery, // output argument for new scalar subquery
 	CExpression **ppexprNewScalar   // output argument for new scalar expression
@@ -814,7 +814,7 @@ CXformUtils::QuantifiedToAgg
 void
 CXformUtils::SubqueryAnyToAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSubquery,
 	CExpression **ppexprNewSubquery, // output argument for new scalar subquery
 	CExpression **ppexprNewScalar   // output argument for new scalar expression
@@ -938,7 +938,7 @@ CXformUtils::SubqueryAnyToAgg
 void
 CXformUtils::SubqueryAllToAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSubquery,
 	CExpression **ppexprNewSubquery, // output argument for new scalar subquery
 	CExpression **ppexprNewScalar   // output argument for new scalar expression
@@ -1062,7 +1062,7 @@ CXformUtils::SubqueryAllToAgg
 CExpression *
 CXformUtils::PexprSeparateSubqueryPreds
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1138,7 +1138,7 @@ CXformUtils::PexprSeparateSubqueryPreds
 CExpression *
 CXformUtils::PexprInversePred
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSubquery
 	)
 {
@@ -1174,7 +1174,7 @@ CXformUtils::PexprInversePred
 CExpression *
 CXformUtils::PexprNullIndicator
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1207,7 +1207,7 @@ CXformUtils::PexprNullIndicator
 CExpression *
 CXformUtils::PexprLogicalPartitionSelector
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *colref_array,
 	CExpression *pexprChild
@@ -1239,7 +1239,7 @@ CXformUtils::PexprLogicalPartitionSelector
 CExpression *
 CXformUtils::PexprLogicalDMLOverProject
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CLogicalDML::EDMLOperator edmlop,
 	CTableDescriptor *ptabdesc,
@@ -1405,7 +1405,7 @@ CXformUtils::FTriggerApplies
 CExpression *
 CXformUtils::PexprRowTrigger
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CLogicalDML::EDMLOperator edmlop,
 	IMDId *rel_mdid,
@@ -1435,7 +1435,7 @@ CXformUtils::PexprRowTrigger
 CExpression *
 CXformUtils::PexprAssertNotNull
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *colref_array
@@ -1522,7 +1522,7 @@ CXformUtils::PexprAssertNotNull
 CExpression *
 CXformUtils::PexprRowTrigger
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CLogicalDML::EDMLOperator edmlop,
 	IMDId *rel_mdid,
@@ -1572,7 +1572,7 @@ CXformUtils::PexprRowTrigger
 CExpressionArray *
 CXformUtils::PdrgpexprPartEqFilters
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *pdrgpcrSource
 	)
@@ -1609,7 +1609,7 @@ CXformUtils::PdrgpexprPartEqFilters
 CExpression *
 CXformUtils::PexprAssertConstraints
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *colref_array
@@ -1631,7 +1631,7 @@ CXformUtils::PexprAssertConstraints
 CExpression *
 CXformUtils::PexprAssertCheckConstraints
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *colref_array
@@ -1709,7 +1709,7 @@ CXformUtils::PexprAssertCheckConstraints
 CExpression *
 CXformUtils::PexprAssertUpdateCardinality
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprDMLChild,
 	CExpression *pexprDML,
 	CColRef *pcrCtid,
@@ -1950,7 +1950,7 @@ CXformUtils::FLocalAggCreatedByEagerAggXform
 void
 CXformUtils::AddMinAggs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CColumnFactory *col_factory,
 	CColRefArray *colref_array,
@@ -2143,7 +2143,7 @@ CXformUtils::FApplyToNextBinding
 CWStringConst *
 CXformUtils::PstrErrorMessage
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG major,
 	ULONG minor,
 	...
@@ -2184,7 +2184,7 @@ CXformUtils::PstrErrorMessage
 CColRefArray *
 CXformUtils::PdrgpcrIndexKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel
@@ -2205,7 +2205,7 @@ CXformUtils::PdrgpcrIndexKeys
 CColRefSet *
 CXformUtils::PcrsIndexKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel
@@ -2226,7 +2226,7 @@ CXformUtils::PcrsIndexKeys
 CColRefSet *
 CXformUtils::PcrsIndexIncludedCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel
@@ -2247,7 +2247,7 @@ CXformUtils::PcrsIndexIncludedCols
 CColRefSet *
 CXformUtils::PcrsIndexColumns
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel,
@@ -2275,7 +2275,7 @@ CXformUtils::PcrsIndexColumns
 CColRefArray *
 CXformUtils::PdrgpcrIndexColumns
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel,
@@ -2327,7 +2327,7 @@ CXformUtils::PdrgpcrIndexColumns
 BOOL
 CXformUtils::FIndexApplicable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const IMDIndex *pmdindex,
 	const IMDRelation *pmdrel,
 	CColRefArray *pdrgpcrOutput,
@@ -2337,7 +2337,9 @@ CXformUtils::FIndexApplicable
 	)
 {
 	// GiST can match with either Btree or Bitmap indexes
-	if (pmdindex->IndexType() == IMDIndex::EmdindGist)
+	if (pmdindex->IndexType() == IMDIndex::EmdindGist ||
+		// GIN can only match with Bitmap Indexes
+		(emdindtype == IMDIndex::EmdindBitmap && IMDIndex::EmdindGin == pmdindex->IndexType()))
 	{
 		if (pmdrel->IsPartialIndex(pmdindex->MDId()))
 		{
@@ -2379,7 +2381,7 @@ CXformUtils::FIndexApplicable
 CExpression *
 CXformUtils::PexprRowNumber
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 
@@ -2413,7 +2415,7 @@ CXformUtils::PexprRowNumber
 CExpression *
 CXformUtils::PexprWindowWithRowNumber
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprWindowChild,
 	CColRefArray *pdrgpcrInput
 	)
@@ -2474,7 +2476,7 @@ CXformUtils::PexprWindowWithRowNumber
 CExpression *
 CXformUtils::PexprAssertOneRow
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprChild
 	)
 {
@@ -2530,18 +2532,12 @@ CXformUtils::PcrProjectElement
 }
 
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CXformUtils::LookupHashJoinKeys
-//
-//	@doc:
-//		Lookup hash join keys in scalar child group
-//
-//---------------------------------------------------------------------------
+
+// Lookup join keys in scalar child group
 void
-CXformUtils::LookupHashJoinKeys
+CXformUtils::LookupJoinKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpressionArray **ppdrgpexprOuter,
 	CExpressionArray **ppdrgpexprInner
@@ -2562,17 +2558,17 @@ CXformUtils::LookupHashJoinKeys
 	CColRefSet *pcrsInnerOutput = CDrvdPropRelational::GetRelationalProperties((*pexpr)[1]->PdpDerive())->PcrsOutput();
 
 	CGroup *pgroupScalar = pgexprScalarOrigin->Pgroup();
-	if (NULL == pgroupScalar->PdrgpexprHashJoinKeysOuter())
+	if (NULL == pgroupScalar->PdrgpexprJoinKeysOuter())
 	{
 		// hash join keys not found
 		return;
 	}
 
-	GPOS_ASSERT(NULL != pgroupScalar->PdrgpexprHashJoinKeysInner());
+	GPOS_ASSERT(NULL != pgroupScalar->PdrgpexprJoinKeysInner());
 
 	// extract used columns by hash join keys
-	CColRefSet *pcrsUsedOuter = CUtils::PcrsExtractColumns(mp, pgroupScalar->PdrgpexprHashJoinKeysOuter());
-	CColRefSet *pcrsUsedInner = CUtils::PcrsExtractColumns(mp, pgroupScalar->PdrgpexprHashJoinKeysInner());
+	CColRefSet *pcrsUsedOuter = CUtils::PcrsExtractColumns(mp, pgroupScalar->PdrgpexprJoinKeysOuter());
+	CColRefSet *pcrsUsedInner = CUtils::PcrsExtractColumns(mp, pgroupScalar->PdrgpexprJoinKeysInner());
 
 	BOOL fOuterKeysUsesOuterChild = pcrsOuterOutput->ContainsAll(pcrsUsedOuter);
 	BOOL fInnerKeysUsesInnerChild = pcrsInnerOutput->ContainsAll(pcrsUsedInner);
@@ -2584,21 +2580,21 @@ CXformUtils::LookupHashJoinKeys
 	{
 		CGroupProxy gp(pgroupScalar);
 
-		pgroupScalar->PdrgpexprHashJoinKeysOuter()->AddRef();
-		pgroupScalar->PdrgpexprHashJoinKeysInner()->AddRef();
+		pgroupScalar->PdrgpexprJoinKeysOuter()->AddRef();
+		pgroupScalar->PdrgpexprJoinKeysInner()->AddRef();
 
 		// align hash join keys with join child
 		if (fOuterKeysUsesOuterChild && fInnerKeysUsesInnerChild)
 		{
-			*ppdrgpexprOuter = pgroupScalar->PdrgpexprHashJoinKeysOuter();
-			*ppdrgpexprInner = pgroupScalar->PdrgpexprHashJoinKeysInner();
+			*ppdrgpexprOuter = pgroupScalar->PdrgpexprJoinKeysOuter();
+			*ppdrgpexprInner = pgroupScalar->PdrgpexprJoinKeysInner();
 		}
 		else
 		{
 			GPOS_ASSERT(fInnerKeysUsesOuterChild && fOuterKeysUsesInnerChild);
 
-			*ppdrgpexprOuter = pgroupScalar->PdrgpexprHashJoinKeysInner();
-			*ppdrgpexprInner = pgroupScalar->PdrgpexprHashJoinKeysOuter();
+			*ppdrgpexprOuter = pgroupScalar->PdrgpexprJoinKeysInner();
+			*ppdrgpexprInner = pgroupScalar->PdrgpexprJoinKeysOuter();
 		}
 	}
 
@@ -2607,16 +2603,9 @@ CXformUtils::LookupHashJoinKeys
 }
 
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CXformUtils::CacheHashJoinKeys
-//
-//	@doc:
-//		Cache hash join keys on scalar child group
-//
-//---------------------------------------------------------------------------
+// Cache join keys on scalar child group
 void
-CXformUtils::CacheHashJoinKeys
+CXformUtils::CacheJoinKeys
 	(
 	CExpression *pexpr,
 	CExpressionArray *pdrgpexprOuter,
@@ -2633,7 +2622,7 @@ CXformUtils::CacheHashJoinKeys
 
 		{	// scope of group proxy
 			CGroupProxy gp(pgroupScalar);
-			gp.SetHashJoinKeys(pdrgpexprOuter, pdrgpexprInner);
+			gp.SetJoinKeys(pdrgpexprOuter, pdrgpexprInner);
 		}
 	}
 }
@@ -2652,7 +2641,7 @@ CXformUtils::CacheHashJoinKeys
 CExpression *
 CXformUtils::PexprAddCTEProducer
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulCTEId,
 	CColRefArray *colref_array,
 	CExpression *pexpr
@@ -2743,7 +2732,7 @@ CXformUtils::FExtractEquality
 BOOL
 CXformUtils::FProcessGPDBAntiSemiHashJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpression **ppexprResult // output: result expression, set to NULL if processing failed
 	)
@@ -2817,7 +2806,7 @@ CXformUtils::FProcessGPDBAntiSemiHashJoin
 CExpression *
 CXformUtils::PexprBuildIndexPlan
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprGet,
 	ULONG ulOriginOpId,
@@ -3004,7 +2993,7 @@ CXformUtils::PexprBuildIndexPlan
 CExpression *
 CXformUtils::PexprScalarBitmapBoolOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprOriginalPred,
 	CExpressionArray *pdrgpexpr,
@@ -3104,7 +3093,7 @@ CXformUtils::PexprScalarBitmapBoolOp
 void
 CXformUtils::ComputeBitmapTableScanResidualPredicate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	BOOL fConjunction,
 	CExpression *pexprOriginalPred,
 	CExpression **ppexprResidual, // input-output argument: the residual predicate computed so-far, and resulting predicate
@@ -3154,7 +3143,7 @@ CXformUtils::ComputeBitmapTableScanResidualPredicate
 CExpression *
 CXformUtils::PexprBitmapBoolOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMDId *pmdidBitmapType,
 	CExpression *pexprLeft,
 	CExpression *pexprRight,
@@ -3191,7 +3180,7 @@ CXformUtils::PexprBitmapBoolOp
 CExpression *
 CXformUtils::PexprEqualityOnBoolColumn
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	BOOL value,
 	CColRef *colref
@@ -3229,7 +3218,7 @@ CXformUtils::PexprEqualityOnBoolColumn
 CExpression *
 CXformUtils::PexprBitmapFromChildren
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprOriginalPred,
 	CExpression *pexprPred,
@@ -3293,7 +3282,7 @@ CXformUtils::PexprBitmapFromChildren
 CExpression *
 CXformUtils::PexprBitmapLookupWithPredicateBreakDown
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprOriginalPred,
 	CExpression *pexprPred,
@@ -3371,7 +3360,7 @@ CXformUtils::PexprBitmapLookupWithPredicateBreakDown
 CExpression *
 CXformUtils::PexprBitmap
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprPred,
 	CTableDescriptor *ptabdesc,
@@ -3522,7 +3511,7 @@ CXformUtils::PexprBitmap
 CExpression *
 CXformUtils::PexprBitmapForIndexLookup
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprPred,
 	CTableDescriptor *ptabdesc,
@@ -3605,7 +3594,7 @@ CXformUtils::PexprBitmapForIndexLookup
 void
 CXformUtils::CreateBitmapIndexProbeOps
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprOriginalPred,
 	CExpressionArray *pdrgpexprPreds,
@@ -3674,7 +3663,7 @@ CXformUtils::CreateBitmapIndexProbeOps
 void
 CXformUtils::CreateBitmapIndexProbes
 	(
-	IMemoryPool *pmp,
+	CMemoryPool *pmp,
 	CMDAccessor *pmda,
 	CExpression *pexprOriginalPred,
 	CExpression *pexprPred,
@@ -3808,7 +3797,7 @@ CXformUtils::CreateBitmapIndexProbes
 void
 CXformUtils::JoinBitmapIndexProbes
 	(
-		IMemoryPool *pmp,
+		CMemoryPool *pmp,
 		CExpressionArray *pdrgpexprBitmap,
 		CExpressionArray *pdrgpexprRecheck,
 		BOOL fConjunction,
@@ -3908,7 +3897,7 @@ CXformUtils::FHasAmbiguousType
 CExpression *
 CXformUtils::PexprSelect2BitmapBoolOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -3961,7 +3950,7 @@ CXformUtils::PexprSelect2BitmapBoolOp
 CExpression *
 CXformUtils::PexprBitmapTableGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CLogical *popGet,
 	ULONG ulOriginOpId,
 	CTableDescriptor *ptabdesc,
@@ -4087,7 +4076,7 @@ CXformUtils::PexprBitmapTableGet
 SPartDynamicIndexGetInfoArrays *
 CXformUtils::PdrgpdrgppartdigCandidates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpressionArray *pdrgpexprScalar,
 	CColRef2dArray *pdrgpdrgpcrPartKey,
@@ -4181,7 +4170,7 @@ CXformUtils::PdrgpdrgppartdigCandidates
 CPartConstraint *
 CXformUtils::PpartcnstrUpdateCovered
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpressionArray *pdrgpexprScalar,
 	CPartConstraint *ppartcnstrCovered,
@@ -4251,7 +4240,7 @@ CXformUtils::PpartcnstrUpdateCovered
 CPartConstraint *
 CXformUtils::PpartcnstrDisjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CPartConstraint *ppartcnstrOld,
 	CPartConstraint *ppartcnstrNew
 	)
@@ -4279,7 +4268,7 @@ CXformUtils::PpartcnstrDisjunction
 SPartDynamicIndexGetInfo *
 CXformUtils::PpartdigDynamicGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexprScalar,
 	CPartConstraint *ppartcnstrCovered,
 	CPartConstraint *ppartcnstrRel
@@ -4306,7 +4295,7 @@ CXformUtils::PpartdigDynamicGet
 CExpression *
 CXformUtils::PexprRemapColumns
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefArray *pdrgpcrA,
 	CColRefArray *pdrgpcrRemappedA,
@@ -4337,7 +4326,7 @@ CXformUtils::PexprRemapColumns
 CExpression *
 CXformUtils::PexprPartialDynamicIndexGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CLogicalDynamicGet *popGet,
 	ULONG ulOriginOpId,
 	CExpressionArray *pdrgpexprIndex,
@@ -4460,7 +4449,7 @@ CXformUtils::PexprPartialDynamicIndexGet
 BOOL
 CXformUtils::FJoinPredOnSingleChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -4512,7 +4501,7 @@ CXformUtils::FJoinPredOnSingleChild
 CExpression *
 CXformUtils::PexprCTEConsumer
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulCTEId,
 	CColRefArray *colref_array
 	)
@@ -4536,7 +4525,7 @@ CXformUtils::PexprCTEConsumer
 CColRefArray *
 CXformUtils::PdrgpcrReorderedSubsequence
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	ULongPtrArray *pdrgpulIndexesOfRefs
 	)
@@ -4572,7 +4561,7 @@ CXformUtils::PdrgpcrReorderedSubsequence
 BOOL
 CXformUtils::FMergeWithPreviousBitmapIndexProbe
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprBitmap,
 	CExpression *pexprRecheck,
 	CExpressionArray *pdrgpexprBitmap,
@@ -4633,7 +4622,7 @@ CXformUtils::FMergeWithPreviousBitmapIndexProbe
 CExpression *
 CXformUtils::PexprWinFuncAgg2ScalarAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprWinFunc
 	)
 {
@@ -4695,7 +4684,7 @@ CXformUtils::PexprWinFuncAgg2ScalarAgg
 void
 CXformUtils::MapPrjElemsWithDistinctAggs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprPrjList,
 	ExprToExprArrayMap **pphmexprdrgpexpr, // output: created map
 	ULONG *pulDifferentDQAs // output: number of DQAs with different arguments
@@ -4830,7 +4819,7 @@ CXformUtils::ICmpPrjElemsArr
 CExpressionArrays *
 CXformUtils::PdrgpdrgpexprSortedPrjElemsArray
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ExprToExprArrayMap *phmexprdrgpexpr
 	)
 {
@@ -4879,7 +4868,7 @@ CXformUtils::PdrgpdrgpexprSortedPrjElemsArray
 CExpression *
 CXformUtils::PexprGbAggOnCTEConsumer2Join
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprGbAgg
 	)
 {

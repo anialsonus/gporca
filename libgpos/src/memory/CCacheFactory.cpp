@@ -10,6 +10,7 @@
 //---------------------------------------------------------------------------
 
 
+#include "gpos/io/ioutils.h"
 #include "gpos/memory/CAutoMemoryPool.h"
 #include "gpos/memory/CCache.h"
 #include "gpos/memory/CCacheFactory.h"
@@ -29,7 +30,7 @@ CCacheFactory *CCacheFactory::m_factory = NULL;
 //---------------------------------------------------------------------------
 CCacheFactory::CCacheFactory
 	(
-		IMemoryPool *mp
+		CMemoryPool *mp
 	)
 	:
 	m_mp(mp)
@@ -46,7 +47,7 @@ CCacheFactory::CCacheFactory
 //		Returns a pointer to allocated memory pool
 //
 //---------------------------------------------------------------------------
-IMemoryPool *
+CMemoryPool *
 CCacheFactory::Pmp() const
 {
 	return m_mp;
@@ -70,7 +71,7 @@ CCacheFactory::Init()
 	GPOS_RESULT res = GPOS_OK;
 
 	// create cache factory memory pool
-	IMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->Create
+	CMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->Create
 							(
 							CMemoryPoolManager::EatTracker,
 							true /*fThreadSafe*/,
@@ -118,7 +119,7 @@ CCacheFactory::Shutdown()
 	GPOS_ASSERT(NULL != factory &&
 			    "Cache factory has not been initialized");
 
-	IMemoryPool *mp = factory->m_mp;
+	CMemoryPool *mp = factory->m_mp;
 
 	// destroy cache factory
 	CCacheFactory::m_factory = NULL;

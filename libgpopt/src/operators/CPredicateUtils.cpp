@@ -189,7 +189,7 @@ CPredicateUtils::FValidRefsOnly
 BOOL 
 CPredicateUtils::FConjunctionOfEqComparisons
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -320,7 +320,7 @@ CPredicateUtils::CollectDisjuncts
 CExpressionArray *
 CPredicateUtils::PdrgpexprConjuncts
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -334,7 +334,7 @@ CPredicateUtils::PdrgpexprConjuncts
 CExpressionArray *
 CPredicateUtils::PdrgpexprDisjuncts
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -350,7 +350,7 @@ CPredicateUtils::PdrgpexprDisjuncts
 CExpressionArray *
 CPredicateUtils::PdrgpexprExpandDisjuncts
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexprDisjuncts
 	)
 {
@@ -405,7 +405,7 @@ CPredicateUtils::PdrgpexprExpandDisjuncts
 CExpressionArray *
 CPredicateUtils::PdrgpexprExpandConjuncts
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexprConjuncts
 	)
 {
@@ -690,7 +690,7 @@ CPredicateUtils::FIdentCompare
 CExpression *
 CPredicateUtils::PexprConjDisj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr,
 	BOOL fConjunction
 	)
@@ -761,7 +761,7 @@ CPredicateUtils::PexprConjDisj
 CExpression *
 CPredicateUtils::PexprConjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr
 	)
 {
@@ -772,7 +772,7 @@ CPredicateUtils::PexprConjunction
 CExpression *
 CPredicateUtils::PexprDisjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr
 	)
 {
@@ -783,7 +783,7 @@ CPredicateUtils::PexprDisjunction
 CExpression *
 CPredicateUtils::PexprConjDisj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOne,
 	CExpression *pexprTwo,
 	BOOL fConjunction
@@ -826,7 +826,7 @@ CPredicateUtils::PexprConjDisj
 CExpression *
 CPredicateUtils::PexprConjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOne,
 	CExpression *pexprTwo
 	)
@@ -838,7 +838,7 @@ CPredicateUtils::PexprConjunction
 CExpression *
 CPredicateUtils::PexprDisjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOne,
 	CExpression *pexprTwo
 	)
@@ -850,7 +850,7 @@ CPredicateUtils::PexprDisjunction
 CExpressionArray *
 CPredicateUtils::PdrgpexprPlainEqualities
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr
 	)
 {
@@ -932,7 +932,7 @@ CPredicateUtils::FSelfComparison
 CExpression *
 CPredicateUtils::PexprEliminateSelfComparison
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1052,7 +1052,7 @@ CPredicateUtils::FINDF
 CExpression *
 CPredicateUtils::PexprINDFConjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *pdrgpcrFirst,
 	CColRefArray *pdrgpcrSecond
 	)
@@ -1115,13 +1115,16 @@ CPredicateUtils::FCompareIdentToConst
 	CExpression *pexprRight = (*pexpr)[1];
 
 	// left side must be scalar ident
-	if (COperator::EopScalarIdent != pexprLeft->Pop()->Eopid())
+
+	if (!(CUtils::FScalarIdent(pexprLeft) ||
+				CCastUtils::FBinaryCoercibleCastedScId(pexprLeft)))
 	{
 		return false;
 	}
 
 	// right side must be a constant
-	if (COperator::EopScalarConst != pexprRight->Pop()->Eopid())
+	if (!(CUtils::FScalarConst(pexprRight) ||
+		  CCastUtils::FBinaryCoercibleCastedConst(pexprRight)))
 	{
 		return false;
 	}
@@ -1154,6 +1157,42 @@ CPredicateUtils::FIdentIDFConst
 
 	// right side must be a constant
 	if (COperator::EopScalarConst != pexprRight->Pop()->Eopid())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+// is the given expression of the form (col = col)
+BOOL
+CPredicateUtils::FEqIdentsOfSameType
+	(
+	CExpression *pexpr
+	)
+{
+	if (!CPredicateUtils::IsEqualityOp(pexpr))
+	{
+		return false;
+	}
+	CExpression *pexprLeft = (*pexpr)[0];
+	CExpression *pexprRight = (*pexpr)[1];
+
+	// left side must be scalar ident
+	if (COperator::EopScalarIdent != pexprLeft->Pop()->Eopid())
+	{
+		return false;
+	}
+
+	// right side must be a scalar ident
+	if (COperator::EopScalarIdent != pexprRight->Pop()->Eopid())
+	{
+		return false;
+	}
+
+	CScalarIdent *left_ident = CScalarIdent::PopConvert(pexprLeft->Pop());
+	CScalarIdent *right_ident = CScalarIdent::PopConvert(pexprRight->Pop());
+	if (!left_ident->MdidType()->Equals(right_ident->MdidType()))
 	{
 		return false;
 	}
@@ -1216,6 +1255,41 @@ CPredicateUtils::FIdentCompareConstIgnoreCast
 	}
 
 	return false;
+}
+
+// is the given expression a comparison between a const and a const
+BOOL
+CPredicateUtils::FCompareConstToConstIgnoreCast
+	(
+	CExpression *pexpr
+	)
+{
+	COperator *pop = pexpr->Pop();
+
+	if (COperator::EopScalarCmp != pop->Eopid())
+	{
+		return false;
+	}
+
+	CExpression *pexprLeft = (*pexpr)[0];
+	CExpression *pexprRight = (*pexpr)[1];
+
+	// left side must be scalar const
+
+	if (!(CUtils::FScalarConst(pexprLeft) ||
+				CCastUtils::FBinaryCoercibleCastedConst(pexprLeft)))
+	{
+		return false;
+	}
+
+	// right side must be a constant
+	if (!(CUtils::FScalarConst(pexprRight) ||
+		  CCastUtils::FBinaryCoercibleCastedConst(pexprRight)))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 // is the given expression an array comparison between scalar ident
@@ -1331,7 +1405,7 @@ CPredicateUtils::FCompareIdentToConstArray
 CExpression *
 CPredicateUtils::PexprPartPruningPredicate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CExpressionArray *pdrgpexpr,
 	CColRef *pcrPartKey,
 	CExpression *pexprCol,	// const selection predicate on the given column obtained from query
@@ -1403,7 +1477,7 @@ CPredicateUtils::PexprPartPruningPredicate
 CExpressionArray *
 CPredicateUtils::PdrgpexprAppendConjunctsDedup
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexpr,
 	CExpression *pexpr
 	)
@@ -1536,7 +1610,7 @@ CPredicateUtils::FScArrayCmpOnColumn
 BOOL
 CPredicateUtils::FDisjunctionOnColumn
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRef *colref,
 	CColRefSet *pcrsAllowedRefs
@@ -1582,7 +1656,7 @@ CPredicateUtils::FRangeComparison
 CExpression *
 CPredicateUtils::PexprExtractPredicatesOnPartKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CColRef2dArray *pdrgpdrgpcrPartKeys,
 	CColRefSet *pcrsAllowedRefs,
@@ -1678,7 +1752,7 @@ CPredicateUtils::PexprExtractPredicatesOnPartKeys
 CExpression *
 CPredicateUtils::PexprPredicateCol
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraint *pcnstr,
 	CColRef *colref,
 	BOOL fUseConstraints
@@ -1832,7 +1906,7 @@ CPredicateUtils::FColumnDisjunctionOfConst
 CExpression *
 CPredicateUtils::PexprIndexLookupKeyOnLeft
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprScalar,
 	const IMDIndex *pmdindex,
@@ -1888,7 +1962,7 @@ CPredicateUtils::PexprIndexLookupKeyOnLeft
 CExpression *
 CPredicateUtils::PexprIndexLookupKeyOnRight
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprScalar,
 	const IMDIndex *pmdindex,
@@ -1933,7 +2007,7 @@ CPredicateUtils::PexprIndexLookupKeyOnRight
 CExpression *
 CPredicateUtils::PexprIndexLookup
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexprScalar,
 	const IMDIndex *pmdindex,
@@ -1955,10 +2029,12 @@ CPredicateUtils::PexprIndexLookup
 		cmptype = CUtils::ParseCmpType(CScalarArrayCmp::PopConvert(pexprScalar->Pop())->MdIdOp());
 	}
 
+	BOOL gin_or_gist_index = (pmdindex->IndexType() == IMDIndex::EmdindGist || pmdindex->IndexType() == IMDIndex::EmdindGin);
+
 	if (cmptype == IMDType::EcmptNEq ||
 		cmptype == IMDType::EcmptIDF ||
-		(cmptype == IMDType::EcmptOther && pmdindex->IndexType() != IMDIndex::EmdindGist) || // only GiST indexes with a comparison type other are ok
-		(pmdindex->IndexType() == IMDIndex::EmdindGist && pexprScalar->Arity() < 2)) // we do not support index expressions for GiST indexes
+		(cmptype == IMDType::EcmptOther && !gin_or_gist_index) || // only GiST indexes with a comparison type other are ok
+		(gin_or_gist_index && pexprScalar->Arity() < 2)) // we do not support index expressions for GiST indexes
 	{
 		return NULL;
 	}
@@ -1982,7 +2058,7 @@ CPredicateUtils::PexprIndexLookup
 void
 CPredicateUtils::ExtractIndexPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpressionArray *pdrgpexprPredicate,
 	const IMDIndex *pmdindex,
@@ -2060,7 +2136,7 @@ CPredicateUtils::ExtractIndexPredicates
 void
 CPredicateUtils::SeparateOuterRefs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CColRefSet *outer_refs,
 	CExpression **ppexprLocal,
@@ -2112,7 +2188,7 @@ CPredicateUtils::SeparateOuterRefs
 CExpression *
 CPredicateUtils::PexprInverseComparison
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprCmp
 	)
 {
@@ -2135,7 +2211,7 @@ CPredicateUtils::PexprInverseComparison
 CExpression *
 CPredicateUtils::PexprPruneSuperfluosEquality
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -2214,11 +2290,18 @@ CPredicateUtils::FCheckPredicateImplication
 	CExpression *pexprPred
 	)
 {
-	// currently restrict testing implication to only equality of column references
-	return COperator::EopScalarCmp == pexprPred->Pop()->Eopid() &&
-		IMDType::EcmptEq == CScalarCmp::PopConvert(pexprPred->Pop())->ParseCmpType() &&
-		COperator::EopScalarIdent == (*pexprPred)[0]->Pop()->Eopid() &&
-		COperator::EopScalarIdent == (*pexprPred)[1]->Pop()->Eopid();
+	// currently restrict testing implication to only equality of column references on scalar
+	// ident and binary coercible casted idents
+	if (COperator::EopScalarCmp == pexprPred->Pop()->Eopid() &&
+		IMDType::EcmptEq == CScalarCmp::PopConvert(pexprPred->Pop())->ParseCmpType())
+	{
+		CExpression *pexprLeft = (*pexprPred)[0];
+		CExpression *pexprRight = (*pexprPred)[1];
+		return ((COperator::EopScalarIdent == pexprLeft->Pop()->Eopid() ||
+				 CCastUtils::FBinaryCoercibleCastedScId(pexprLeft)) &&
+				(COperator::EopScalarIdent == pexprRight->Pop()->Eopid() || CCastUtils::FBinaryCoercibleCastedScId(pexprRight)));
+	}
+	return false;
 }
 
 // Given a predicate and a list of equivalence classes, return true if that predicate is
@@ -2258,7 +2341,7 @@ CPredicateUtils::FImpliedPredicate
 CExpression *
 CPredicateUtils::PexprRemoveImpliedConjuncts
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CExpressionHandle &exprhdl
 	)
@@ -2308,7 +2391,7 @@ CPredicateUtils::PexprRemoveImpliedConjuncts
 BOOL
 CPredicateUtils::FValidSemiJoinCorrelations
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOuter,
 	CExpression *pexprInner,
 	CExpressionArray *pdrgpexprCorrelations
@@ -2346,7 +2429,7 @@ CPredicateUtils::FValidSemiJoinCorrelations
 BOOL
 CPredicateUtils::FSimpleEqualityUsingCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CColRefSet *pcrs
 	)
@@ -2379,7 +2462,7 @@ CPredicateUtils::FSimpleEqualityUsingCols
 CExpression *
 CPredicateUtils::PexprReplaceColsWithNulls
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CColRefSet *pcrs
 	)
@@ -2423,7 +2506,7 @@ CPredicateUtils::PexprReplaceColsWithNulls
 BOOL
 CPredicateUtils::FNullRejecting
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CColRefSet *pcrs
 	)
@@ -2650,7 +2733,7 @@ CPredicateUtils::FConvertToCNF
 void
 CPredicateUtils::CollectGrandChildrenUnionUnionAll
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	ULONG child_index,
 	CExpressionArray *pdrgpexprResult,
@@ -2840,6 +2923,36 @@ CPredicateUtils::FBuiltInComparisonIsVeryStrict(IMDId *mdid)
 		// this operator might also qualify but unfortunately we can't be sure
 		return false;
 	}
+}
+
+BOOL
+CPredicateUtils::ExprContainsOnlyStrictComparisons(CMemoryPool *mp, CExpression *expr)
+{
+	CExpressionArray *conjuncts = PdrgpexprConjuncts(mp, expr);
+	CMDAccessor *mda = COptCtxt::PoctxtFromTLS()->Pmda();
+
+	BOOL result = true;
+	for (ULONG ul = 0; ul < conjuncts->Size(); ++ul)
+	{
+		CExpression *conjunct = (*conjuncts)[ul];
+		if (FComparison(conjunct))
+		{
+			CScalarCmp *pscalarCmp = CScalarCmp::PopConvert(conjunct->Pop());
+			if (!CMDAccessorUtils::FScalarOpReturnsNullOnNullInput(mda, pscalarCmp->MdIdOp()))
+			{
+				result = false;
+				break;
+			}
+		}
+		else
+		{
+			result = false;
+			break;
+		}
+	}
+
+	conjuncts->Release();
+	return result;
 }
 
 // EOF

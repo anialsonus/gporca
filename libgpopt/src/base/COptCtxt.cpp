@@ -11,7 +11,6 @@
 
 #include "gpos/base.h"
 #include "gpos/common/CAutoP.h"
-#include "gpos/sync/CAutoMutex.h"
 
 #include "naucrates/traceflags/traceflags.h"
 #include "gpopt/base/CColRefSet.h"
@@ -36,7 +35,7 @@ ULONG COptCtxt::m_ulFirstValidPartId = 1;
 //---------------------------------------------------------------------------
 COptCtxt::COptCtxt
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColumnFactory *col_factory,
 	CMDAccessor *md_accessor,
 	IConstExprEvaluator *pceeval,
@@ -102,7 +101,7 @@ COptCtxt::~COptCtxt()
 COptCtxt *
 COptCtxt::PoctxtCreate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	IConstExprEvaluator *pceeval,
 	COptimizerConfig *optimizer_config

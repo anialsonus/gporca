@@ -53,7 +53,7 @@ static CHAR szExprPlusOpPrefix[] =	"+--";
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CGroupExpression *pgexpr
 	)
@@ -91,7 +91,7 @@ CExpression::CExpression
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CExpression *pexpr
 	)
@@ -130,7 +130,7 @@ CExpression::CExpression
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CExpression *pexprChildFirst,
 	CExpression *pexprChildSecond
@@ -173,7 +173,7 @@ CExpression::CExpression
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CExpression *pexprChildFirst,
 	CExpression *pexprChildSecond,
@@ -219,7 +219,7 @@ CExpression::CExpression
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CExpressionArray *pdrgpexpr
 	)
@@ -253,7 +253,7 @@ CExpression::CExpression
 //---------------------------------------------------------------------------
 CExpression::CExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CGroupExpression *pgexpr,
 	CExpressionArray *pdrgpexpr,
@@ -305,10 +305,6 @@ CExpression::~CExpression()
 
 		m_pop->Release();
 	}
-
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 }
 
 
@@ -786,7 +782,7 @@ CExpression::HasOuterRefs()
 CReqdPropPlan *
 CExpression::PrppCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CReqdPropPlan *prppInput
 	)
 {
@@ -812,7 +808,7 @@ CExpression::PrppCompute
 CReqdPropPlan *
 CExpression::PrppDecorate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CReqdPropPlan *prppInput
 	)
 {
@@ -955,7 +951,7 @@ CExpression::Matches
 CExpression *
 CExpression::PexprCopyWithRemappedColumns
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	UlongToColRefMap *colref_mapping,
 	BOOL must_exist
 	)
@@ -1367,7 +1363,7 @@ CExpression::UlHashDedup
 CExpression *
 CExpression::PexprRehydrate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CCostContext *pcc,
 	CExpressionArray *pdrgpexpr,
 	CDrvdPropCtxtPlan *pdpctxtplan

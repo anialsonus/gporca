@@ -165,6 +165,12 @@ const CDouble CCostModelParamsGPDB::DBitmapPageCostSmallNDV(204.3810);
 // default threshold of NDV for bitmap costing
 const CDouble CCostModelParamsGPDB::DBitmapNDVThreshold(200);
 
+// cost of a bitmap scan rebind
+const CDouble CCostModelParamsGPDB::DBitmapScanRebindCost(0.06);
+
+// see CCostModelGPDB::CostHashJoin() for why this is needed
+const CDouble CCostModelParamsGPDB::DPenalizeHJSkewUpperLimit(10.0);
+
 #define GPOPT_COSTPARAM_NAME_MAX_LENGTH		80
 
 // parameter names in the same order of param enumeration
@@ -232,7 +238,7 @@ const CHAR rgszCostParamNames[CCostModelParamsGPDB::EcpSentinel][GPOPT_COSTPARAM
 //---------------------------------------------------------------------------
 CCostModelParamsGPDB::CCostModelParamsGPDB
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	m_mp(mp)
@@ -295,6 +301,8 @@ CCostModelParamsGPDB::CCostModelParamsGPDB
 	m_rgpcp[EcpBitmapPageCostLargeNDV] = GPOS_NEW(mp) SCostParam(EcpBitmapPageCostLargeNDV, DBitmapPageCostLargeNDV, DBitmapPageCostLargeNDV - 1.0, DBitmapPageCostLargeNDV + 1.0);
 	m_rgpcp[EcpBitmapPageCostSmallNDV] = GPOS_NEW(mp) SCostParam(EcpBitmapPageCostSmallNDV, DBitmapPageCostSmallNDV, DBitmapPageCostSmallNDV - 1.0, DBitmapPageCostSmallNDV + 1.0);
 	m_rgpcp[EcpBitmapNDVThreshold] = GPOS_NEW(mp) SCostParam(EcpBitmapNDVThreshold, DBitmapNDVThreshold, DBitmapNDVThreshold - 1.0, DBitmapNDVThreshold + 1.0);
+	m_rgpcp[EcpBitmapScanRebindCost] = GPOS_NEW(mp) SCostParam(EcpBitmapScanRebindCost, DBitmapScanRebindCost, DBitmapScanRebindCost - 1.0, DBitmapScanRebindCost + 1.0);
+	m_rgpcp[EcpPenalizeHJSkewUpperLimit] = GPOS_NEW(mp) SCostParam(EcpPenalizeHJSkewUpperLimit, DPenalizeHJSkewUpperLimit, DPenalizeHJSkewUpperLimit - 1.0, DPenalizeHJSkewUpperLimit + 1.0);
 }
 
 

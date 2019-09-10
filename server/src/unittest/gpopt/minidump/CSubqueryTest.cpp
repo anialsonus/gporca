@@ -71,6 +71,11 @@ const CHAR *rgszSubqueryFileNames[] =
 		"../data/dxl/minidump/InSubqueryWithNotNullCol.mdp",
 		"../data/dxl/minidump/AnySubqueryWithVolatileComp.mdp",
 		"../data/dxl/minidump/AnySubqueryWithVolatileFunc.mdp",
+		"../data/dxl/minidump/SubqueryOuterRefTVF.mdp",
+		"../data/dxl/minidump/SubqueryOuterRefLimit.mdp",
+		"../data/dxl/minidump/Subquery-ExistsAllAggregates.mdp",
+		"../data/dxl/minidump/Subquery-ExistsAllAggregatesWithDisjuncts.mdp",
+		"../data/dxl/minidump/Subquery-AnyAllAggregates.mdp",
 	#ifndef GPOS_32BIT
 		// TODO:  - 05/14/2014: the plan generates a different plan only for
 		// 32-bit rhel

@@ -10,7 +10,6 @@
 //---------------------------------------------------------------------------
 
 #include "gpos/base.h"
-#include "gpos/sync/CAutoMutex.h"
 
 #include "gpopt/base/CCTEInfo.h"
 #include "gpopt/base/CCTEReq.h"
@@ -33,7 +32,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CCTEInfo::CCTEInfoEntry::CCTEInfoEntry
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprCTEProducer
 	)
 	:
@@ -59,7 +58,7 @@ CCTEInfo::CCTEInfoEntry::CCTEInfoEntry
 //---------------------------------------------------------------------------
 CCTEInfo::CCTEInfoEntry::CCTEInfoEntry
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprCTEProducer,
 	BOOL fUsed
 	)
@@ -174,7 +173,7 @@ ULONG CCTEInfo::CCTEInfoEntry::UlCTEId() const
 //---------------------------------------------------------------------------
 CCTEInfo::CCTEInfo
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	m_mp(mp),
@@ -353,11 +352,6 @@ CCTEInfo::DeriveProducerStats
 
 	CExpression *pexprCTEProducer = pcteinfoentry->Pexpr();
 
-	// for multi-threaded optimization two consumers can potentially try deriving
-	// stats on the producer at the same time, hence lock the mutex
-	CAutoMutex am(pcteinfoentry->m_mutex);
-	am.Lock();
-
 	// Given the subset of CTE consumer columns needed for statistics derivation,
 	// compute its corresponding set of columns in the CTE Producer
 	CColRefSet *pcrsCTEProducer = CUtils::PcrsCTEProducerColumns(m_mp, pcrsStat, popConsumer);
@@ -521,9 +515,6 @@ CCTEInfo::IncrementConsumers
 	else
 	{
 		// counter already exists - just increment it
-		// to be sure that no one else does this at the same time, lock the mutex
-		CAutoMutex am(pconsumercounter->m_mutex);
-		am.Lock();
 		pconsumercounter->Increment();
 	}
 }
@@ -540,7 +531,7 @@ CCTEInfo::IncrementConsumers
 CCTEReq *
 CCTEInfo::PcterProducers
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -568,7 +559,7 @@ CCTEInfo::PcterProducers
 CExpressionArray *
 CCTEInfo::PdrgPexpr
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -631,9 +622,6 @@ CCTEInfo::AddConsumerCols
 	CCTEInfoEntry *pcteinfoentry = m_phmulcteinfoentry->Find(&ulCTEId);
 	GPOS_ASSERT(NULL != pcteinfoentry);
 
-	CAutoMutex am(pcteinfoentry->m_mutex);
-	am.Lock();
-
 	pcteinfoentry->AddConsumerCols(colref_array);
 }
 
@@ -657,9 +645,6 @@ CCTEInfo::UlConsumerColPos
 
 	CCTEInfoEntry *pcteinfoentry = m_phmulcteinfoentry->Find(&ulCTEId);
 	GPOS_ASSERT(NULL != pcteinfoentry);
-
-	CAutoMutex am(pcteinfoentry->m_mutex);
-	am.Lock();
 
 	return pcteinfoentry->UlConsumerColPos(colref);
 }
@@ -761,7 +746,7 @@ CCTEInfo::MarkUnusedCTEs()
 UlongToColRefMap *
 CCTEInfo::PhmulcrConsumerToProducer
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulCTEId,
 	CColRefSet *pcrs, // set of columns to check
 	CColRefArray *pdrgpcrProducer // producer columns

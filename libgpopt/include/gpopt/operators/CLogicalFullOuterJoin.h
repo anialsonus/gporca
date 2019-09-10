@@ -35,7 +35,7 @@ namespace gpopt
 
 			// ctor
 			explicit
-			CLogicalFullOuterJoin(IMemoryPool *mp);
+			CLogicalFullOuterJoin(CMemoryPool *mp);
 
 			// dtor
 			virtual
@@ -74,7 +74,7 @@ namespace gpopt
 			virtual
 			CColRefSet *PcrsDeriveNotNull
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle & //exprhdl
 				)
 				const
@@ -85,13 +85,13 @@ namespace gpopt
 
 			// derive max card
 			virtual
-			CMaxCard Maxcard(IMemoryPool *mp, CExpressionHandle &exprhdl) const;
+			CMaxCard Maxcard(CMemoryPool *mp, CExpressionHandle &exprhdl) const;
 
 			// derive constraint property
 			virtual
 			CPropConstraint *PpcDeriveConstraint
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle & //exprhdl
 				)
 				const
@@ -107,7 +107,11 @@ namespace gpopt
 				)
 				const
 			{
-				// Low to prefer the stats coming from the equivalent UNION expression
+				// Disable stats derivation for CLogicalFullOuterJoin because it is
+				// currently not implemented. Instead rely on stats coming from the
+				// equivalent UNION expression (formed using ExfExpandFullOuterJoin).
+				// Also see CXformCTEAnchor2Sequence::Transform() and
+				// CXformCTEAnchor2TrivialSelect::Transform().
 				return EspLow;
 			}
 
@@ -116,7 +120,7 @@ namespace gpopt
 			//-------------------------------------------------------------------------------------
 
 			// candidate set of xforms
-			CXformSet *PxfsCandidates(IMemoryPool *mp) const;
+			CXformSet *PxfsCandidates(CMemoryPool *mp) const;
 
 			//-------------------------------------------------------------------------------------
 			//-------------------------------------------------------------------------------------

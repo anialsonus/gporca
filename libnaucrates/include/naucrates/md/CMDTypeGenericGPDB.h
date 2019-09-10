@@ -51,7 +51,7 @@ namespace gpmd
 	{		
 		private:
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 			
 			// DXL for object
 			const CWStringDynamic *m_dxl_str;
@@ -112,7 +112,10 @@ namespace gpmd
 
 			// is type hashable
 			BOOL m_is_hashable;
-		
+
+			// is type merge joinable using '='
+			BOOL m_is_merge_joinable;
+
 			// is type composite
 			BOOL m_is_composite_type;
 
@@ -135,7 +138,7 @@ namespace gpmd
 			// ctor
 			CMDTypeGenericGPDB
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				IMDId *mdid,
 				CMDName *mdname,
 				BOOL is_redistributable,
@@ -155,6 +158,7 @@ namespace gpmd
 				IMDId *pmdidSum,
 				IMDId *pmdidCount,
 				BOOL is_hashable,
+				BOOL is_merge_joinable,
 				BOOL is_composite_type,
 				IMDId *mdid_base_relation,
 				IMDId *mdid_type_array,
@@ -229,6 +233,13 @@ namespace gpmd
 			{
 				return m_is_hashable;
 			}
+
+			// is type merge joinable on '='
+			virtual
+			BOOL IsMergeJoinable() const
+			{
+				return m_is_merge_joinable;
+			}
 			
 			// id of the relation corresponding to a composite type
 			virtual 
@@ -253,7 +264,7 @@ namespace gpmd
 
 			// create typed datum from DXL datum
 			virtual
-			IDatum *GetDatumForDXLDatum(IMemoryPool *mp, const CDXLDatum *dxl_datum) const;
+			IDatum *GetDatumForDXLDatum(CMemoryPool *mp, const CDXLDatum *dxl_datum) const;
 
 			// return the GPDB length
 			INT
@@ -271,15 +282,15 @@ namespace gpmd
 
 			// generate the DXL datum from IDatum
 			virtual
-			CDXLDatum* GetDatumVal(IMemoryPool *mp, IDatum *datum) const;
+			CDXLDatum* GetDatumVal(CMemoryPool *mp, IDatum *datum) const;
 
 			// generate the DXL datum representing null value
 			virtual
-			CDXLDatum* GetDXLDatumNull(IMemoryPool *mp) const;
+			CDXLDatum* GetDXLDatumNull(CMemoryPool *mp) const;
 
 			// generate the DXL scalar constant from IDatum
 			virtual
-			CDXLScalarConstValue* GetDXLOpScConst(IMemoryPool *mp, IDatum *datum) const;
+			CDXLScalarConstValue* GetDXLOpScConst(CMemoryPool *mp, IDatum *datum) const;
 
 #ifdef GPOS_DEBUG
 			// debug print of the type in the provided stream
@@ -295,7 +306,7 @@ namespace gpmd
 			static
 			CDXLDatum *CreateDXLDatumVal
 						(
-						IMemoryPool *mp,
+						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
 						BOOL is_passed_by_value,
@@ -310,7 +321,7 @@ namespace gpmd
 			static
 			CDXLDatum *CreateDXLDatumStatsDoubleMappable
 						(
-						IMemoryPool *mp,
+						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
 						BOOL is_passed_by_value,
@@ -325,7 +336,7 @@ namespace gpmd
 			static
 			CDXLDatum *CreateDXLDatumStatsIntMappable
 						(
-						IMemoryPool *mp,
+						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
 						BOOL is_passed_by_value,

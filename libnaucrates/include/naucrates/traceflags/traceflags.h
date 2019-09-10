@@ -85,8 +85,8 @@ namespace gpos
 		///////////////////// engine flags ////////////////////
 		///////////////////////////////////////////////////////
 
-		// use threads in optimization engine
-		EopttraceParallel = 103000,
+		// first engine flag
+		EopttraceFirstEngineFlag = 103000, // not currently used
 
 		// produce a minidump
 		EopttraceMinidump = 103001,
@@ -177,6 +177,13 @@ namespace gpos
 
 		// Eager Agg 
 		EopttraceEnableEagerAgg = 103030,
+
+		// Translate unused colrefs. specifically translate all colrefs, including ones
+		// that are not referenced in the query.
+		EopttraceTranslateUnusedColrefs = 103031,
+
+		// ExpandFullJoin
+		EopttraceExpandFullJoin = 103032,
 		///////////////////////////////////////////////////////
 		///////////////////// statistics flags ////////////////
 		//////////////////////////////////////////////////////
@@ -198,6 +205,9 @@ namespace gpos
 
 		// Always pick plans that split scalar DQA into a plan with 3-stage aggregation
 		EopttraceForceThreeStageScalarDQA = 104005,
+
+		// Penalize HashJoins with a skewed hash distribute under them
+		EopttracePenalizeSkewedHashJoin = 104006,
 
 		///////////////////////////////////////////////////////
 		/////////// constant expression evaluator flags ///////
@@ -222,7 +232,7 @@ extern "C"
 #endif // __cplusplus
 
 // set trace flags based on given bit set, and return two output bit sets of old trace flags values
-void SetTraceflags(gpos::IMemoryPool *mp, const gpos::CBitSet *input_bitset, gpos::CBitSet **enable_bitset, gpos::CBitSet **disabled_bitset);
+void SetTraceflags(gpos::CMemoryPool *mp, const gpos::CBitSet *input_bitset, gpos::CBitSet **enable_bitset, gpos::CBitSet **disabled_bitset);
 
 // restore trace flags values based on given bit sets
 void ResetTraceflags(gpos::CBitSet *enable_bitset, gpos::CBitSet *disabled_bitset);

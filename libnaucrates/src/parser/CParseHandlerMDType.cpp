@@ -39,7 +39,7 @@ XERCES_CPP_NAMESPACE_USE
 //---------------------------------------------------------------------------
 CParseHandlerMDType::CParseHandlerMDType
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CParseHandlerManager *parse_handler_mgr,
 	CParseHandlerBase *parse_handler_root
 	)
@@ -162,6 +162,15 @@ CParseHandlerMDType::StartElement
 										m_parse_handler_mgr->GetDXLMemoryManager(),
 										attrs,
 										EdxltokenMDTypeHashable,
+										EdxltokenMDType
+										);
+
+			// parse if type is merge joinable
+			m_is_merge_joinable = CDXLOperatorFactory::ExtractConvertAttrValueToBool
+										(
+										m_parse_handler_mgr->GetDXLMemoryManager(),
+										attrs,
+										EdxltokenMDTypeMergeJoinable,
 										EdxltokenMDType
 										);
 
@@ -453,6 +462,7 @@ CParseHandlerMDType::EndElement
 										m_mdid_sum_op,
 										m_mdid_count_op,
 										m_is_hashable,
+										m_is_merge_joinable,
 										m_is_composite,
 										m_mdid_base_rel,
 										m_mdid_array_type,

@@ -37,8 +37,8 @@ namespace gpopt
 		
 			// ctors
 			explicit
-			CPhysicalTableScan(IMemoryPool *mp);
-			CPhysicalTableScan(IMemoryPool *, const CName *, CTableDescriptor *, CColRefArray *);
+			CPhysicalTableScan(CMemoryPool *mp);
+			CPhysicalTableScan(CMemoryPool *, const CName *, CTableDescriptor *, CColRefArray *);
 
 			// ident accessors
 			virtual 
@@ -64,7 +64,7 @@ namespace gpopt
 			virtual
 			CPartIndexMap *PpimDerive
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &, // exprhdl
 				CDrvdPropCtxt * //pdpctxt
 				)
@@ -100,7 +100,7 @@ namespace gpopt
 			virtual
 			IStatistics *PstatsDerive
 				(
-				IMemoryPool *, // mp
+				CMemoryPool *, // mp
 				CExpressionHandle &, // exprhdl
 				CReqdPropPlan *, // prpplan
 				IStatisticsArray * //stats_ctxt
@@ -110,6 +110,18 @@ namespace gpopt
 				GPOS_ASSERT(!"stats derivation during costing for table scan is invalid");
 
 				return NULL;
+			}
+
+			virtual
+			CRewindabilitySpec *PrsDerive
+				(
+				CMemoryPool *mp,
+				CExpressionHandle & // exprhdl
+				)
+				const
+			{
+				// mark-restorability of output is always true
+				return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtMarkRestore, CRewindabilitySpec::EmhtNoMotion);
 			}
 
 

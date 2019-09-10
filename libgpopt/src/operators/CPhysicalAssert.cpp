@@ -30,7 +30,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalAssert::CPhysicalAssert
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CException *pexc
 	)
 	:
@@ -73,7 +73,7 @@ CPhysicalAssert::~CPhysicalAssert()
 CColRefSet *
 CPhysicalAssert::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -98,7 +98,7 @@ CPhysicalAssert::PcrsRequired
 COrderSpec *
 CPhysicalAssert::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
@@ -124,7 +124,7 @@ CPhysicalAssert::PosRequired
 CDistributionSpec *
 CPhysicalAssert::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -160,7 +160,7 @@ CPhysicalAssert::PdsRequired
 CRewindabilitySpec *
 CPhysicalAssert::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -170,11 +170,6 @@ CPhysicalAssert::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-	// if there are outer references, then we need a materialize
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -191,7 +186,7 @@ CPhysicalAssert::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalAssert::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG  child_index,
@@ -216,7 +211,7 @@ CPhysicalAssert::PppsRequired
 CCTEReq *
 CPhysicalAssert::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -244,7 +239,7 @@ CPhysicalAssert::PcteRequired
 COrderSpec *
 CPhysicalAssert::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -264,7 +259,7 @@ CPhysicalAssert::PosDerive
 CDistributionSpec *
 CPhysicalAssert::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -284,12 +279,12 @@ CPhysicalAssert::PdsDerive
 CRewindabilitySpec *
 CPhysicalAssert::PrsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	return PrsDerivePassThruOuter(exprhdl);
+	return PrsDerivePassThruOuter(mp, exprhdl);
 }
 
 

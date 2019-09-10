@@ -15,7 +15,7 @@
 
 
 #include "gpos/base.h"
-#include "gpos/memory/IMemoryPool.h"
+#include "gpos/memory/CMemoryPool.h"
 
 #include "naucrates/dxl/operators/CDXLScalarBoolExpr.h"
 #include "naucrates/dxl/operators/CDXLScalarWindowRef.h"
@@ -101,7 +101,7 @@ namespace gpopt
 			};
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 			
 			// metadata accessor
 			CMDAccessor *m_pmda;
@@ -288,7 +288,9 @@ namespace gpopt
 			CDXLNode *PdxlnWindow(CExpression *pexprSeqPrj, CColRefArray *colref_array, CDistributionSpecArray *pdrgpdsBaseTables, ULONG *pulNonGatherMotions, BOOL *pfDML);
 		
 			CDXLNode *PdxlnNLJoin(CExpression *pexprNLJ, CColRefArray *colref_array, CDistributionSpecArray *pdrgpdsBaseTables, ULONG *pulNonGatherMotions, BOOL *pfDML);
-			
+
+			CDXLNode *PdxlnMergeJoin(CExpression *pexprMJ, CColRefArray *colref_array, CDistributionSpecArray *pdrgpdsBaseTables, ULONG *pulNonGatherMotions, BOOL *pfDML);
+
 			CDXLNode *PdxlnHashJoin(CExpression *pexprHJ, CColRefArray *colref_array, CDistributionSpecArray *pdrgpdsBaseTables, ULONG *pulNonGatherMotions, BOOL *pfDML);
 
 			CDXLNode *PdxlnCorrelatedNLJoin(CExpression *pexprNLJ, CColRefArray *colref_array, CDistributionSpecArray *pdrgpdsBaseTables, ULONG *pulNonGatherMotions, BOOL *pfDML);
@@ -645,7 +647,7 @@ namespace gpopt
 			// translate a window frame
 			CDXLWindowFrame *GetWindowFrame(CWindowFrame *pwf);
 
-			CDXLTableDescr *MakeDXLTableDescr(const CTableDescriptor *ptabdesc, const CColRefArray *pdrgpcrOutput);
+			CDXLTableDescr *MakeDXLTableDescr(const CTableDescriptor *ptabdesc, const CColRefArray *pdrgpcrOutput, const CReqdPropPlan *requiredProperties);
 
 			// compute physical properties like operator cost from the expression
 			CDXLPhysicalProperties *GetProperties(const CExpression *pexpr);
@@ -734,7 +736,7 @@ namespace gpopt
 			// combines the ordered columns and required columns into a single list
 			CColRefArray *PdrgpcrMerge
 					(
-					IMemoryPool *mp,
+					CMemoryPool *mp,
 					CColRefArray *pdrgpcrOrder,
 					CColRefArray *pdrgpcrRequired
 					);
@@ -820,7 +822,7 @@ namespace gpopt
 			static
 			void AddBitmapFilterColumns
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CPhysicalScan *pop,
 				CExpression *pexprRecheckCond,
 				CExpression *pexprScalar,
@@ -830,7 +832,7 @@ namespace gpopt
 			// ctor
 			CTranslatorExprToDXL
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CMDAccessor *md_accessor,
 				IntPtrArray *pdrgpiSegments,
 				BOOL fInitColumnFactory = true

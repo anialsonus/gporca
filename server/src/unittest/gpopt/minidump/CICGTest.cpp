@@ -36,15 +36,19 @@ ULONG CICGTest::m_ulUnsupportedTestCounter = 0; // start from first unsupported 
 ULONG CICGTest::m_ulTestCounterPreferHashJoinToIndexJoin = 0;
 ULONG CICGTest::m_ulTestCounterPreferIndexJoinToHashJoin = 0;
 ULONG CICGTest::m_ulNegativeIndexApplyTestCounter = 0;
+ULONG CICGTest::m_ulTestCounterNoAdditionTraceFlag = 0;
 
 // minidump files
 const CHAR *rgszFileNames[] =
 	{
-		"../data/dxl/minidump/DisableLargeTableBroadcast.mdp",
 		"../data/dxl/minidump/InsertIntoNonNullAfterDroppingColumn.mdp",
 		"../data/dxl/minidump/OptimizerConfigWithSegmentsForCosting.mdp",
 		"../data/dxl/minidump/QueryMismatchedDistribution.mdp",
 		"../data/dxl/minidump/QueryMismatchedDistribution-DynamicIndexScan.mdp",
+		"../data/dxl/minidump/3WayJoinOnMultiDistributionColumnsTables.mdp",
+		"../data/dxl/minidump/3WayJoinOnMultiDistributionColumnsTablesNoMotion.mdp",
+		"../data/dxl/minidump/4WayJoinInferredPredsRemovedWith2Motion.mdp",
+		"../data/dxl/minidump/NoRedistributeOnAppend.mdp",
 
 #ifndef GPOS_DEBUG
 		// TODO:  - Jul 14 2015; disabling it for debug build to reduce testing time
@@ -54,7 +58,6 @@ const CHAR *rgszFileNames[] =
 		"../data/dxl/minidump/TPCH-Q5.mdp",
 		"../data/dxl/minidump/TPCDS-39-InnerJoin-JoinEstimate.mdp",
 		"../data/dxl/minidump/TPCH-Partitioned-256GB.mdp",
-		"../data/dxl/minidump/Tpcds-NonPart-Q70a.mdp",
 		// TODO:  - Jul 31st 2018; disabling it since new cost model picks up Indexed nested Loop Joi
 		// however the comment on file says that it should not pick Indexed Nested Loop Join.
 		// disabling it for now. Revisit this test when we upgrade scan cost model.
@@ -120,6 +123,7 @@ CICGTest::EresUnittest()
 		GPOS_UNITTEST_FUNC(CICGTest::EresUnittest_NegativeIndexApplyTests),
 
 		GPOS_UNITTEST_FUNC(CICGTest::EresUnittest_RunMinidumpTests),
+		GPOS_UNITTEST_FUNC(CICGTest::EresUnittest_RunTestsWithoutAdditionalTraceFlags),
 
 #ifndef GPOS_DEBUG
 		// This test is slow in debug build because it has to free a lot of memory structures
@@ -150,6 +154,24 @@ CICGTest::EresUnittest_RunMinidumpTests()
 	return CTestUtils::EresUnittest_RunTests(rgszFileNames, &m_ulTestCounter, GPOS_ARRAY_SIZE(rgszFileNames));
 }
 
+GPOS_RESULT
+CICGTest::EresUnittest_RunTestsWithoutAdditionalTraceFlags()
+{
+	const CHAR *rgszFileNames[] =
+	{
+		"../data/dxl/minidump/Union-On-HJNs.mdp",
+		"../data/dxl/minidump/Tpcds-NonPart-Q70a.mdp"
+	};
+	return CTestUtils::EresUnittest_RunTestsWithoutAdditionalTraceFlags
+			(
+			rgszFileNames,
+			&m_ulTestCounterNoAdditionTraceFlag,
+			GPOS_ARRAY_SIZE(rgszFileNames),
+			true,
+			true
+			);
+}
+
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -169,7 +191,7 @@ CICGTest::EresUnittest_RunUnsupportedMinidumpTests()
 	CAutoTraceFlag atf2(EopttraceDisableXformBase + CXform::ExfDynamicGet2DynamicTableScan, true);
 	
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcNone);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	
 	GPOS_RESULT eres = GPOS_OK;
 	const ULONG ulTests = GPOS_ARRAY_SIZE(unSupportedTestCases);
@@ -268,7 +290,7 @@ CICGTest::EresUnittest_NegativeIndexApplyTests()
 	CAutoTraceFlag atfNLJ(EopttraceDisableXformBase + CXform::ExfInnerJoin2NLJoin, true);
 
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcNone);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	GPOS_RESULT eres = GPOS_OK;
 	const ULONG ulTests = GPOS_ARRAY_SIZE(rgszNegativeIndexApplyFileNames);
@@ -419,7 +441,7 @@ GPOS_RESULT
 CICGTest::EresUnittest_PreferHashJoinVersusIndexJoinWhenRiskIsHigh()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// enable (Redistribute, Broadcast) hash join plans
 	CAutoTraceFlag atf(EopttraceEnableRedistributeBroadcastHashJoin, true /*value*/);

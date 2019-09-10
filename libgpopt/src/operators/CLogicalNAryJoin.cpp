@@ -29,7 +29,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CLogicalNAryJoin::CLogicalNAryJoin
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CLogicalJoin(mp)
@@ -49,7 +49,7 @@ CLogicalNAryJoin::CLogicalNAryJoin
 CMaxCard
 CLogicalNAryJoin::Maxcard
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -68,7 +68,7 @@ CLogicalNAryJoin::Maxcard
 CXformSet *
 CLogicalNAryJoin::PxfsCandidates
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	) 
 	const
 {
@@ -79,6 +79,7 @@ CLogicalNAryJoin::PxfsCandidates
 	(void) xform_set->ExchangeSet(CXform::ExfExpandNAryJoinMinCard);
 	(void) xform_set->ExchangeSet(CXform::ExfExpandNAryJoinDP);
 	(void) xform_set->ExchangeSet(CXform::ExfExpandNAryJoinGreedy);
+	(void) xform_set->ExchangeSet(CXform::ExfExpandNAryJoinDPv2);
 
 	return xform_set;
 }

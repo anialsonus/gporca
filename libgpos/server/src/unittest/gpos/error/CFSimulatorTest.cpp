@@ -40,8 +40,7 @@ CFSimulatorTest::EresUnittest()
 		};
 		
 	// ignore this test for FP simulation and time slicing check
-	if (CFSimulator::FSimulation() ||
-	    IWorker::m_enforce_time_slices)
+	if (CFSimulator::FSimulation() )
 	{
 		return GPOS_OK;
 	}
@@ -119,7 +118,7 @@ CFSimulatorTest::EresUnittest_OOM()
 {
 	// create memory pool of 128KB
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcStrict);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	GPOS_RESULT eres = GPOS_FAILED;
 

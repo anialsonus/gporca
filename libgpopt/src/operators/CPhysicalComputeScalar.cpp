@@ -35,7 +35,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalComputeScalar::CPhysicalComputeScalar
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp)
@@ -100,7 +100,7 @@ CPhysicalComputeScalar::Matches
 CColRefSet *
 CPhysicalComputeScalar::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -130,7 +130,7 @@ CPhysicalComputeScalar::PcrsRequired
 COrderSpec *
 CPhysicalComputeScalar::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
@@ -170,7 +170,7 @@ CPhysicalComputeScalar::PosRequired
 CDistributionSpec *
 CPhysicalComputeScalar::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -266,7 +266,7 @@ CPhysicalComputeScalar::PdsRequired
 CRewindabilitySpec *
 CPhysicalComputeScalar::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -276,12 +276,6 @@ CPhysicalComputeScalar::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-
-	// if there are outer references, then we need a materialize
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -297,7 +291,7 @@ CPhysicalComputeScalar::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalComputeScalar::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -322,7 +316,7 @@ CPhysicalComputeScalar::PppsRequired
 CCTEReq *
 CPhysicalComputeScalar::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -384,7 +378,7 @@ CPhysicalComputeScalar::FProvidesReqdCols
 COrderSpec *
 CPhysicalComputeScalar::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -404,7 +398,7 @@ CPhysicalComputeScalar::PosDerive
 CDistributionSpec *
 CPhysicalComputeScalar::PdsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -439,18 +433,18 @@ CPhysicalComputeScalar::PdsDerive
 CRewindabilitySpec *
 CPhysicalComputeScalar::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	CRewindabilitySpec *prsChild = PrsDerivePassThruOuter(exprhdl);
+	CRewindabilitySpec *prsChild = PrsDerivePassThruOuter(mp, exprhdl);
 
 	CDrvdPropScalar *pdpscalar = exprhdl.GetDrvdScalarProps(1 /*ulChildIndex*/);
 	if (pdpscalar->FHasNonScalarFunction() || IMDFunction::EfsVolatile == pdpscalar->Pfp()->Efs())
 	{
 		// ComputeScalar is not rewindable if it has non-scalar/volatile functions in project list
-		CRewindabilitySpec * prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, prsChild->Emht());
+		CRewindabilitySpec * prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, prsChild->Emht());
 		prsChild->Release();
 		return prs;
 	}

@@ -54,7 +54,7 @@ namespace gpopt
 			// ctors
 			CPhysicalIndexScan
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CIndexDescriptor *pindexdesc,
 				CTableDescriptor *ptabdesc,
 				ULONG ulOriginOpId,
@@ -122,7 +122,7 @@ namespace gpopt
 			virtual
 			COrderSpec *PosDerive
 							(
-							IMemoryPool *,//mp
+							CMemoryPool *,//mp
 							CExpressionHandle &//exprhdl
 							)
 							const
@@ -135,13 +135,25 @@ namespace gpopt
 			virtual
 			CPartIndexMap *PpimDerive
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &, // exprhdl
 				CDrvdPropCtxt * //pdpctxt
 				)
 				const
 			{
 				return GPOS_NEW(mp) CPartIndexMap(mp);
+			}
+
+			virtual
+			CRewindabilitySpec *PrsDerive
+				(
+				CMemoryPool *mp,
+				CExpressionHandle & // exprhdl
+				)
+				const
+			{
+				// rewindability of output is always true
+				return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtMarkRestore, CRewindabilitySpec::EmhtNoMotion);
 			}
 			
 			//-------------------------------------------------------------------------------------
@@ -169,7 +181,7 @@ namespace gpopt
 			virtual
 			IStatistics *PstatsDerive
 				(
-				IMemoryPool *, // mp
+				CMemoryPool *, // mp
 				CExpressionHandle &, // exprhdl
 				CReqdPropPlan *, // prpplan
 				IStatisticsArray * //stats_ctxt

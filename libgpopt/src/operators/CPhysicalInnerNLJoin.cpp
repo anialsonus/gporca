@@ -36,7 +36,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalInnerNLJoin::CPhysicalInnerNLJoin
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysicalNLJoin(mp)
@@ -81,7 +81,7 @@ CPhysicalInnerNLJoin::~CPhysicalInnerNLJoin()
 CDistributionSpec *
 CPhysicalInnerNLJoin::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -149,7 +149,7 @@ CPhysicalInnerNLJoin::PdsRequired
 					// create a matching hashed distribution request
 					BOOL fNullsColocated = pdshashed->FNullsColocated();
 					CDistributionSpecHashed *pdshashedEquiv = GPOS_NEW(mp) CDistributionSpecHashed(pdrgpexprMatching, fNullsColocated);
-
+					pdshashedEquiv->ComputeEquivHashExprs(mp, exprhdl);
 					return pdshashedEquiv;
 				}
 				pdrgpexprMatching->Release();

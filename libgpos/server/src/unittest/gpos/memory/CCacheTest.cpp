@@ -51,8 +51,7 @@ CCacheTest::EresUnittest()
 		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_Eviction),
 		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_Iteration),
 		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_DeepObject),
-		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_IterativeDeletion),
-		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_ConcurrentAccess)
+		GPOS_UNITTEST_FUNC(CCacheTest::EresUnittest_IterativeDeletion)
 		};
 
 	fUnique = true;
@@ -195,7 +194,7 @@ CCacheTest::CDeepObject::FMyEqual
 void
 CCacheTest::CDeepObject::AddEntry
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulKey,
 	ULONG ulVal
 	)
@@ -346,7 +345,7 @@ CCacheTest::EresUnittest_Refcount()
 	//Scope of the accessor when we insert
 	{
 		CSimpleObjectCacheAccessor ca(pcache);
-		IMemoryPool* mp = ca.Pmp();
+		CMemoryPool* mp = ca.Pmp();
 
 		pso = GPOS_NEW(mp) SSimpleObject(1, 2);
 		GPOS_ASSERT(1 == pso->RefCount());
@@ -404,7 +403,7 @@ CCacheTest::InsertOneElement(CCache<SSimpleObject*, ULONG*> *pCache, ULONG ulKey
 	SSimpleObject *pso = NULL;
 	{
 		CSimpleObjectCacheAccessor ca(pCache);
-		IMemoryPool *mp = ca.Pmp();
+		CMemoryPool *mp = ca.Pmp();
 		pso = GPOS_NEW(mp) SSimpleObject(ulKey, ulKey);
 		ca.Insert(&(pso->m_ulKey), pso);
 		GPOS_ASSERT(3 == pso->RefCount() && "Expected pso, cacheentry and cacheaccessor to have ownership");
@@ -684,7 +683,7 @@ CCacheTest::EresInsertDuplicates
 
 	{
 		CAutoMemoryPool amp;
-		IMemoryPool *mp = amp.Pmp();
+		CMemoryPool *mp = amp.Pmp();
 		CAutoTrace at(mp);
 		at.Os() << std::endl << "Total memory consumption by cache: " << pcache->TotalAllocatedSize() << " bytes";
 		at.Os() << std::endl << "Total memory consumption by memory manager: " << CMemoryPoolManager::GetMemoryPoolMgr()->TotalAllocatedSize() << " bytes";
@@ -780,7 +779,7 @@ CCacheTest::EresUnittest_DeepObject()
 	// insertion - scope for accessor
 	{
 		CDeepObjectCacheAccessor ca(pcache);
-		IMemoryPool *mp = ca.Pmp();
+		CMemoryPool *mp = ca.Pmp();
 		CDeepObject *pdo = GPOS_NEW(mp) CDeepObject();
 		pdo->AddEntry(mp, 1, 1);
 		pdo->AddEntry(mp, 2, 2);
@@ -798,7 +797,7 @@ CCacheTest::EresUnittest_DeepObject()
 		if (pcache->AllowsDuplicateKeys())
 		{
 			CDeepObjectCacheAccessor ca(pcache);
-			IMemoryPool *mp = ca.Pmp();
+			CMemoryPool *mp = ca.Pmp();
 			CDeepObject *pdoDuplicate = GPOS_NEW(mp) CDeepObject();
 			pdoDuplicate->AddEntry(mp, 1, 5);
 			pdoDuplicate->AddEntry(mp, 2, 5);
@@ -1011,196 +1010,6 @@ CCacheTest::EresUnittest_IterativeDeletion()
 				    "Incorrect number of remaining duplicates");
 
 	}
-
-	return GPOS_OK;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CCacheTest::PvInsertTask
-//
-//	@doc:
-//		A task that inserts entries in the cache
-//
-//---------------------------------------------------------------------------
-void *
-CCacheTest::PvInsertTask
-	(
-	 void * pv
-	)
-{
-	GPOS_CHECK_ABORT;
-
-	CCache<SSimpleObject*, ULONG*> *pcache = (CCache<SSimpleObject*, ULONG*> *) pv;
-	CCacheTest::EresInsertDuplicates(pcache);
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CCacheTest::PvLookupTask
-//
-//	@doc:
-//		A task that iterates over entries in the cache
-//
-//---------------------------------------------------------------------------
-void *
-CCacheTest::PvLookupTask
-	(
-	 void * pv
-	)
-{
-	CCache<SSimpleObject*, ULONG*> *pcache = (CCache<SSimpleObject*, ULONG*> *) pv;
-	CRandom rand;
-	for (ULONG i = 0; i<10; i++)
-	{
-		GPOS_CHECK_ABORT;
-
-		CSimpleObjectCacheAccessor ca(pcache);
-		ULONG ulkey =  rand.Next() % (10);
-		ca.Lookup(&ulkey);
-		SSimpleObject *pso = ca.Val();
-
-		if (NULL != pso)
-		{
-			// release object since there is no customer to release it after lookup and before CCache's cleanup
-			pso->Release();
-		}
-
-		while (NULL != pso)
-		{
-			GPOS_CHECK_ABORT;
-
-			pso = ca.Next();
-		}
-	}
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CCacheTest::PvDeleteTask
-//
-//	@doc:
-//		A task that iterates over entries in the cache and removes them
-//
-//---------------------------------------------------------------------------
-void *
-CCacheTest::PvDeleteTask
-	(
-	 void * pv
-	)
-{
-	CCache<SSimpleObject*, ULONG*> *pcache = (CCache<SSimpleObject*, ULONG*> *) pv;
-	CRandom rand;
-	for (ULONG i = 0; i< 10; i++)
-	{
-		GPOS_CHECK_ABORT;
-
-		CSimpleObjectCacheAccessor ca(pcache);
-		ULONG ulkey =  rand.Next() % (10);
-		ca.Lookup(&ulkey);
-
-		SSimpleObject *pso = ca.Val();
-
-		if (NULL != pso)
-		{
-			// release object since there is no customer to release it after lookup and before CCache's cleanup
-			pso->Release();
-		}
-
-		while (NULL != pso)
-		{
-			ca.MarkForDeletion();
-			pso = ca.Next();
-
-			GPOS_CHECK_ABORT;
-		}
-	}
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CCacheTest::EresUnittest_ConcurrentAccess
-//
-//	@doc:
-//		A test for multiple tasks accessing the same cache.
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CCacheTest::EresUnittest_ConcurrentAccess()
-{
-	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
-	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
-
-	// scope for cache auto pointer
-	{
-		GPOS_CHECK_ABORT;
-
-		CAutoP<CCache<SSimpleObject*, ULONG*> > apcache;
-		apcache = CCacheFactory::CreateCache<SSimpleObject*, ULONG*>
-					(
-					fUnique,
-					UNLIMITED_CACHE_QUOTA,
-					SSimpleObject::UlMyHash,
-					SSimpleObject::FMyEqual
-					);
-
-		CCache<SSimpleObject*, ULONG*> *pcache = apcache.Value();
-
-		// scope for ATP
-		{
-			GPOS_CHECK_ABORT;
-
-			CAutoTaskProxy atp(mp, pwpm);
-
-			CTask *rgPtsk[GPOS_CACHE_THREADS];
-
-			CCacheTest::TaskFuncPtr rgPfuncTask[] =
-				{
-				CCacheTest::PvInsertTask,
-				CCacheTest::PvLookupTask,
-				CCacheTest::PvDeleteTask
-				};
-
-			const ULONG ulNumberOfTaskTypes = GPOS_ARRAY_SIZE(rgPfuncTask);
-
-			// create tasks
-			for (ULONG i = 0; i < GPOS_CACHE_THREADS; i++)
-			{
-				rgPtsk[i] = atp.Create
-							(
-							rgPfuncTask[i % ulNumberOfTaskTypes],
-							pcache
-							);
-
-				GPOS_CHECK_ABORT;
-
-				atp.Schedule(rgPtsk[i]);
-			}
-			GPOS_CHECK_ABORT;
-
-			// wait for completion
-			for (ULONG i = 0; i < GPOS_CACHE_THREADS; i++)
-			{
-				atp.Wait(rgPtsk[i]);
-				GPOS_CHECK_ABORT;
-
-			}
-		}
-		GPOS_CHECK_ABORT;
-
-	}
-	GPOS_CHECK_ABORT;
 
 	return GPOS_OK;
 }

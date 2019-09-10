@@ -440,7 +440,7 @@ CRange::FPoint() const
 CExpression *
 CRange::PexprScalar
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CColRef *colref
 	)
 {
@@ -496,7 +496,7 @@ CRange::PexprScalar
 CExpression *
 CRange::PexprEquality
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CColRef *colref
 	)
 {
@@ -524,7 +524,7 @@ CRange::PexprEquality
 CExpression *
 CRange::PexprScalarCompEnd
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IDatum *datum,
 	ERangeInclusion eri,
 	IMDType::ECmpType ecmptIncl,
@@ -565,7 +565,7 @@ CRange::PexprScalarCompEnd
 CRange *
 CRange::PrngIntersect
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CRange *prange
 	)
 {
@@ -620,7 +620,7 @@ CRange::PrngIntersect
 CRange *
 CRange::PrngDifferenceLeft
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CRange *prange
 	)
 {
@@ -630,7 +630,7 @@ CRange::PrngDifferenceLeft
 		return this;
 	}
 
-	if (FStartsBefore(prange) && NULL != prange->PdatumLeft())
+	if (NULL != prange->PdatumLeft() && FStartsBefore(prange))
 	{
 		m_mdid->AddRef();
 
@@ -670,7 +670,7 @@ CRange::PrngDifferenceLeft
 CRange *
 CRange::PrngDifferenceRight
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CRange *prange
 	)
 {
@@ -680,7 +680,7 @@ CRange::PrngDifferenceRight
 		return this;
 	}
 
-	if (FEndsAfter(prange) && NULL != prange->PdatumRight())
+	if (NULL != prange->PdatumRight() && FEndsAfter(prange))
 	{
 		m_mdid->AddRef();
 
@@ -718,13 +718,13 @@ CRange::PrngDifferenceRight
 CRange *
 CRange::PrngExtend
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CRange *prange
 	)
 {
-	if (FDisjointLeft(prange) &&
-		m_pcomp->Equals(prange->PdatumLeft(), m_pdatumRight) &&
-		(EriIncluded == prange->EriLeft() || EriIncluded == m_eriRight))
+	if ((EriIncluded == prange->EriLeft() || EriIncluded == m_eriRight)
+		&& (m_pcomp->Equals(prange->PdatumLeft(), m_pdatumRight))
+		)
 	{
 		// ranges are contiguous so combine them into one
 		m_mdid->AddRef();
@@ -818,7 +818,7 @@ CRange::OsPrintBound
 void
 CRange::DbgPrint() const
 {
-	IMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
+	CMemoryPool *mp = COptCtxt::PoctxtFromTLS()->Pmp();
 	CAutoTrace at(mp);
 	(void) this->OsPrint(at.Os());
 }

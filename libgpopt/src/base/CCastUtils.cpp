@@ -26,7 +26,7 @@ using namespace gpmd;
 // is the given expression a binary coercible cast of a scalar identifier
 BOOL
 CCastUtils::FBinaryCoercibleCastedScId
-    (
+	(
 	CExpression *pexpr,
 	CColRef *colref
 	)
@@ -38,17 +38,17 @@ CCastUtils::FBinaryCoercibleCastedScId
 		return false;
 	}
 
-    CExpression *pexprChild = (*pexpr)[0];
+	CExpression *pexprChild = (*pexpr)[0];
 
 	// cast(col1)
 	return COperator::EopScalarIdent == pexprChild->Pop()->Eopid() &&
-	colref == CScalarIdent::PopConvert(pexprChild->Pop())->Pcr();
+		colref == CScalarIdent::PopConvert(pexprChild->Pop())->Pcr();
 }
 
 // is the given expression a binary coercible cast of a scalar identifier
 BOOL
 CCastUtils::FBinaryCoercibleCastedScId
-    (
+	(
 	CExpression *pexpr
 	)
 {
@@ -63,6 +63,26 @@ CCastUtils::FBinaryCoercibleCastedScId
 
 	// cast(col1)
 	return COperator::EopScalarIdent == pexprChild->Pop()->Eopid();
+}
+
+// is the given expression a binary coercible cast of a const
+BOOL
+CCastUtils::FBinaryCoercibleCastedConst
+	(
+	CExpression *pexpr
+	)
+{
+	GPOS_ASSERT(NULL != pexpr);
+
+	if (!FBinaryCoercibleCast(pexpr))
+	{
+		return false;
+	}
+
+	CExpression *pexprChild = (*pexpr)[0];
+
+	// cast(const)
+	return COperator::EopScalarConst == pexprChild->Pop()->Eopid();
 }
 
 // extract the column reference if the given expression a scalar identifier
@@ -103,7 +123,7 @@ CCastUtils::PcrExtractFromScIdOrCastScId
 CExpression *
 CCastUtils::PexprCast
     (
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	const CColRef *colref,
 	IMDId *mdid_dest
@@ -199,7 +219,7 @@ CCastUtils::PexprWithoutBinaryCoercibleCasts
 CExpressionArray *
 CCastUtils::PdrgpexprCastEquality
     (
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -238,7 +258,7 @@ CCastUtils::PdrgpexprCastEquality
 CExpression *
 CCastUtils::PexprAddCast
     (
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprPred
 	)
 {
@@ -305,7 +325,7 @@ CCastUtils::PexprAddCast
 CExpression *
 CCastUtils::PexprCast
     (
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CExpression *pexpr,
 	IMDId *mdid_dest

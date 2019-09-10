@@ -101,6 +101,8 @@ namespace gpopt
 				EcpBitmapPageCostLargeNDV, // bitmap page cost for large NDV
 				EcpBitmapPageCostSmallNDV, // bitmap page cost for smaller NDV
 				EcpBitmapNDVThreshold, // bitmap NDV threshold
+				EcpBitmapScanRebindCost, // cost of rebind operation in a bitmap scan
+				EcpPenalizeHJSkewUpperLimit, // upper limit for penalizing a skewed hashjoin operator
 
 				EcpSentinel
 			};
@@ -108,7 +110,7 @@ namespace gpopt
 		private:
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 
 			// array of parameters
 			// cost param enum is used as index in this array
@@ -314,6 +316,14 @@ namespace gpopt
 			static
 			const CDouble DBitmapNDVThreshold;
 
+			// cost of bitmap scan rebind
+			static
+			const CDouble DBitmapScanRebindCost;
+
+			// upper limit for penalizing a skewed hash operator
+			static
+			const CDouble DPenalizeHJSkewUpperLimit;
+
 			// private copy ctor
 			CCostModelParamsGPDB(CCostModelParamsGPDB &);
 
@@ -321,7 +331,7 @@ namespace gpopt
 
 			// ctor
 			explicit
-			CCostModelParamsGPDB(IMemoryPool *mp);
+			CCostModelParamsGPDB(CMemoryPool *mp);
 
 			// dtor
 			virtual

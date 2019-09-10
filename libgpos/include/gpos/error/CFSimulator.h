@@ -61,8 +61,7 @@ namespace gpos
 			//
 			//	@doc:
 			//		Tracks all stacks for a given exception, i.e. contains one single 
-			//		bitvector; access to bitvector is protected by spinlock of hashtable
-			//		in CFSimulator
+			//		bitvector;
 			//
 			//---------------------------------------------------------------------------
 			class CStackTracker
@@ -131,7 +130,7 @@ namespace gpos
 								
 					// ctor
         			explicit
-					CStackTracker(IMemoryPool *mp, ULONG resolution, SStackKey key);
+					CStackTracker(CMemoryPool *mp, ULONG resolution, SStackKey key);
 					
 					// exchange/set function
 					BOOL ExchangeSet(ULONG bit);
@@ -162,17 +161,15 @@ namespace gpos
 			CFSimulator(const CFSimulator&);
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 			
 			// resolution
 			ULONG m_resolution;
 			
 			// short hands for stack repository and accessor
-			typedef CSyncHashtable<CStackTracker, CStackTracker::SStackKey,
-				CSpinlockOS> CStackTable;
+			typedef CSyncHashtable<CStackTracker, CStackTracker::SStackKey> CStackTable;
 
-			typedef CSyncHashtableAccessByKey<CStackTracker, CStackTracker::SStackKey,
-				CSpinlockOS> CStackTableAccessor;
+			typedef CSyncHashtableAccessByKey<CStackTracker, CStackTracker::SStackKey> CStackTableAccessor;
 				
 			// stack repository
 			CStackTable m_stack;
@@ -183,7 +180,7 @@ namespace gpos
 		public:
 		
 			// ctor
-			CFSimulator(IMemoryPool *mp, ULONG resolution);
+			CFSimulator(CMemoryPool *mp, ULONG resolution);
 
 			// dtor
 			~CFSimulator() {}

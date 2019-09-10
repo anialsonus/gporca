@@ -13,6 +13,7 @@
 #include "gpos/common/CAutoRef.h"
 
 #include "gpopt/base/CUtils.h"
+#include "gpopt/base/CCastUtils.h"
 #include "gpopt/base/IColConstraintsMapper.h"
 #include "gpopt/base/CColConstraintsArrayMapper.h"
 #include "gpopt/base/CColConstraintsHashMapper.h"
@@ -45,7 +46,7 @@ BOOL CConstraint::m_fFalse(false);
 //---------------------------------------------------------------------------
 CConstraint::CConstraint
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	m_phmcontain(NULL),
@@ -83,7 +84,7 @@ CConstraint::~CConstraint()
 CConstraint *
 CConstraint::PcnstrFromScalarArrayCmp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRef *colref
 	)
@@ -162,7 +163,7 @@ CConstraint::PcnstrFromScalarArrayCmp
 CConstraint *
 CConstraint::PcnstrFromScalarExpr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSetArray **ppdrgpcrs // output equivalence classes
 	)
@@ -236,7 +237,7 @@ CConstraint::PcnstrFromScalarExpr
 CConstraint *
 CConstraint::PcnstrConjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr
 	)
 {
@@ -254,7 +255,7 @@ CConstraint::PcnstrConjunction
 CConstraint *
 CConstraint::PcnstrDisjunction
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr
 	)
 {
@@ -272,7 +273,7 @@ CConstraint::PcnstrDisjunction
 CConstraint *
 CConstraint::PcnstrConjDisj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr,
 	BOOL fConj
 	)
@@ -327,7 +328,7 @@ CConstraint::PcnstrConjDisj
 void
 CConstraint::AddColumnToEquivClasses
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CColRef *colref,
 	CColRefSetArray **ppdrgpcrs
 	)
@@ -359,7 +360,7 @@ CConstraint::AddColumnToEquivClasses
 CConstraint *
 CConstraint::PcnstrFromScalarCmp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSetArray **ppdrgpcrs // output equivalence classes
 	)
@@ -372,14 +373,36 @@ CConstraint::PcnstrFromScalarCmp
 	CExpression *pexprLeft = (*pexpr)[0];
 	CExpression *pexprRight = (*pexpr)[1];
 
-	// check if the scalar comparison is over scalar idents
-	if (COperator::EopScalarIdent == pexprLeft->Pop()->Eopid()
-		&& COperator::EopScalarIdent == pexprRight->Pop()->Eopid())
+	// check if the scalar comparison is over scalar idents or binary coercible casted scalar idents
+	if ((CUtils::FScalarIdent(pexprLeft) || CCastUtils::FBinaryCoercibleCastedScId(pexprLeft)) &&
+		(CUtils::FScalarIdent(pexprRight) || CCastUtils::FBinaryCoercibleCastedScId(pexprRight)))
 	{
-		CScalarIdent *popScIdLeft = CScalarIdent::PopConvert((*pexpr)[0]->Pop());
-		const CColRef *pcrLeft =  popScIdLeft->Pcr();
+		CScalarIdent *popScIdLeft, *popScIdRight;
+		if (CUtils::FScalarIdent(pexprLeft))
+		{
+			// col1 = ...
+			popScIdLeft = CScalarIdent::PopConvert(pexprLeft->Pop());
+		}
+		else
+		{
+			// cast(col1) = ...
+			GPOS_ASSERT(CCastUtils::FBinaryCoercibleCastedScId(pexprLeft));
+			popScIdLeft = CScalarIdent::PopConvert((*pexprLeft)[0]->Pop());
+		}
 
-		CScalarIdent *popScIdRight = CScalarIdent::PopConvert((*pexpr)[1]->Pop());
+		if (CUtils::FScalarIdent(pexprRight))
+		{
+			// ... = col2
+			popScIdRight = CScalarIdent::PopConvert(pexprRight->Pop());
+		}
+		else
+		{
+			// ... = cost(col2)
+			GPOS_ASSERT(CCastUtils::FBinaryCoercibleCastedScId(pexprRight));
+			popScIdRight = CScalarIdent::PopConvert((*pexprRight)[0]->Pop());
+		}
+
+		const CColRef *pcrLeft =  popScIdLeft->Pcr();
 		const CColRef *pcrRight =  popScIdRight->Pcr();
 
 		if (!CUtils::FConstrainableType(pcrLeft->RetrieveType()->MDId()) ||
@@ -391,7 +414,7 @@ CConstraint::PcnstrFromScalarCmp
 		*ppdrgpcrs = GPOS_NEW(mp) CColRefSetArray(mp);
 		if (CPredicateUtils::IsEqualityOp(pexpr))
 		{
-			// col1 = col2
+			// col1 = col2 or bcast(col1) = col2 or col1 = bcast(col2) or bcast(col1) = bcast(col2)
 			CColRefSet *pcrsNew = GPOS_NEW(mp) CColRefSet(mp);
 			pcrsNew->Include(pcrLeft);
 			pcrsNew->Include(pcrRight);
@@ -422,7 +445,7 @@ CConstraint::PcnstrFromScalarCmp
 CConstraint *
 CConstraint::PcnstrFromScalarBoolOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSetArray **ppdrgpcrs // output equivalence classes
 	)
@@ -523,7 +546,7 @@ CConstraint::PcnstrFromScalarBoolOp
 CColRefSetArray *
 CConstraint::PdrgpcrsMergeFromBoolOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSetArray *pdrgpcrsFst,
 	CColRefSetArray *pdrgpcrsSnd
@@ -563,7 +586,7 @@ CConstraint::PdrgpcrsMergeFromBoolOp
 CConstraintArray *
 CConstraint::PdrgpcnstrOnColumn
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr,
 	CColRef *colref,
 	BOOL fExclusive		// returned constraints must reference ONLY the given col
@@ -601,7 +624,7 @@ CConstraint::PdrgpcnstrOnColumn
 CExpression *
 CConstraint::PexprScalarConjDisj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr,
 	BOOL fConj
 	)
@@ -638,7 +661,7 @@ CConstraint::PexprScalarConjDisj
 CConstraintArray *
 CConstraint::PdrgpcnstrFlatten
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr,
 	EConstraintType ect
 	)
@@ -686,7 +709,7 @@ CConstraint::PdrgpcnstrFlatten
 CConstraintArray *
 CConstraint::PdrgpcnstrDeduplicate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CConstraintArray *pdrgpcnstr,
 	EConstraintType ect
 	)
@@ -757,7 +780,19 @@ CConstraint::PdrgpcnstrDeduplicate
 		GPOS_ASSERT(NULL != pexpr);
 
 		CConstraint *pcnstrNew = CConstraintInterval::PciIntervalFromScalarExpr(mp, pexpr, colref);
-		GPOS_ASSERT(NULL != pcnstrNew);
+		if (NULL == pcnstrNew)
+		{
+			// We ran into a type conflict that prevents us from using this method to simplify the constraint.
+			// Give up and return the un-flattened constraint.
+			// Note that if we get here, that means that
+			//   a) a single constraint
+			//   b) in case of a conjunction expression, none of the constraints
+			//   c) in case of a disjunction, at least one of the constraints
+			// could not be converted.
+			pcnstrChild->AddRef();
+			pcnstrNew = pcnstrChild;
+		}
+
 		pexpr->Release();
 		pdrgpcnstrNew->Append(pcnstrNew);
 		pcrsDeduped->Include(colref);
@@ -779,7 +814,7 @@ CConstraint::PdrgpcnstrDeduplicate
 ColRefToConstraintArrayMap *
 CConstraint::Phmcolconstr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefSet *pcrs,
 	CConstraintArray *pdrgpcnstr
 	)
@@ -816,7 +851,7 @@ CConstraint::Phmcolconstr
 CConstraint *
 CConstraint::PcnstrConjDisjRemapForColumn
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRef *colref,
 	CConstraintArray *pdrgpcnstr,
 	BOOL fConj

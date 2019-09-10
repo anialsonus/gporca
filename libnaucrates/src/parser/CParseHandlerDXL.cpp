@@ -44,7 +44,7 @@ XERCES_CPP_NAMESPACE_USE
 //---------------------------------------------------------------------------
 CParseHandlerDXL::CParseHandlerDXL
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CParseHandlerManager *parse_handler_mgr
 	)
 	:
@@ -382,11 +382,6 @@ CParseHandlerDXL::StartElement
 	const Attributes& attrs
 	)
 {		
-	// reset time slice counter to ignore time taken by Xerces XSD grammar loader (OPT-491)
-#ifdef GPOS_DEBUG
-    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-	
 	if (0 == XMLString::compareString(element_local_name, CDXLTokens::XmlstrToken(EdxltokenDXLMessage)) ||
 		0 == XMLString::compareString(element_local_name, CDXLTokens::XmlstrToken(EdxltokenThread)) ||
 		0 == XMLString::compareString(element_local_name, CDXLTokens::XmlstrToken(EdxltokenComment)))

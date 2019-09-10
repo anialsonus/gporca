@@ -11,7 +11,6 @@
 #ifndef GPOS_CMessageRepository_H
 #define GPOS_CMessageRepository_H
 
-#include "gpos/sync/CSpinlock.h"
 #include "gpos/error/CMessageTable.h"
 
 namespace gpos
@@ -33,25 +32,23 @@ namespace gpos
 			CMessageRepository *m_repository;
 			
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 
 			// short hand for Table of Message Tables (TMT)
 			typedef CSyncHashtable<
 						CMessageTable, 
-						ELocale, 
-						CSpinlockOS> TMT;
+						ELocale> TMT;
 
 			// short hand for TMT accessor
 			typedef CSyncHashtableAccessByKey<
 						CMessageTable, 
-						ELocale, 
-						CSpinlockOS> TMTAccessor;
+						ELocale> TMTAccessor;
 		
 			// basic hash table
 			TMT m_hash_table;
 			
 			// init basic directory
-			void InitDirectory(IMemoryPool *mp);
+			void InitDirectory(CMemoryPool *mp);
 			
 			// install message table for a given locale
 			void AddMessageTable(ELocale locale);
@@ -62,7 +59,7 @@ namespace gpos
 		public:
 
 			// ctor
-			CMessageRepository(IMemoryPool *mp);
+			CMessageRepository(CMemoryPool *mp);
 
 			// dtor
 			~CMessageRepository();

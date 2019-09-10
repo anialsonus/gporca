@@ -20,7 +20,7 @@ static
 void
 AssertValidChildDistributions
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CDistributionSpec::EDistributionType *pedt, // array of distribution types to check
 		ULONG ulDistrs, // number of distribution types to check
@@ -32,7 +32,7 @@ static
 void
 CheckChildDistributions
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		BOOL fSingletonChild,
 		BOOL fReplicatedChild,
@@ -80,7 +80,7 @@ CPhysicalUnionAll::FInputOrderSensitive() const
 
 CPhysicalUnionAll::CPhysicalUnionAll
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CColRefArray *pdrgpcrOutput,
 		CColRef2dArray *pdrgpdrgpcrInput,
 		ULONG ulScanIdPartialIndex
@@ -196,7 +196,7 @@ const
 CColRefSet *
 CPhysicalUnionAll::PcrsRequired
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &,//exprhdl,
 		CColRefSet *pcrsRequired,
 		ULONG child_index,
@@ -220,7 +220,7 @@ CPhysicalUnionAll::PcrsRequired
 COrderSpec *
 CPhysicalUnionAll::PosRequired
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &, //exprhdl,
 		COrderSpec *, //posRequired,
 		ULONG
@@ -251,7 +251,7 @@ const
 CRewindabilitySpec *
 CPhysicalUnionAll::PrsRequired
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CRewindabilitySpec *prsRequired,
 		ULONG child_index,
@@ -276,7 +276,7 @@ const
 CPartitionPropagationSpec *
 CPhysicalUnionAll::PppsRequired
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CPartitionPropagationSpec *pppsRequired,
 		ULONG child_index,
@@ -311,7 +311,7 @@ CPhysicalUnionAll::PppsRequired
 CCTEReq *
 CPhysicalUnionAll::PcteRequired
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CCTEReq *pcter,
 		ULONG child_index,
@@ -370,7 +370,7 @@ const
 COrderSpec *
 CPhysicalUnionAll::PosDerive
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &//exprhdl
 	)
 const
@@ -391,12 +391,13 @@ const
 CRewindabilitySpec *
 CPhysicalUnionAll::PrsDerive
 	(
-		IMemoryPool *, // mp
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl
 	)
 const
 {
-	return PrsDerivePassThruOuter(exprhdl);
+	// TODO: shardikar; This should check all the children, not only the outer child.
+	return PrsDerivePassThruOuter(mp, exprhdl);
 }
 
 //---------------------------------------------------------------------------
@@ -539,7 +540,7 @@ const
 CPartIndexMap *
 CPhysicalUnionAll::PpimDerive
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CDrvdPropCtxt *pdpctxt
 	)
@@ -560,7 +561,7 @@ const
 CPartFilterMap *
 CPhysicalUnionAll::PpfmDerive
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl
 	)
 const
@@ -586,7 +587,7 @@ CPhysicalUnionAll::FPassThruStats() const
 CDistributionSpec *
 CPhysicalUnionAll::PdsDerive
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl
 	)
 const
@@ -640,7 +641,7 @@ const
 CDistributionSpecRandom *
 CPhysicalUnionAll::PdsStrictRandomParallelUnionAllChildren
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &expr_handle
 	)
 	const
@@ -675,7 +676,7 @@ CPhysicalUnionAll::PdsStrictRandomParallelUnionAllChildren
 CDistributionSpecHashed *
 CPhysicalUnionAll::PdshashedDerive
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl
 	)
 const
@@ -689,9 +690,8 @@ const
 		CDistributionSpec *pdsChild = exprhdl.Pdpplan(ulChild)->Pds();
 		CDistributionSpec::EDistributionType edtChild = pdsChild->Edt();
 		fSuccess = (CDistributionSpec::EdtHashed == edtChild || CDistributionSpec::EdtHashedNoOp == edtChild || CDistributionSpec::EdtStrictHashed == edtChild)
-				&& pdsChild->FSatisfies((*m_pdrgpds)[ulChild]);
+						&& pdsChild->FSatisfies((*m_pdrgpds)[ulChild]);
 	}
-
 	if (!fSuccess)
 	{
 		// a child does not deliver hashed distribution
@@ -700,8 +700,17 @@ const
 
 	// (2) check that child hashed distributions map to the same output columns
 
-	// map outer child hashed distribution to corresponding UnionAll column positions
-	ULongPtrArray *pdrgpulOuter = PdrgpulMap(mp, CDistributionSpecHashed::PdsConvert(exprhdl.Pdpplan(0 /*child_index*/)->Pds())->Pdrgpexpr(), 0/*child_index*/);
+	// map outer child hashed distribution to corresponding UnionAll column positions.
+	// make sure to look at the equivalent distribution specs
+	ULongPtrArray *pdrgpulOuter = NULL;
+	CDistributionSpec *pdsChild = exprhdl.Pdpplan(0)->Pds();
+	CDistributionSpecHashed *pdsHashedFirstChild = CDistributionSpecHashed::PdsConvert(pdsChild);
+	CDistributionSpecHashed *pdsHashed = pdsHashedFirstChild;
+	while (pdsHashed && NULL == pdrgpulOuter)
+	{
+		pdrgpulOuter = PdrgpulMap(mp, CDistributionSpecHashed::PdsConvert(pdsHashed)->Pdrgpexpr(), 0/*child_index*/);
+		pdsHashed = pdsHashed->PdshashedEquiv();
+	}
 	if (NULL == pdrgpulOuter)
 	{
 		return NULL;
@@ -710,11 +719,19 @@ const
 	ULongPtrArray *pdrgpulChild = NULL;
 	for (ULONG ulChild = 1; fSuccess && ulChild < arity; ulChild++)
 	{
-		pdrgpulChild = PdrgpulMap(mp, CDistributionSpecHashed::PdsConvert(exprhdl.Pdpplan(ulChild)->Pds())->Pdrgpexpr(), ulChild);
-
-		// match mapped column positions of current child with outer child
-		fSuccess = (NULL != pdrgpulChild) && Equals(pdrgpulOuter, pdrgpulChild);
-		CRefCount::SafeRelease(pdrgpulChild);
+		CDistributionSpecHashed *pdsChildSpec = CDistributionSpecHashed::PdsConvert(exprhdl.Pdpplan(ulChild)->Pds());
+		GPOS_ASSERT(NULL != pdsChildSpec);
+		CDistributionSpecHashed *pdsChildHashed = pdsChildSpec;
+		BOOL equi_hash_spec_matches = false;
+		while (pdsChildHashed && !equi_hash_spec_matches)
+		{
+			pdrgpulChild = PdrgpulMap(mp, CDistributionSpecHashed::PdsConvert(pdsChildHashed)->Pdrgpexpr(), ulChild);
+			// match mapped column positions of current child with outer child
+			equi_hash_spec_matches = (NULL != pdrgpulChild) && Equals(pdrgpulOuter, pdrgpulChild);
+			CRefCount::SafeRelease(pdrgpulChild);
+			pdsChildHashed = pdsChildHashed->PdshashedEquiv();
+		}
+		fSuccess = equi_hash_spec_matches;
 	}
 
 	CDistributionSpecHashed *pdsOutput = NULL;
@@ -740,7 +757,7 @@ const
 CDistributionSpecHashed *
 CPhysicalUnionAll::PdsMatching
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		const ULongPtrArray *pdrgpulOuter
 	)
 const
@@ -776,7 +793,7 @@ const
 CDistributionSpecHashed *
 CPhysicalUnionAll::PdshashedPassThru
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CDistributionSpecHashed *pdshashedRequired,
 		ULONG child_index
 	)
@@ -844,7 +861,7 @@ const
 CDistributionSpec *
 CPhysicalUnionAll::PdsDeriveFromChildren
 	(
-		IMemoryPool *
+		CMemoryPool *
 #ifdef GPOS_DEBUG
 		mp
 #endif // GPOS_DEBUG
@@ -907,7 +924,7 @@ const
 ULongPtrArray *
 CPhysicalUnionAll::PdrgpulMap
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionArray *pdrgpexpr,
 		ULONG child_index
 	)
@@ -947,7 +964,7 @@ const
 }
 
 CColRefSet *
-CPhysicalUnionAll::MapOutputColRefsToInput(IMemoryPool *mp,
+CPhysicalUnionAll::MapOutputColRefsToInput(CMemoryPool *mp,
 										   CColRefSet *out_col_refs,
 										   ULONG child_index)
 {
@@ -980,7 +997,7 @@ CPhysicalUnionAll::MapOutputColRefsToInput(IMemoryPool *mp,
 void
 AssertValidChildDistributions
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CDistributionSpec::EDistributionType *pedt, // array of distribution types to check
 		ULONG ulDistrs, // number of distribution types to check
@@ -1010,7 +1027,7 @@ AssertValidChildDistributions
 void
 CheckChildDistributions
 	(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		BOOL fSingletonChild,
 		BOOL fReplicatedChild,

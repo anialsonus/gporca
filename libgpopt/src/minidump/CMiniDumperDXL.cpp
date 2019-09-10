@@ -35,7 +35,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CMiniDumperDXL::CMiniDumperDXL
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CMiniDumper(mp)
@@ -103,7 +103,7 @@ CMiniDumperDXL::SerializeEntryHeader()
 	str.AppendFormat
 		(
 		CDXLSections::m_wszThreadHeaderTemplate,
-		CWorker::Self()->GetThreadId()
+		0 // thread id
 		);
 
 	*m_oos << str.GetBuffer();

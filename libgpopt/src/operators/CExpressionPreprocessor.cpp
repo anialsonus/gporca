@@ -45,7 +45,7 @@ using namespace gpopt;
 CExpression *
 CExpressionPreprocessor::PexprEliminateSelfComparison
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -78,7 +78,7 @@ CExpressionPreprocessor::PexprEliminateSelfComparison
 CExpression *
 CExpressionPreprocessor::PexprPruneSuperfluousEquality
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -116,7 +116,7 @@ CExpressionPreprocessor::PexprPruneSuperfluousEquality
 CExpression *
 CExpressionPreprocessor::PexprTrimExistentialSubqueries
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -176,7 +176,7 @@ CExpressionPreprocessor::PexprTrimExistentialSubqueries
 CExpression *
 CExpressionPreprocessor::PexprSimplifyQuantifiedSubqueries
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -249,7 +249,7 @@ CExpressionPreprocessor::PexprSimplifyQuantifiedSubqueries
 CExpression *
 CExpressionPreprocessor::PexprUnnestScalarSubqueries
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -349,7 +349,7 @@ CExpressionPreprocessor::PexprUnnestScalarSubqueries
 CExpression *
 CExpressionPreprocessor::PexprRemoveSuperfluousLimit
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -394,7 +394,7 @@ CExpressionPreprocessor::PexprRemoveSuperfluousLimit
 CExpression *
 CExpressionPreprocessor::PexprRemoveSuperfluousDistinctInDQA
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -447,7 +447,9 @@ CExpressionPreprocessor::PexprRemoveSuperfluousDistinctInDQA
 }
 
 //	Remove outer references from order spec inside limit, grouping columns
-//	in GbAgg, and Partition/Order columns in window operators
+//	in GbAgg, and Partition/Order columns in window operators. Also handle
+//	cases where we would end up with an empty groupby list and project list,
+//	which is not supported.
 //
 //	Example, for the schema: t(a, b), s(i, j)
 //	The query:
@@ -469,7 +471,7 @@ CExpressionPreprocessor::PexprRemoveSuperfluousDistinctInDQA
 CExpression *
 CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -478,13 +480,18 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 	GPOS_ASSERT(NULL != mp);
 	GPOS_ASSERT(NULL != pexpr);
 
+	// operator, possibly altered below if we need to change the operator
 	COperator *pop = pexpr->Pop();
+	// expression, possibly altered below if we need to change the children
+	CExpression *newExpr = pexpr;
+
 	COperator::EOperatorId op_id = pop->Eopid();
 	BOOL fHasOuterRefs = (pop->FLogical() && CUtils::HasOuterRefs(pexpr));
 
 	pop->AddRef();
 	if (fHasOuterRefs)
 	{
+		// special handling for three operator types: Limit, GrbyAgg, Sequence
 		if (COperator::EopLogicalLimit == op_id)
 		{
 			CColRefSet *outer_refs = CDrvdPropRelational::GetRelationalProperties(pexpr->PdpDerive())->PcrsOuter();
@@ -518,7 +525,9 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 			// the outer references are NOT the ONLY Group By column
 			//
 			// For example:
-			// -- Cannot remove t.b from groupby, because this will produce invalid plan
+			// -- Cannot remove t.b from groupby, because this will produce an invalid plan
+			// -- with both groupby list and project list empty, in this case we need to add
+			// -- a project node below the GrbyAgg
 			// select a from t where c in (select distinct t.b from s)
 			//
 			// -- remove t.b from groupby is ok, because there is at least one agg function: count()
@@ -531,8 +540,10 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 			// -- constant for each invocation of subquery
 			// select a from t where c in (select count(s.j) from s group by s.i, t.b)
 			//
+
 			if (0 < pExprProjList->Arity() || 0 < colref_array->Size())
 			{
+				// remove outer refs from the groupby columns list
 				CColRefArray *pdrgpcrMinimal = popAgg->PdrgpcrMinimal();
 				if (NULL != pdrgpcrMinimal)
 				{
@@ -558,6 +569,65 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 			}
 			else
 			{
+				// grouping_cols has outer references that can't be removed, because
+				// that would make both pExprProjList and grouping_cols empty, which is not allowed.
+				// The solution in this case is to add a project node below that will simply echo
+				// the outer reference, and to use that newly produced ColRef as groupby column.
+				CExpression *child = (*pexpr)[0];
+				CExpressionArray *grouping_cols_arr = CUtils::PdrgpexprScalarIdents(mp, popAgg->Pdrgpcr());
+
+				GPOS_ASSERT(0 < grouping_cols_arr->Size());
+				child->AddRef();
+
+				// add a project node on top of our child
+				CExpression *projectExpr = CUtils::PexprAddProjection(
+																	  mp,
+																	  child,
+																	  grouping_cols_arr,
+																	  false // don't add to hash table,
+																			// this is done at the end
+																			// of preprocessing
+																	 );
+				grouping_cols_arr->Release();
+
+				// build a children array for the new GrbyAgg expression
+				CExpressionArray *new_children = GPOS_NEW(mp) CExpressionArray(mp);
+				new_children->Append(projectExpr);
+				for (ULONG ul = 1; ul < pexpr->PdrgPexpr()->Size(); ul++)
+				{
+					new_children->Append((*pexpr->PdrgPexpr())[ul]);
+					(*pexpr->PdrgPexpr())[ul]->AddRef();
+				}
+
+				// build a new CLogicalGbAgg operator, with a new grouping columns list
+				CColRefArray *new_grouping_cols = GPOS_NEW(mp) CColRefArray(mp);
+				CExpression *new_projected_cols = (*projectExpr)[1];
+				for (ULONG ul = 0; ul < new_projected_cols->Arity(); ul++)
+				{
+					new_grouping_cols->Append(CUtils::PcrFromProjElem((*new_projected_cols)[ul]));
+				}
+				GPOS_ASSERT(NULL == popAgg->PdrgpcrArgDQA());
+				pop = GPOS_NEW(mp) CLogicalGbAgg(
+												 mp,
+												 new_grouping_cols,
+												 NULL,
+												 popAgg->Egbaggtype(),
+												 popAgg->FGeneratesDuplicates(),
+												 NULL // no DQA cols
+												);
+				// release the previous pop
+				popAgg->Release();
+				popAgg = NULL;
+
+				// finally, put it all together, our new GrbyAgg now has a project node below
+				// it that will turn the outer reference into a produced ColRef that is used
+				// as a groupby column
+				pop->AddRef();
+				newExpr = GPOS_NEW(mp) CExpression(
+												   mp,
+												   pop,
+												   new_children
+												   );
 				// clean up
 				colref_array->Release();
 			}
@@ -579,14 +649,18 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 	}
 
 	// recursively process children
-	const ULONG arity = pexpr->Arity();
+	const ULONG arity = newExpr->Arity();
 	CExpressionArray *pdrgpexprChildren = GPOS_NEW(mp) CExpressionArray(mp);
 	for (ULONG ul = 0; ul < arity; ul++)
 	{
-		CExpression *pexprChild = PexprRemoveSuperfluousOuterRefs(mp, (*pexpr)[ul]);
+		CExpression *pexprChild = PexprRemoveSuperfluousOuterRefs(mp, (*newExpr)[ul]);
 		pdrgpexprChildren->Append(pexprChild);
 	}
 
+	if (newExpr != pexpr)
+	{
+		newExpr->Release();
+	}
 	return GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
 }
 
@@ -595,7 +669,7 @@ CExpressionPreprocessor::PexprRemoveSuperfluousOuterRefs
 CExpression *
 CExpressionPreprocessor::PexprScalarBoolOpConvert2In
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CScalarBoolOp::EBoolOperator eboolop,
 	CExpressionArray *pdrgpexpr
 	)
@@ -660,7 +734,7 @@ CExpressionPreprocessor::FConvert2InIsConvertable(CExpression *pexpr, CScalarBoo
 CExpression *
 CExpressionPreprocessor::PexprConvert2In
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr // does not take ownership
 	)
 {
@@ -736,7 +810,7 @@ CExpressionPreprocessor::PexprConvert2In
 CExpression *
 CExpressionPreprocessor::PexprCollapseInnerJoins
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -812,7 +886,7 @@ CExpressionPreprocessor::PexprCollapseInnerJoins
 CExpression *
 CExpressionPreprocessor::PexprCollapseProjects
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -852,7 +926,7 @@ CExpressionPreprocessor::PexprCollapseProjects
 CExpression *
 CExpressionPreprocessor::PexprProjBelowSubquery
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	BOOL fUnderPrList
 	)
@@ -949,7 +1023,7 @@ CExpressionPreprocessor::PexprProjBelowSubquery
 CExpression *
 CExpressionPreprocessor::PexprCollapseUnionUnionAll
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1041,7 +1115,7 @@ CExpressionPreprocessor::PexprCollapseUnionUnionAll
 CExpression *
 CExpressionPreprocessor::PexprOuterJoinToInnerJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1112,7 +1186,7 @@ CExpressionPreprocessor::PexprOuterJoinToInnerJoin
 CExpression *
 CExpressionPreprocessor::PexprConjEqualityPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefSet *pcrs
 	)
 {
@@ -1186,7 +1260,7 @@ CExpressionPreprocessor::FEquivClassFromChild
 CExpression *
 CExpressionPreprocessor::PexprAddEqualityPreds
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsProcessed
 	)
@@ -1268,7 +1342,7 @@ CExpressionPreprocessor::PexprAddEqualityPreds
 CExpression *
 CExpressionPreprocessor::PexprScalarPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CPropConstraint *ppc,
 	CColRefSet *pcrsNotNull,
 	CColRefSet *pcrs,
@@ -1316,7 +1390,7 @@ CExpressionPreprocessor::PexprScalarPredicates
 CExpression *
 CExpressionPreprocessor::PexprFromConstraintsScalar
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1360,7 +1434,7 @@ CExpressionPreprocessor::PexprFromConstraintsScalar
 CExpression *
 CExpressionPreprocessor::PexprWithImpliedPredsOnLOJInnerChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprLOJ,
 	BOOL *pfAddedPredicates // output: set to True if new predicates are added to inner child
 	)
@@ -1452,7 +1526,7 @@ CExpressionPreprocessor::PexprWithImpliedPredsOnLOJInnerChild
 CExpression *
 CExpressionPreprocessor::PexprOuterJoinInferPredsFromOuterChildToInnerChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	BOOL *pfAddedPredicates // output: set to True if new predicates are added to inner child
 	)
@@ -1487,7 +1561,7 @@ CExpressionPreprocessor::PexprOuterJoinInferPredsFromOuterChildToInnerChild
 CExpression *
 CExpressionPreprocessor::PexprFromConstraints
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsProcessed
 	)
@@ -1555,7 +1629,7 @@ CExpressionPreprocessor::PexprFromConstraints
 CExpression *
 CExpressionPreprocessor::PexprPruneEmptySubtrees
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1598,7 +1672,7 @@ CExpressionPreprocessor::PexprPruneEmptySubtrees
 CExpression *
 CExpressionPreprocessor::PexprRemoveUnusedCTEs
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1634,7 +1708,7 @@ CExpressionPreprocessor::PexprRemoveUnusedCTEs
 void
 CExpressionPreprocessor::CollectCTEPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CTEPredsMap *phm
 	)
@@ -1687,7 +1761,7 @@ CExpressionPreprocessor::CollectCTEPredicates
 void
 CExpressionPreprocessor::AddPredsToCTEProducers
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1742,7 +1816,7 @@ CExpressionPreprocessor::AddPredsToCTEProducers
 CExpression *
 CExpressionPreprocessor::PexprAddPredicatesFromConstraints
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1781,7 +1855,7 @@ CExpressionPreprocessor::PexprAddPredicatesFromConstraints
 CExpression *
 CExpressionPreprocessor::PexprInferPredicates
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1832,7 +1906,7 @@ CExpressionPreprocessor::PexprInferPredicates
 CExpression *
 CExpressionPreprocessor::PexprPruneUnusedComputedCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsReqd
 	)
@@ -1856,7 +1930,7 @@ CExpressionPreprocessor::PexprPruneUnusedComputedCols
 CExpression *
 CExpressionPreprocessor::PexprPruneUnusedComputedColsRecursive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsReqd
 	)
@@ -1928,7 +2002,7 @@ CExpressionPreprocessor::PexprPruneUnusedComputedColsRecursive
 CExpression *
 CExpressionPreprocessor::PexprPruneProjListProjectOrGbAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsUnused,
 	CColRefSet *pcrsDefined,
@@ -2023,7 +2097,7 @@ CExpressionPreprocessor::PexprPruneProjListProjectOrGbAgg
 CExpression *
 CExpressionPreprocessor::PexprReorderScalarCmpChildren
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -2102,7 +2176,7 @@ CExpressionPreprocessor::PexprReorderScalarCmpChildren
 CExpression *
 CExpressionPreprocessor::ConvertInToSimpleExists
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -2174,7 +2248,7 @@ CExpressionPreprocessor::ConvertInToSimpleExists
 CExpression *
 CExpressionPreprocessor::PexprExistWithPredFromINSubq
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -2239,7 +2313,7 @@ CExpressionPreprocessor::PexprExistWithPredFromINSubq
 CExpression *
 CExpressionPreprocessor::PexprPreprocess
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsOutputAndOrderCols // query output cols and cols used in the order specs
 	)

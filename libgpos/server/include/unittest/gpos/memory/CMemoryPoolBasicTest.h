@@ -17,7 +17,7 @@
 #ifndef GPOS_CMemoryPoolBasicTest_H
 #define GPOS_CMemoryPoolBasicTest_H
 
-#include "gpos/memory/IMemoryPool.h"
+#include "gpos/memory/CMemoryPool.h"
 #include "gpos/memory/CMemoryPool.h"
 #include "gpos/memory/CMemoryPoolManager.h"
 
@@ -42,14 +42,7 @@ namespace gpos
 			static GPOS_RESULT EresLeak(CMemoryPoolManager::AllocType eat);
 			static GPOS_RESULT EresLeakByException(CMemoryPoolManager::AllocType eat);
 #endif // GPOS_DEBUG
-			static GPOS_RESULT EresConcurrency(CMemoryPoolManager::AllocType eat);
-			static GPOS_RESULT EresStress(CMemoryPoolManager::AllocType eat);
 
-			static void *AllocateSerial(void *pv);
-			static void *AllocateRepeated(void *pv);
-			static void *AllocateStress(void *pv);
-			static void Allocate(IMemoryPool *mp, ULONG count);
-			static void AllocateRandom(IMemoryPool *mp);
 			static ULONG Size(ULONG offset);
 
 		public:

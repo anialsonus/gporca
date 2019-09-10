@@ -9,7 +9,7 @@
       <dxl:TraceFlags Value="103027,101013,102007,103001"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
-      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.352.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -24,7 +24,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.18.1.0" Name="char" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
+      <dxl:Type Mdid="0.18.1.0" Name="char" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
         <dxl:EqualityOp Mdid="0.92.1.0"/>
         <dxl:InequalityOp Mdid="0.630.1.0"/>
         <dxl:LessThanOp Mdid="0.631.1.0"/>
@@ -39,7 +39,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
+      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
         <dxl:EqualityOp Mdid="0.91.1.0"/>
         <dxl:InequalityOp Mdid="0.85.1.0"/>
         <dxl:LessThanOp Mdid="0.58.1.0"/>
@@ -54,7 +54,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.607.1.0"/>
         <dxl:InequalityOp Mdid="0.608.1.0"/>
         <dxl:LessThanOp Mdid="0.609.1.0"/>
@@ -248,7 +248,7 @@
           <dxl:UpperBound Closed="true" TypeMdid="0.26.1.0" IsNull="false" IsByValue="true" Value="10883"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.700.1.0" Name="float4" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.700.1.0" Name="float4" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.620.1.0"/>
         <dxl:InequalityOp Mdid="0.621.1.0"/>
         <dxl:LessThanOp Mdid="0.622.1.0"/>
@@ -263,7 +263,7 @@
         <dxl:SumAgg Mdid="0.2110.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1034.1.0" Name="_aclitem" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1034.1.0" Name="_aclitem" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1070.1.0"/>
         <dxl:InequalityOp Mdid="0.1071.1.0"/>
         <dxl:LessThanOp Mdid="0.1072.1.0"/>
@@ -285,7 +285,7 @@
       </dxl:Index>
       <dxl:ColumnStatistics Mdid="1.2615.1.1.5" Name="xmin" Width="4.000000"/>
       <dxl:ColumnStatistics Mdid="1.2615.1.1.4" Name="oid" Width="8.000000"/>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -300,7 +300,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.385.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -315,7 +315,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
+      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
         <dxl:EqualityOp Mdid="0.387.1.0"/>
         <dxl:InequalityOp Mdid="0.402.1.0"/>
         <dxl:LessThanOp Mdid="0.2799.1.0"/>
@@ -330,7 +330,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.21.1.0" Name="int2" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="2" PassByValue="true">
+      <dxl:Type Mdid="0.21.1.0" Name="int2" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="2" PassByValue="true">
         <dxl:EqualityOp Mdid="0.94.1.0"/>
         <dxl:InequalityOp Mdid="0.519.1.0"/>
         <dxl:LessThanOp Mdid="0.95.1.0"/>
@@ -345,7 +345,7 @@
         <dxl:SumAgg Mdid="0.2109.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.96.1.0"/>
         <dxl:InequalityOp Mdid="0.518.1.0"/>
         <dxl:LessThanOp Mdid="0.97.1.0"/>
@@ -360,7 +360,7 @@
         <dxl:SumAgg Mdid="0.2108.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.19.1.0" Name="name" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="64" PassByValue="false">
+      <dxl:Type Mdid="0.19.1.0" Name="name" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="64" PassByValue="false">
         <dxl:EqualityOp Mdid="0.93.1.0"/>
         <dxl:InequalityOp Mdid="0.643.1.0"/>
         <dxl:LessThanOp Mdid="0.660.1.0"/>
@@ -520,7 +520,7 @@
         <dxl:Commutator Mdid="0.607.1.0"/>
         <dxl:InverseOp Mdid="0.608.1.0"/>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.1009.1.0" Name="_text" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1009.1.0" Name="_text" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1070.1.0"/>
         <dxl:InequalityOp Mdid="0.1071.1.0"/>
         <dxl:LessThanOp Mdid="0.1072.1.0"/>
@@ -1065,34 +1065,6 @@
             <dxl:Columns>
               <dxl:Column ColId="0" Attno="1" ColName="relname" TypeMdid="0.19.1.0"/>
               <dxl:Column ColId="1" Attno="2" ColName="relnamespace" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="2" Attno="3" ColName="reltype" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="3" Attno="4" ColName="relowner" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="4" Attno="5" ColName="relam" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="5" Attno="6" ColName="relfilenode" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="6" Attno="7" ColName="reltablespace" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="7" Attno="8" ColName="relpages" TypeMdid="0.23.1.0"/>
-              <dxl:Column ColId="8" Attno="9" ColName="reltuples" TypeMdid="0.700.1.0"/>
-              <dxl:Column ColId="9" Attno="10" ColName="reltoastrelid" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="10" Attno="11" ColName="reltoastidxid" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="11" Attno="12" ColName="relaosegrelid" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="12" Attno="13" ColName="relaosegidxid" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="13" Attno="14" ColName="relhasindex" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="14" Attno="15" ColName="relisshared" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="15" Attno="16" ColName="relkind" TypeMdid="0.18.1.0"/>
-              <dxl:Column ColId="16" Attno="17" ColName="relstorage" TypeMdid="0.18.1.0"/>
-              <dxl:Column ColId="17" Attno="18" ColName="relnatts" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="18" Attno="19" ColName="relchecks" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="19" Attno="20" ColName="reltriggers" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="20" Attno="21" ColName="relukeys" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="21" Attno="22" ColName="relfkeys" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="22" Attno="23" ColName="relrefs" TypeMdid="0.21.1.0"/>
-              <dxl:Column ColId="23" Attno="24" ColName="relhasoids" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="24" Attno="25" ColName="relhaspkey" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="25" Attno="26" ColName="relhasrules" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="26" Attno="27" ColName="relhassubclass" TypeMdid="0.16.1.0"/>
-              <dxl:Column ColId="27" Attno="28" ColName="relfrozenxid" TypeMdid="0.28.1.0"/>
-              <dxl:Column ColId="28" Attno="29" ColName="relacl" TypeMdid="0.1034.1.0"/>
-              <dxl:Column ColId="29" Attno="30" ColName="reloptions" TypeMdid="0.1009.1.0"/>
               <dxl:Column ColId="30" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
               <dxl:Column ColId="31" Attno="-2" ColName="oid" TypeMdid="0.26.1.0"/>
               <dxl:Column ColId="32" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
@@ -1120,8 +1092,6 @@
           <dxl:TableDescriptor Mdid="0.2615.1.1" TableName="pg_namespace">
             <dxl:Columns>
               <dxl:Column ColId="38" Attno="1" ColName="nspname" TypeMdid="0.19.1.0"/>
-              <dxl:Column ColId="39" Attno="2" ColName="nspowner" TypeMdid="0.26.1.0"/>
-              <dxl:Column ColId="40" Attno="3" ColName="nspacl" TypeMdid="0.1034.1.0"/>
               <dxl:Column ColId="41" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
               <dxl:Column ColId="42" Attno="-2" ColName="oid" TypeMdid="0.26.1.0"/>
               <dxl:Column ColId="43" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>

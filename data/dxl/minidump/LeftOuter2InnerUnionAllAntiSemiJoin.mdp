@@ -34,7 +34,7 @@ and ei.entity_id  = i.ad_id;
       <dxl:ColumnStatistics Mdid="1.17279045.1.1.8" Name="tableoid" Width="4.000000" NullFreq="0.000000" NdvRemain="0.000000" FreqRemain="0.000000"/>
       <dxl:ColumnStatistics Mdid="1.17279045.1.1.1" Name="entity_id" Width="8.000000" NullFreq="0.000000" NdvRemain="0.000000" FreqRemain="0.000000"/>
       <dxl:ColumnStatistics Mdid="1.17279045.1.1.0" Name="user_id" Width="8.000000" NullFreq="0.000000" NdvRemain="0.000000" FreqRemain="0.000000"/>
-      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
+      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
         <dxl:EqualityOp Mdid="0.91.1.0"/>
         <dxl:InequalityOp Mdid="0.85.1.0"/>
         <dxl:LessThanOp Mdid="0.58.1.0"/>
@@ -49,7 +49,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.96.1.0"/>
         <dxl:InequalityOp Mdid="0.518.1.0"/>
         <dxl:LessThanOp Mdid="0.97.1.0"/>
@@ -64,7 +64,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SumAgg Mdid="0.2108.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.607.1.0"/>
         <dxl:InequalityOp Mdid="0.608.1.0"/>
         <dxl:LessThanOp Mdid="0.609.1.0"/>
@@ -79,7 +79,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
+      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
         <dxl:EqualityOp Mdid="0.387.1.0"/>
         <dxl:InequalityOp Mdid="0.402.1.0"/>
         <dxl:LessThanOp Mdid="0.2799.1.0"/>
@@ -94,7 +94,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.385.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -109,7 +109,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.352.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -172,7 +172,7 @@ and ei.entity_id  = i.ad_id;
       <dxl:ColumnStatistics Mdid="1.17279045.1.1.4" Name="xmin" Width="4.000000" NullFreq="0.000000" NdvRemain="0.000000" FreqRemain="0.000000"/>
       <dxl:MDCast Mdid="3.23.1.0;23.1.0" Name="int4" BinaryCoercible="true" SourceTypeId="0.23.1.0" DestinationTypeId="0.23.1.0" CastFuncId="0.0.0.0"/>
       <dxl:RelationStatistics Mdid="2.17279071.1.1" Name="impressions_raw" Rows="0.000000" EmptyRelation="true"/>
-      <dxl:Type Mdid="0.1114.1.0" Name="timestamp" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
+      <dxl:Type Mdid="0.1114.1.0" Name="timestamp" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
         <dxl:EqualityOp Mdid="0.2060.1.0"/>
         <dxl:InequalityOp Mdid="0.2061.1.0"/>
         <dxl:LessThanOp Mdid="0.2062.1.0"/>
@@ -293,10 +293,10 @@ and ei.entity_id  = i.ad_id;
         </dxl:And>
       </dxl:LogicalJoin>
     </dxl:Query>
-    <dxl:Plan Id="0" SpaceSize="3416">
+    <dxl:Plan Id="0" SpaceSize="3472">
       <dxl:GatherMotion InputSegments="0,1" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="11.084961" Rows="2.000000" Width="24"/>
+          <dxl:Cost StartupCost="0" TotalCost="11.008789" Rows="2.000000" Width="24"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="0" Alias="user_id">
@@ -313,7 +313,7 @@ and ei.entity_id  = i.ad_id;
         <dxl:SortingColumnList/>
         <dxl:Sequence>
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="10.061523" Rows="2.000000" Width="24"/>
+            <dxl:Cost StartupCost="0" TotalCost="9.985352" Rows="2.000000" Width="24"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="0" Alias="user_id">
@@ -417,7 +417,7 @@ and ei.entity_id  = i.ad_id;
           </dxl:CTEProducer>
           <dxl:Sequence>
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="7.989258" Rows="2.000000" Width="20"/>
+              <dxl:Cost StartupCost="0" TotalCost="7.913086" Rows="2.000000" Width="20"/>
             </dxl:Properties>
             <dxl:ProjList>
               <dxl:ProjElem ColId="0" Alias="user_id">
@@ -657,7 +657,7 @@ and ei.entity_id  = i.ad_id;
             </dxl:CTEProducer>
             <dxl:Append IsTarget="false" IsZapped="false">
               <dxl:Properties>
-                <dxl:Cost StartupCost="0" TotalCost="4.308594" Rows="2.000000" Width="20"/>
+                <dxl:Cost StartupCost="0" TotalCost="4.232422" Rows="2.000000" Width="20"/>
               </dxl:Properties>
               <dxl:ProjList>
                 <dxl:ProjElem ColId="0" Alias="user_id">
@@ -755,7 +755,7 @@ and ei.entity_id  = i.ad_id;
               </dxl:Result>
               <dxl:Result>
                 <dxl:Properties>
-                  <dxl:Cost StartupCost="0" TotalCost="3.250000" Rows="1.000000" Width="20"/>
+                  <dxl:Cost StartupCost="0" TotalCost="3.173828" Rows="1.000000" Width="20"/>
                 </dxl:Properties>
                 <dxl:ProjList>
                   <dxl:ProjElem ColId="48" Alias="user_id">
@@ -772,7 +772,7 @@ and ei.entity_id  = i.ad_id;
                 <dxl:OneTimeFilter/>
                 <dxl:HashJoin JoinType="LeftAntiSemiJoin">
                   <dxl:Properties>
-                    <dxl:Cost StartupCost="0" TotalCost="2.210938" Rows="1.000000" Width="16"/>
+                    <dxl:Cost StartupCost="0" TotalCost="2.134766" Rows="1.000000" Width="16"/>
                   </dxl:Properties>
                   <dxl:ProjList>
                     <dxl:ProjElem ColId="48" Alias="user_id">
@@ -837,7 +837,7 @@ and ei.entity_id  = i.ad_id;
                   </dxl:CTEConsumer>
                   <dxl:Aggregate AggregationStrategy="Hashed" StreamSafe="false">
                     <dxl:Properties>
-                      <dxl:Cost StartupCost="0" TotalCost="1.074219" Rows="1.000000" Width="8"/>
+                      <dxl:Cost StartupCost="0" TotalCost="1.037109" Rows="1.000000" Width="8"/>
                     </dxl:Properties>
                     <dxl:GroupingColumns>
                       <dxl:GroupingColumn ColId="58"/>
@@ -854,7 +854,7 @@ and ei.entity_id  = i.ad_id;
                     <dxl:Filter/>
                     <dxl:CTEConsumer CTEId="1" Columns="58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76">
                       <dxl:Properties>
-                        <dxl:Cost StartupCost="0" TotalCost="0.011719" Rows="1.000000" Width="12"/>
+                        <dxl:Cost StartupCost="0" TotalCost="0.005859" Rows="1.000000" Width="12"/>
                       </dxl:Properties>
                       <dxl:ProjList>
                         <dxl:ProjElem ColId="58" Alias="user_id">

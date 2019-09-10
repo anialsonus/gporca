@@ -145,15 +145,12 @@ namespace gpopt
 			typedef CHashMap<CPartPropReq, CPartitionPropagationSpec, CPartPropReq::HashValue, CPartPropReq::Equals,
 						CleanupRelease<CPartPropReq>, CleanupRelease<CPartitionPropagationSpec> > PartPropReqToPartPropSpecMap;
 
-			// mutex for locking map of child columns requests during lookup/insertion
-			CMutex m_mutexJoin;
-
 			// partition propagation request map
 			PartPropReqToPartPropSpecMap *m_phmpp;
 
 			// ctor
 			explicit
-			CPhysicalJoin(IMemoryPool *mp);
+			CPhysicalJoin(CMemoryPool *mp);
 
 			// dtor
 			virtual 
@@ -165,7 +162,7 @@ namespace gpopt
 			// helper to compute required distribution of correlated join's children
 			CDistributionSpec *PdsRequiredCorrelatedJoin
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CDistributionSpec *pdsRequired,
 				ULONG child_index,
@@ -177,7 +174,7 @@ namespace gpopt
 			// helper to compute required rewindability of correlated join's children
 			CRewindabilitySpec *PrsRequiredCorrelatedJoin
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CRewindabilitySpec *prsRequired,
 				ULONG child_index,
@@ -189,7 +186,7 @@ namespace gpopt
 			// create partition propagation request
 			CPartPropReq *PpprCreate
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CPartitionPropagationSpec *pppsRequired,
 				ULONG child_index
@@ -198,7 +195,7 @@ namespace gpopt
 			// compute required partition propagation of the n-th child
 			CPartitionPropagationSpec *PppsRequiredCompute
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CPartitionPropagationSpec *pppsRequired,
 				ULONG child_index,
@@ -209,7 +206,7 @@ namespace gpopt
 			// spec for the children of a join
 			CPartitionPropagationSpec *PppsRequiredJoinChild
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CPartitionPropagationSpec *pppsRequired,
 				ULONG child_index,
@@ -219,33 +216,23 @@ namespace gpopt
 
 			// helper for propagating required sort order to outer child
 			static
-			COrderSpec *PosPropagateToOuter(IMemoryPool *mp, CExpressionHandle &exprhdl, COrderSpec *posRequired);
+			COrderSpec *PosPropagateToOuter(CMemoryPool *mp, CExpressionHandle &exprhdl, COrderSpec *posRequired);
 
 			// helper for checking if required sort columns come from outer child
 			static
-			BOOL FSortColsInOuterChild(IMemoryPool *mp, CExpressionHandle &exprhdl, COrderSpec *pos);
+			BOOL FSortColsInOuterChild(CMemoryPool *mp, CExpressionHandle &exprhdl, COrderSpec *pos);
 
 			// helper for checking if the outer input of a binary join operator
 			// includes the required columns
 			static
 			BOOL FOuterProvidesReqdCols(CExpressionHandle &exprhdl, CColRefSet *pcrsRequired);
 
-			// helper for adding a pair of hash join keys to given arrays
-			static
-			void AddHashKeys
-				(
-				CExpression *pexprPred,
-				CExpression *pexprOuter,
-				CExpression *pexprInner,
-				CExpressionArray *pdrgpexprOuter,
-				CExpressionArray *pdrgpexprInner
-				);
 			
 			// helper to add filter on part key
 			static
 			void AddFilterOnPartKey
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				BOOL fNLJoin,
 				CExpression *pexprScalar,
 				CPartIndexMap *ppimSource,
@@ -262,16 +249,18 @@ namespace gpopt
 			static
 			CExpression *PexprJoinPredOnPartKeys
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpression *pexprScalar,
 				CPartIndexMap *ppimSource,
 				ULONG part_idx_id,
 				CColRefSet *pcrsAllowedRefs
 				);
 
-			// are the given predicate parts hash-join compatible?
+			// Do each of the given predicate children use columns from a different
+			// join child?
 			static
-			BOOL FHashJoinCompatible(CExpression *pexprOuter, CExpression* pexprInner, CExpression *pexprPredOuter, CExpression *pexprPredInner);
+			BOOL FPredKeysSeparated(CExpression *pexprOuter, CExpression* pexprInner,
+									CExpression *pexprPredOuter, CExpression *pexprPredInner);
 
 		public:
 
@@ -292,7 +281,7 @@ namespace gpopt
 			virtual
 			CColRefSet *PcrsRequired
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CColRefSet *pcrsRequired,
 				ULONG child_index,
@@ -304,7 +293,7 @@ namespace gpopt
 			virtual
 			CCTEReq *PcteRequired
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CCTEReq *pcter,
 				ULONG child_index,
@@ -317,7 +306,7 @@ namespace gpopt
 			virtual
 			CDistributionSpec *PdsRequired
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CDistributionSpec *pdsRequired,
 				ULONG child_index,
@@ -330,7 +319,7 @@ namespace gpopt
 			virtual
 			CPartitionPropagationSpec *PppsRequired
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CPartitionPropagationSpec *pppsRequired,
 				ULONG child_index,
@@ -360,7 +349,7 @@ namespace gpopt
 			virtual
 			COrderSpec *PosDerive
 				(
-				IMemoryPool *, // mp
+				CMemoryPool *, // mp
 				CExpressionHandle &exprhdl
 				)
 				const
@@ -370,17 +359,17 @@ namespace gpopt
 
 			// derive distribution
 			virtual
-			CDistributionSpec *PdsDerive(IMemoryPool *mp, CExpressionHandle &exprhdl) const;
+			CDistributionSpec *PdsDerive(CMemoryPool *mp, CExpressionHandle &exprhdl) const;
 
 			// derive rewindability
 			virtual
-			CRewindabilitySpec *PrsDerive(IMemoryPool *mp, CExpressionHandle &exprhdl) const;
+			CRewindabilitySpec *PrsDerive(CMemoryPool *mp, CExpressionHandle &exprhdl) const;
 
 			// derive partition index map
 			virtual
 			CPartIndexMap *PpimDerive
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl,
 				CDrvdPropCtxt * //pdpctxt
 				)
@@ -393,7 +382,7 @@ namespace gpopt
 			virtual
 			CPartFilterMap *PpfmDerive
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CExpressionHandle &exprhdl
 				)
 				const
@@ -432,27 +421,26 @@ namespace gpopt
 			static
 			BOOL FHashJoinCompatible(CExpression *pexprPred, CExpression *pexprOuter, CExpression* pexprInner);
 
-			// extract expressions that can be used in hash-join from the given predicate
+			// is given predicate merge-join compatible
 			static
-			void ExtractHashJoinExpressions(CExpression *pexprPred, CExpression **ppexprLeft, CExpression **ppexprRight);
-
-			// can expression be implemented with hash join
-			static
-			BOOL FHashJoinPossible
-				(
-				IMemoryPool *mp,
-				CExpression *pexpr,
-				CExpressionArray *pdrgpexprOuter,
-				CExpressionArray *pdrgpexprInner,
-				CExpression **ppexprResult // output: join expression to be tarnsformed to hash join
-				);
+			BOOL FMergeJoinCompatible(CExpression *pexprPred, CExpression *pexprOuter, CExpression* pexprInner);
 
 			// return number of distribution requests for correlated join
 			static
 			ULONG UlDistrRequestsForCorrelatedJoin();
 
 			static
-			CRewindabilitySpec *PrsRequiredForNLJoinOuterChild(IMemoryPool *pmp, CExpressionHandle &exprhdl, CRewindabilitySpec *prsRequired);
+			void AlignJoinKeyOuterInner
+				(
+				CExpression *pexprConjunct,
+				CExpression *pexprOuter,
+				CExpression *pexprInner,
+				CExpression **ppexprKeyOuter,
+				CExpression **ppexprKeyInner
+				);
+
+			static
+			CRewindabilitySpec *PrsRequiredForNLJoinOuterChild(CMemoryPool *pmp, CExpressionHandle &exprhdl, CRewindabilitySpec *prsRequired);
 
 	}; // class CPhysicalJoin
 

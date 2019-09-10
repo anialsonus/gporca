@@ -74,18 +74,29 @@ CRewindabilitySpec::Matches
 //	prs  = requested rewindability
 //	this = derived rewindability
 //
-//	R -> Rewindable, R' -> Not Rewindable
-//	M -> Motion Hazard, M' -> No Motion Hazard
-//	+----------------------+----+-----+-----+------+
-//	| Requested/Derived -> | RM | RM' | R'M | R'M' |
-//	|   |                  |    |     |     |      |
-//	|   V                  |    |     |     |      |
-//	+----------------------+----+-----+-----+------+
-//	| RM                   | F  | T   | F   | F    |
-//	| RM'                  | T  | T   | F   | F    |
-//	| R'M                  | T  | T   | T   | T    |
-//	| R'M'                 | T  | T   | T   | T    |
-//	+----------------------+----+-----+-----+------+
+//	Table 1 - Rewindability satisfiability matrix:
+//	  T - Satisfied
+//	  F - Not satisfied; enforcer required
+//	  M - Maybe satisfied; check motion hazard satisfiability (see below)
+//	+-------------+------+-------------+------------+-------------+
+//	|  Derive ->  | None | Rescannable | Rewindable | MarkRestore |
+//	|  Required   |      |             |            |             |
+//	+-------------+------+-------------+------------+-------------+
+//	| None        | T    | T           | T          | T           |
+//	| Rescannable | F    | M           | M          | M           |
+//	| Rewindable  | F    | F           | M          | M           |
+//	| MarkRestore | F    | F           | F          | M           |
+//	+-------------+------+-------------+------------+-------------+
+//
+//	Table 2 - Motion hazard check matrix:
+//	(NB: only applies to the 3 cases in the previous table):
+//	+-----------+----------+--------+
+//	| Derive -> | NoMotion | Motion |
+//	| Required  |          |        |
+//	+-----------+----------+--------+
+//	| NoMotion  | T        | T      |
+//	| Motion    | T        | F      |
+//	+-----------+----------+--------+
 
 BOOL
 CRewindabilitySpec::FSatisfies
@@ -94,31 +105,41 @@ CRewindabilitySpec::FSatisfies
 	)
 	const
 {
-	// Non-rewindable requests always satisfied
-	if (!prs->IsRewindable())
+	// ErtNone requests always satisfied (row 1 in table 1)
+	if (prs->Ert() == ErtNone)
 	{
 		return true;
 	}
-	if (!IsRewindable())
+	// ErtNone derived op cannot satisfy rewindable or rescannable requests
+	// (rows 2-4, col 1 in table 1)
+	else if (Ert() == ErtNone)
 	{
-		// Rewindable requests not satisfied by a non-rewindable operator
 		return false;
 	}
+	// A rewindable/MarkRestore request cannot be satisfied by a rescannable op
+	// (row 3-4 col 2 in table 1)
+	if (Ert() == ErtRescannable && (prs->Ert() == ErtRewindable || prs->Ert() == ErtMarkRestore))
+	{
+		return false;
+	}
+	// A MarkRestore request cannot be satisified by a rewindable op
+	// (row 4 col 3 in table 1)
+	if (Ert() == ErtRewindable && prs->Ert() == ErtMarkRestore)
+	{
+		return false;
+	}
+	// For the rest, check motion hazard satisfiability:
+
+	// A request to handle motion hazard cannot be satisfied by an op that
+	// derived a motion hazard (row 2 col 2 in table 2)
 	if (prs->HasMotionHazard() && HasMotionHazard())
 	{
-		// Rewindablity requested along with motion hazard handling can not be satisfied
-		// by a rewindable operator with a motion hazard.
 		return false;
 	}
 
-	// Rewindability requested without motion hazard handling can be satisfied
-	// by a rewindable operator with a motion hazard.
-	//
-	// Rewindability requested with motion hazard handling can be satisfied
-	// by a rewindable operator without a motion hazard.
-	//
-	// Rewindability request with no motion hazard handling,
-	// is satisfied by a rewindable operator that does not derive a motion hazard.
+	// A request without motion hazard handling is satisfied. Also, a op that
+	// derived no motion hazard is satisfied
+	// (row 1 in table 2 & row 2 col 1 in table 2)
 	return true;
 }
 
@@ -150,7 +171,7 @@ CRewindabilitySpec::HashValue() const
 void
 CRewindabilitySpec::AppendEnforcers
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CReqdPropPlan *prpp,
 	CExpressionArray *pdrgpexpr,
@@ -208,8 +229,16 @@ CRewindabilitySpec::OsPrint
 			os << "REWINDABLE";
 			break;
 
-		case ErtNotRewindable:
-			os << "NON-REWINDABLE";
+		case ErtRescannable:
+			os << "RESCANNABLE";
+			break;
+
+		case ErtNone:
+			os << "NONE";
+			break;
+
+		case ErtMarkRestore:
+			os << "MARK-RESTORE";
 			break;
 
 		default:

@@ -30,7 +30,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CXformUpdate2DML::CXformUpdate2DML
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CXformExploration
@@ -85,7 +85,7 @@ CXformUpdate2DML::Transform
 	GPOS_ASSERT(FCheckPattern(pexpr));
 
 	CLogicalUpdate *popUpdate = CLogicalUpdate::PopConvert(pexpr->Pop());
-	IMemoryPool *mp = pxfctxt->Pmp();
+	CMemoryPool *mp = pxfctxt->Pmp();
 
 	// extract components for alternative
 
@@ -215,12 +215,12 @@ CXformUpdate2DML::Transform
 	}
 	// create logical DML
 	ptabdesc->AddRef();
-	pdrgpcrInsert->AddRef();
+	pdrgpcrDelete->AddRef();
 	CExpression *pexprDML =
 		GPOS_NEW(mp) CExpression
 			(
 			mp,
-			GPOS_NEW(mp) CLogicalDML(mp, CLogicalDML::EdmlUpdate, ptabdesc, pdrgpcrInsert, pbsModified, pcrAction, pcrTableOid, pcrCtid, pcrSegmentId, pcrTupleOid),
+			GPOS_NEW(mp) CLogicalDML(mp, CLogicalDML::EdmlUpdate, ptabdesc, pdrgpcrDelete, pbsModified, pcrAction, pcrTableOid, pcrCtid, pcrSegmentId, pcrTupleOid),
 			pexprProject
 			);
 	

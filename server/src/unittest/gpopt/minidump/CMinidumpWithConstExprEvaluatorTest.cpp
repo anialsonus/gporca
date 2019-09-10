@@ -42,6 +42,7 @@ const CHAR *rgszConstExprEvaluatorOnFileNames[] =
 	{
 	 	"../data/dxl/minidump/DynamicIndexScan-Homogenous-EnabledDateConstraint.mdp",
 	 	"../data/dxl/minidump/DynamicIndexScan-Heterogenous-EnabledDateConstraint.mdp",
+		"../data/dxl/minidump/RemoveImpliedPredOnBCCPredicates.mdp"
 	};
 
 
@@ -82,7 +83,7 @@ CMinidumpWithConstExprEvaluatorTest::EresUnittest_RunMinidumpTestsWithConstExprE
 	CAutoTraceFlag atf(EopttraceEnableConstantExpressionEvaluation, true /*value*/);
 
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	IConstExprEvaluator *pceeval = GPOS_NEW(mp) CConstExprEvaluatorForDates(mp);
 

@@ -29,7 +29,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CXformLeftAntiSemiJoin2HashJoin::CXformLeftAntiSemiJoin2HashJoin
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	// pattern
@@ -87,7 +87,18 @@ CXformLeftAntiSemiJoin2HashJoin::Transform
 	GPOS_ASSERT(FPromising(pxfctxt->Pmp(), this, pexpr));
 	GPOS_ASSERT(FCheckPattern(pexpr));
 
-	CXformUtils::ImplementHashJoin<CPhysicalLeftAntiSemiHashJoin>(pxfctxt, pxfres, pexpr, true /*fAntiSemiJoin*/);
+	CXformUtils::ImplementHashJoin<CPhysicalLeftAntiSemiHashJoin>(pxfctxt, pxfres, pexpr);
+
+	if (pxfres->Pdrgpexpr()->Size() == 0)
+	{
+		CExpression *pexprProcessed = NULL;
+		if (CXformUtils::FProcessGPDBAntiSemiHashJoin(pxfctxt->Pmp(), pexpr, &pexprProcessed))
+		{
+			// try again after simplifying join predicate
+			CXformUtils::ImplementHashJoin<CPhysicalLeftAntiSemiHashJoin>(pxfctxt, pxfres, pexprProcessed);
+			pexprProcessed->Release();
+		}
+	}
 }
 
 

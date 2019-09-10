@@ -15,9 +15,7 @@
 #include "gpos/common/CRefCount.h"
 #include "gpos/common/CSyncHashtable.h"
 #include "gpos/common/CSyncList.h"
-#include "gpos/sync/CAtomicCounter.h"
 
-#include "gpopt/spinlock.h"
 #include "gpopt/search/CGroupExpression.h"
 
 namespace gpopt
@@ -49,34 +47,31 @@ namespace gpopt
 			typedef
 					CSyncHashtableAccessByKey<
 						CGroupExpression, // entry
-						CGroupExpression, // search key
-						CSpinlockMemo> ShtAcc;
+						CGroupExpression> ShtAcc;
 
 			// definition of hash table iterator
 			typedef
 					CSyncHashtableIter<
 						CGroupExpression, // entry
-						CGroupExpression, // search key
-						CSpinlockMemo> ShtIter;
+						CGroupExpression> ShtIter;
 
 			// definition of hash table iterator accessor
 			typedef
 					CSyncHashtableAccessByIter<
 						CGroupExpression, // entry
-						CGroupExpression, // search key
-						CSpinlockMemo> ShtAccIter;
+						CGroupExpression> ShtAccIter;
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 		
 			// id counter for groups
-			CAtomicULONG m_aul;
+			ULONG m_aul;
 
 			// root group
 			CGroup *m_pgroupRoot;
 
 			// number of groups
-			volatile ULONG_PTR m_ulpGrps;
+			ULONG_PTR m_ulpGrps;
 
 			// tree map of member group expressions
 			MemoTreeMap *m_pmemotmap;
@@ -87,8 +82,7 @@ namespace gpopt
 			// hashtable of all group expressions
 			CSyncHashtable<
 				CGroupExpression, // entry
-				CGroupExpression, // search key
-				CSpinlockMemo> m_sht;
+				CGroupExpression> m_sht;
 
 			// add new group
 			void Add(CGroup *pgroup, CExpression *pexprOrigin);
@@ -109,7 +103,7 @@ namespace gpopt
 		
 			// ctor
 			explicit
-			CMemo(IMemoryPool *mp);
+			CMemo(CMemoryPool *mp);
 			
 			// dtor
 			~CMemo();
@@ -148,7 +142,7 @@ namespace gpopt
 			CGroup *PgroupInsert(CGroup *pgroupTarget, CExpression *pexprOrigin, CGroupExpression *pgexpr);
 
 			// extract a plan that delivers the given required properties
-			CExpression *PexprExtractPlan(IMemoryPool *mp, CGroup *pgroupRoot, CReqdPropPlan *prppInput, ULONG ulSearchStages);
+			CExpression *PexprExtractPlan(CMemoryPool *mp, CGroup *pgroupRoot, CReqdPropPlan *prppInput, ULONG ulSearchStages);
 
 			// merge duplicate groups
 			void GroupMerge();
@@ -163,7 +157,7 @@ namespace gpopt
 			IOstream &OsPrint(IOstream &os);
 
 			// derive stats when no stats not present for the group
-			void DeriveStatsIfAbsent(IMemoryPool *mp);
+			void DeriveStatsIfAbsent(CMemoryPool *mp);
 
 			// build tree map
 			void BuildTreeMap(COptimizationContext *poc);

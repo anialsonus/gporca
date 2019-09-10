@@ -46,7 +46,7 @@ const CGroupExpression CGroupExpression::m_gexprInvalid;
 //---------------------------------------------------------------------------
 CGroupExpression::CGroupExpression
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COperator *pop,
 	CGroupArray *pdrgpgroup,
 	CXform::EXformId exfid,
@@ -66,7 +66,8 @@ CGroupExpression::CGroupExpression
 	m_fIntermediate(fIntermediate),
 	m_estate(estUnexplored),
 	m_eol(EolLow),
-	m_ppartialplancostmap(NULL)
+	m_ppartialplancostmap(NULL),
+	m_ecirculardependency(ecdDefault)
 {
 	GPOS_ASSERT(NULL != pop);
 	GPOS_ASSERT(NULL != pdrgpgroup);
@@ -155,11 +156,6 @@ CGroupExpression::CleanupContexts()
 			}
 		}
 	}
-
-#ifdef GPOS_DEBUG
-	CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-
 }
 
 
@@ -262,7 +258,7 @@ CGroupExpression::SetOptimizationLevel()
 BOOL
 CGroupExpression::FValidContext
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COptimizationContext *poc,
 	COptimizationContextArray *pdrgpocChild
 	)
@@ -454,7 +450,7 @@ CGroupExpression::PccInsertBest
 CCostContext *
 CGroupExpression::PccComputeCost
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COptimizationContext *poc,
 	ULONG ulOptReq,
 	COptimizationContextArray *pdrgpoc, // array of child contexts
@@ -532,7 +528,7 @@ CGroupExpression::PccComputeCost
 CCost
 CGroupExpression::CostLowerBound
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CReqdPropPlan *prppInput,
 	CCostContext *pccChild,
 	ULONG child_index
@@ -613,7 +609,7 @@ CGroupExpression::ResetState()
 CCost
 CGroupExpression::CostCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CCostContext *pcc
 	)
 	const
@@ -704,7 +700,7 @@ CGroupExpression::PccLookup
 CCostContextArray *
 CGroupExpression::PdrgpccLookupAll
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COptimizationContext *poc
 	)
 {
@@ -752,7 +748,10 @@ CGroupExpression::PccInsert
 	CCostContext *pcc
 	)
 {
-	ShtAcc shta(Sht(), pcc->Poc());
+	// HERE BE DRAGONS
+	// See comment in CCache::InsertEntry
+	COptimizationContext *const poc = pcc->Poc();
+	ShtAcc shta(Sht(), poc);
 
 	CCostContext *pccFound = shta.Find();
 	while (NULL != pccFound)
@@ -781,8 +780,8 @@ CGroupExpression::PccInsert
 void
 CGroupExpression::PreprocessTransform
 	(
-	IMemoryPool *pmpLocal,
-	IMemoryPool *pmpGlobal,
+	CMemoryPool *pmpLocal,
+	CMemoryPool *pmpGlobal,
 	CXform *pxform
 	)
 {
@@ -809,8 +808,8 @@ CGroupExpression::PreprocessTransform
 void
 CGroupExpression::PostprocessTransform
 	(
-	IMemoryPool *, // pmpLocal
-	IMemoryPool *, // pmpGlobal
+	CMemoryPool *, // pmpLocal
+	CMemoryPool *, // pmpGlobal
 	CXform *pxform
 	)
 {
@@ -832,8 +831,8 @@ CGroupExpression::PostprocessTransform
 void
 CGroupExpression::Transform
 	(
-	IMemoryPool *mp,
-	IMemoryPool *pmpLocal,
+	CMemoryPool *mp,
+	CMemoryPool *pmpLocal,
 	CXform *pxform,
 	CXformResult *pxfres,
 	ULONG *pulElapsedTime, // output: elapsed time in millisecond
@@ -1065,8 +1064,8 @@ CGroupExpression::HashValue
 IStatistics *
 CGroupExpression::PstatsRecursiveDerive
 	(
-	IMemoryPool *, // pmpLocal
-	IMemoryPool *pmpGlobal,
+	CMemoryPool *, // pmpLocal
+	CMemoryPool *pmpGlobal,
 	CReqdPropRelational *prprel,
 	IStatisticsArray *stats_ctxt,
 	BOOL fComputeRootStats
@@ -1108,7 +1107,7 @@ CGroupExpression::PstatsRecursiveDerive
 void
 CGroupExpression::PrintXform
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CXform *pxform,
 	CExpression *pexpr,
 	CXformResult *pxfres,
@@ -1177,6 +1176,63 @@ CGroupExpression::OsPrintCostContexts
 	return os;
 }
 
+
+// Consider the group expression CLogicalSelect [ 0 3 ]
+// it has the 0th child coming from Group 0, where Group 0 has Duplicate Group 4
+// While deriving Stats, this will cause a circular loop as follows
+// 1. CLogicalSelect child 0 -> Will ask the stats to be derived on Group 0
+// 2. Group 0 will ask Group 4 to give the stats (as its duplicate),
+// which will then again ask CLogicalSelect [0 4] to derive stats resulting in a loop.
+// Such Group Expression can be ignored for deriving stats and implementation.
+// Group 4 (#GExprs: 5):
+// 0: CLogicalSelect [ 0 3 ]
+// 1: CLogicalNAryJoin [ 6 7 8 ] Origin: (xform: CXformInlineCTEConsumerUnderSelect, Grp: 4, GrpExpr: 0)
+// 2: CLogicalCTEConsumer (0), Columns: ["a" (18), "b" (19), "a" (20), "b" (21)] [ ]
+// 3: CLogicalNAryJoin [ 6 7 3 ] Origin: (xform: CXformInlineCTEConsumer, Grp: 4, GrpExpr: 2)
+// 4: CLogicalInnerJoin [ 6 7 3 ] Origin: (xform: CXformExpandNAryJoinGreedy, Grp: 4, GrpExpr: 3)
+//
+// Group 0 (#GExprs: 0, Duplicate Group: 4):
+BOOL
+CGroupExpression::ContainsCircularDependencies()
+{
+	// if it's already marked to contain circular dependency, return early
+	if (m_ecirculardependency == CGroupExpression::ecdCircularDependency)
+	{
+		return true;
+	}
+
+	GPOS_ASSERT(m_ecirculardependency == CGroupExpression::ecdDefault);
+
+	// if exploration is completed, then the group expression does not have
+	// any circular dependency
+	if (Pgroup()->FExplored())
+	{
+		return false;
+	}
+
+	// we are still in exploration phase, check if there are any circular dependencies
+	CGroupArray *child_groups = Pdrgpgroup();
+	for (ULONG ul = 0; ul < child_groups->Size(); ul++)
+	{
+		CGroup *child_group = (*child_groups)[ul];
+		if (child_group->FScalar())
+			continue;
+		CGroup *child_duplicate_group = child_group->PgroupDuplicate();
+		if (child_duplicate_group != NULL)
+		{
+			ULONG child_duplicate_group_id = child_duplicate_group->Id();
+			ULONG current_group_id = Pgroup()->Id();
+			if (child_duplicate_group_id == current_group_id)
+			{
+				m_ecirculardependency = CGroupExpression::ecdCircularDependency;
+				GPOS_ASSERT(Pgroup()->UlGExprs() > 1);
+				break;
+			}
+		}
+	}
+
+	return m_ecirculardependency == CGroupExpression::ecdCircularDependency;
+}
 
 //---------------------------------------------------------------------------
 //	@function:

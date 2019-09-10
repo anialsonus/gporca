@@ -82,7 +82,7 @@ COptimizerConfig::~COptimizerConfig()
 COptimizerConfig *
 COptimizerConfig::PoconfDefault
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	return GPOS_NEW(mp) COptimizerConfig
@@ -107,7 +107,7 @@ COptimizerConfig::PoconfDefault
 COptimizerConfig *
 COptimizerConfig::PoconfDefault
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ICostModel *pcm
 	)
 {
@@ -133,7 +133,7 @@ COptimizerConfig::PoconfDefault
 //
 //---------------------------------------------------------------------------
 void
-COptimizerConfig::Serialize(IMemoryPool *mp, CXMLSerializer *xml_serializer, CBitSet *pbsTrace) const
+COptimizerConfig::Serialize(CMemoryPool *mp, CXMLSerializer *xml_serializer, CBitSet *pbsTrace) const
 {
 
 	GPOS_ASSERT(NULL != xml_serializer);
@@ -172,6 +172,7 @@ COptimizerConfig::Serialize(IMemoryPool *mp, CXMLSerializer *xml_serializer, CBi
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenJoinOrderDPThreshold), m_hint->UlJoinOrderDPLimit());
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenBroadcastThreshold), m_hint->UlBroadcastThreshold());
 	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenEnforceConstraintsOnDML), m_hint->FEnforceConstraintsOnDML());
+	xml_serializer->AddAttribute(CDXLTokens::GetDXLTokenStr(EdxltokenPushGroupByBelowSetopThreshold), m_hint->UlPushGroupByBelowSetopThreshold());
 	xml_serializer->CloseElement(CDXLTokens::GetDXLTokenStr(EdxltokenNamespacePrefix), CDXLTokens::GetDXLTokenStr(EdxltokenHint));
 
 	// Serialize traceflags represented in bitset into stream

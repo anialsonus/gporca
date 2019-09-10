@@ -56,7 +56,7 @@ namespace gpopt
 			COptCtxt(COptCtxt &);
 
 			// shared memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 		
 			// column factory
 			CColumnFactory *m_pcf;
@@ -74,7 +74,7 @@ namespace gpopt
 			IComparator *m_pcomp;
 
 			// atomic counter for generating part index ids
-			CAtomicULONG m_auPartId;
+			ULONG m_auPartId;
 
 			// global CTE information
 			CCTEInfo *m_pcteinfo;
@@ -107,7 +107,7 @@ namespace gpopt
 			// ctor
 			COptCtxt
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CColumnFactory *col_factory,
 				CMDAccessor *md_accessor,
 				IConstExprEvaluator *pceeval,
@@ -119,7 +119,7 @@ namespace gpopt
 			~COptCtxt();
 
 			// memory pool accessor
-			IMemoryPool *Pmp() const
+			CMemoryPool *Pmp() const
 			{
 				return m_mp;
 			}
@@ -230,7 +230,7 @@ namespace gpopt
 			// return a new part index id
 			ULONG UlPartIndexNextVal()
 			{
-				return m_auPartId.Incr();
+				return m_auPartId++;
 			}
 			
 			// required system columns
@@ -255,7 +255,7 @@ namespace gpopt
 			static
 			COptCtxt *PoctxtCreate
 						(
-						IMemoryPool *mp,
+						CMemoryPool *mp,
 						CMDAccessor *md_accessor,
 						IConstExprEvaluator *pceeval,
 						COptimizerConfig *optimizer_config

@@ -32,7 +32,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalFilter::CPhysicalFilter
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp)
@@ -69,7 +69,7 @@ CPhysicalFilter::~CPhysicalFilter()
 CColRefSet *
 CPhysicalFilter::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -94,7 +94,7 @@ CPhysicalFilter::PcrsRequired
 COrderSpec *
 CPhysicalFilter::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
@@ -120,7 +120,7 @@ CPhysicalFilter::PosRequired
 CDistributionSpec *
 CPhysicalFilter::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -155,7 +155,7 @@ CPhysicalFilter::PdsRequired
 CRewindabilitySpec *
 CPhysicalFilter::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -165,16 +165,6 @@ CPhysicalFilter::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-
-	// If there are outer references in the Filter (but none coming from the
-	// child), we can optimize by adding a materialize in between. However, if
-	// there are outer references in the child, we should *not* add a materialize
-	// here.  Otherwise the child will not get rescanned leading to wrong
-	// results.
-	if (exprhdl.HasOuterRefs() && !exprhdl.HasOuterRefs(0))
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -191,7 +181,7 @@ CPhysicalFilter::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalFilter::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG 
@@ -292,7 +282,7 @@ CPhysicalFilter::PppsRequired
 CCTEReq *
 CPhysicalFilter::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -320,7 +310,7 @@ CPhysicalFilter::PcteRequired
 COrderSpec *
 CPhysicalFilter::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -340,12 +330,72 @@ CPhysicalFilter::PosDerive
 CDistributionSpec *
 CPhysicalFilter::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	return PdsDerivePassThruOuter(exprhdl);
+	CDistributionSpec *pdsChild = PdsDerivePassThruOuter(exprhdl);
+
+	if (CDistributionSpec::EdtHashed == pdsChild->Edt() && exprhdl.HasOuterRefs())
+	{
+		CExpression *pexprFilterPred = exprhdl.PexprScalarChild(1);
+
+		CDistributionSpecHashed *pdshashedOriginal = CDistributionSpecHashed::PdsConvert(pdsChild);
+		CDistributionSpecHashed *pdshashedEquiv = pdshashedOriginal->PdshashedEquiv();
+
+		// If the child op is an IndexScan on multi-key distributed table, the
+		// derived distribution spec may contain an incomplete equivalent
+		// distribution spec (see CPhysicalScan::PdsDerive()). In that case, try to
+		// complete the spec here.
+		// Also, if there is no equivalent spec, try to find a predicate on the
+		// filter op itself, that can be used to create a complete equivalent spec
+		// here.
+		if (NULL == pdshashedEquiv || !pdshashedOriginal->HasCompleteEquivSpec(mp))
+		{
+			CDistributionSpecHashed *pdshashed;
+
+			// use the original preds if no equivalent spec exists
+			if (NULL == pdshashedEquiv)
+			{
+				pdshashed = pdshashedOriginal;
+			}
+			// use the filter preds to complete the incomplete spec
+			else
+			{
+				GPOS_ASSERT(!pdshashedOriginal->HasCompleteEquivSpec(mp));
+				pdshashed = pdshashedEquiv;
+			}
+
+			CDistributionSpecHashed *pdshashedComplete =
+				CDistributionSpecHashed::CompleteEquivSpec(mp, pdshashed, pexprFilterPred);
+
+			CExpressionArray *pdrgpexprOriginal = pdshashedOriginal->Pdrgpexpr();
+			pdrgpexprOriginal->AddRef();
+
+			CDistributionSpecHashed *pdsResult;
+			if (NULL == pdshashedComplete)
+			{
+				// could not complete the spec, return the original without any equiv spec
+				pdsResult = GPOS_NEW(mp) CDistributionSpecHashed(pdrgpexprOriginal, pdshashedOriginal->FNullsColocated());
+			}
+			else
+			{
+				// return the original with the completed equiv spec
+				pdsResult = GPOS_NEW(mp) CDistributionSpecHashed(pdrgpexprOriginal, pdshashedOriginal->FNullsColocated(), pdshashedComplete);
+			}
+
+			// in any case, returned distribution spec must be complete!
+			GPOS_ASSERT(NULL == pdsResult->PdshashedEquiv() || pdsResult->HasCompleteEquivSpec(mp));
+			pdsChild->Release();
+			return pdsResult;
+		}
+
+		// in any case, returned distribution spec must be complete!
+		GPOS_ASSERT(NULL == pdshashedEquiv || pdshashedOriginal->HasCompleteEquivSpec(mp));
+	}
+
+	return pdsChild;
 }
 
 
@@ -360,12 +410,14 @@ CPhysicalFilter::PdsDerive
 CRewindabilitySpec *
 CPhysicalFilter::PrsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	return PrsDerivePassThruOuter(exprhdl);
+	// In theory, CPhysicalFilter can support Mark Restore - we disable it
+	// here for now similar to ExecSupportsMarkRestore().
+	return PrsDerivePassThruOuter(mp, exprhdl);
 }
 
 

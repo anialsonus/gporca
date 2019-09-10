@@ -36,7 +36,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CXformExpandNAryJoinDP::CXformExpandNAryJoinDP
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CXformExploration
@@ -109,7 +109,7 @@ CXformExpandNAryJoinDP::Transform
 	GPOS_ASSERT(FPromising(pxfctxt->Pmp(), this, pexpr));
 	GPOS_ASSERT(FCheckPattern(pexpr));
 
-	IMemoryPool *mp = pxfctxt->Pmp();
+	CMemoryPool *mp = pxfctxt->Pmp();
 
 	const ULONG arity = pexpr->Arity();
 	GPOS_ASSERT(arity >= 3);
@@ -142,6 +142,7 @@ CXformExpandNAryJoinDP::Transform
 			CExpression *pexprJoinOrder = (*jodp.PdrgpexprTopK())[ul];
 			if (pexprJoinOrder != pexprResult)
 			{
+				// We should consider normalizing this expression before inserting it, as we do for pexprResult
 				pexprJoinOrder->AddRef();
 				pxfres->Add(pexprJoinOrder);
 			}

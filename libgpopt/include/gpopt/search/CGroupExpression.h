@@ -16,7 +16,6 @@
 #include "gpos/common/CList.h"
 #include "gpos/common/CRefCount.h"
 
-#include "gpopt/spinlock.h"
 #include "gpopt/base/CCostContext.h"
 #include "gpopt/engine/CPartialPlan.h"
 #include "gpopt/operators/COperator.h"
@@ -63,38 +62,43 @@ namespace gpopt
 				estSentinel
 			};
 
+			// circular dependency state
+			enum ECircularDependency
+			{
+				ecdDefault,						// default state
+				ecdCircularDependency,			// contains circular dependency
+
+				ecdSentinel
+			};
+
 			// type definition of cost context hash table
 			typedef
 				CSyncHashtable<
 					CCostContext, // entry
-					OPTCTXT_PTR, // search key
-					CSpinlockCC> ShtCC;
+					OPTCTXT_PTR   /* search key */> ShtCC;
 
 		private:
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 
 			// definition of context hash table accessor
 			typedef
 				CSyncHashtableAccessByKey<
 					CCostContext, // entry
-					OPTCTXT_PTR, // search key
-					CSpinlockCC> ShtAcc;
+					OPTCTXT_PTR> ShtAcc;
 
 			// definition of context hash table iter
 			typedef
 				CSyncHashtableIter<
 					CCostContext, // entry
-					OPTCTXT_PTR, // search key
-					CSpinlockCC> ShtIter;
+					OPTCTXT_PTR> ShtIter;
 
 			// definition of context hash table iter accessor
 			typedef
 				CSyncHashtableAccessByIter<
 					CCostContext, // entry
-					OPTCTXT_PTR, // search key
-					CSpinlockCC> ShtAccIter;
+					OPTCTXT_PTR> ShtAccIter;
 
 			// map of partial plans to their costs
 			typedef CHashMap<CPartialPlan, CCost, CPartialPlan::HashValue, CPartialPlan::Equals,
@@ -139,6 +143,9 @@ namespace gpopt
 			// map of partial plans to their cost lower bound
 			PartialPlanToCostMap *m_ppartialplancostmap;
 
+			// circular dependency state
+			ECircularDependency m_ecirculardependency;
+
 			// hashtable of cost contexts
 			ShtCC m_sht;
 
@@ -151,7 +158,7 @@ namespace gpopt
 			// print transformation
 			void PrintXform
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				CXform *pxform,
 				CExpression *pexpr,
 				CXformResult *pxfres,
@@ -161,27 +168,27 @@ namespace gpopt
 			// preprocessing before applying transformation
 			void PreprocessTransform
 				(
-				IMemoryPool *pmpLocal,
-				IMemoryPool *pmpGlobal,
+				CMemoryPool *pmpLocal,
+				CMemoryPool *pmpGlobal,
 				CXform *pxform
 				);
 
 			// postprocessing after applying transformation
 			void PostprocessTransform
 				(
-				IMemoryPool *pmpLocal,
-				IMemoryPool *pmpGlobal,
+				CMemoryPool *pmpLocal,
+				CMemoryPool *pmpGlobal,
 				CXform *pxform
 				);
 
 			// costing scheme
-			CCost CostCompute(IMemoryPool *mp, CCostContext *pcc) const;
+			CCost CostCompute(CMemoryPool *mp, CCostContext *pcc) const;
 
 			// set optimization level of group expression
 			void SetOptimizationLevel();
 
 			// check validity of group expression
-			BOOL FValidContext(IMemoryPool *mp, COptimizationContext *poc, COptimizationContextArray *pdrgpocChild);
+			BOOL FValidContext(CMemoryPool *mp, COptimizationContext *poc, COptimizationContextArray *pdrgpocChild);
 			
 			// remove cost context in hash table
 			CCostContext *PccRemove(COptimizationContext *poc, ULONG ulOptReq);
@@ -218,7 +225,7 @@ namespace gpopt
 			// ctor
 			CGroupExpression
 				(
-				IMemoryPool *mp,
+				CMemoryPool *mp,
 				COperator *pop,
 				CGroupArray *pdrgpgroup,
 				CXform::EXformId exfid,
@@ -253,10 +260,10 @@ namespace gpopt
 			BOOL FCostContextExists(COptimizationContext *poc, COptimizationContextArray *pdrgpoc);
 
 			// compute and store expression's cost under a given context
-			CCostContext *PccComputeCost(IMemoryPool *mp, COptimizationContext *poc, ULONG ulOptReq, COptimizationContextArray *pdrgpoc, BOOL fPruned, CCost costLowerBound);
+			CCostContext *PccComputeCost(CMemoryPool *mp, COptimizationContext *poc, ULONG ulOptReq, COptimizationContextArray *pdrgpoc, BOOL fPruned, CCost costLowerBound);
 
 			// compute a cost lower bound for plans, rooted by current group expression, and satisfying the given required properties
-			CCost CostLowerBound(IMemoryPool *mp, CReqdPropPlan *prppInput, CCostContext *pccChild, ULONG child_index);
+			CCost CostLowerBound(CMemoryPool *mp, CReqdPropPlan *prppInput, CCostContext *pccChild, ULONG child_index);
 
 			// initialize group expression
 			void Init(CGroup *pgroup, ULONG id);
@@ -386,8 +393,8 @@ namespace gpopt
 			// transform group expression
 			void Transform
 				(
-				IMemoryPool *mp,
-				IMemoryPool *pmpLocal,
+				CMemoryPool *mp,
+				CMemoryPool *pmpLocal,
 				CXform *pxform,
 				CXformResult *pxfres,
 				ULONG *pulElapsedTime,
@@ -424,7 +431,7 @@ namespace gpopt
 			CCostContext *PccLookup(COptimizationContext *poc, ULONG ulOptReq);
 
 			// lookup all cost contexts matching given optimization context
-			CCostContextArray *PdrgpccLookupAll(IMemoryPool *mp, COptimizationContext *poc);
+			CCostContextArray *PdrgpccLookupAll(CMemoryPool *mp, COptimizationContext *poc);
 
 			// insert a cost context in hash table
 			CCostContext *PccInsert(CCostContext *pcc);
@@ -432,8 +439,8 @@ namespace gpopt
 			// derive statistics recursively on a given group expression
 			IStatistics *PstatsRecursiveDerive
 				(
-				IMemoryPool *pmpLocal,
-				IMemoryPool *pmpGlobal,
+				CMemoryPool *pmpLocal,
+				CMemoryPool *pmpGlobal,
 				CReqdPropRelational *prprel,
 				IStatisticsArray *stats_ctxt,
 				BOOL fComputeRootStats = true
@@ -452,6 +459,8 @@ namespace gpopt
 			static
 			const CGroupExpression m_gexprInvalid;
 
+			virtual
+			BOOL ContainsCircularDependencies();
 	}; // class CGroupExpression
 	
 }

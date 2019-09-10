@@ -45,10 +45,11 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CMemo::CMemo
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	m_mp(mp),
+	m_aul(0),
 	m_pgroupRoot(NULL),
 	m_ulpGrps(0),
 	m_pmemotmap(NULL)
@@ -145,7 +146,7 @@ CMemo::Add
 	}
 	GPOS_ASSERT(NULL != pdp);
 
-	ULONG id = m_aul.Incr();
+	ULONG id = m_aul++;
 	pdp->AddRef();
 #ifdef GPOS_DEBUG
 	CGroupExpression *pgexpr = NULL;
@@ -161,7 +162,7 @@ CMemo::Add
 
 	GPOS_ASSERT(NULL != pgexpr);
 	m_listGroups.Push(pgroup);
-	(void) ExchangeAddUlongPtrWithInt(&m_ulpGrps, 1);
+	m_ulpGrps++;
 }
 
 
@@ -322,7 +323,7 @@ CMemo::PgroupInsert
 CExpression *
 CMemo::PexprExtractPlan
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CGroup *pgroupRoot,
 	CReqdPropPlan *prppInput,
 	ULONG ulSearchStages
@@ -698,7 +699,7 @@ CMemo::OsPrint
 void
 CMemo::DeriveStatsIfAbsent
 	(
-	IMemoryPool *pmpLocal
+	CMemoryPool *pmpLocal
 	)
 {
 	CGroup *pgroup = m_listGroups.PtFirst();

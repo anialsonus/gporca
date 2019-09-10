@@ -30,7 +30,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalSort::CPhysicalSort
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COrderSpec *pos
 	)
 	:
@@ -95,7 +95,7 @@ CPhysicalSort::Matches
 CColRefSet *
 CPhysicalSort::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -126,7 +126,7 @@ CPhysicalSort::PcrsRequired
 COrderSpec *
 CPhysicalSort::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &, // exprhdl
 	COrderSpec *, // posRequired
 	ULONG
@@ -158,7 +158,7 @@ CPhysicalSort::PosRequired
 CDistributionSpec *
 CPhysicalSort::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -184,8 +184,8 @@ CPhysicalSort::PdsRequired
 CRewindabilitySpec *
 CPhysicalSort::PrsRequired
 	(
-	IMemoryPool *mp,
-	CExpressionHandle &,// exprhdl,
+	CMemoryPool *mp,
+	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *,//prsRequired,
 	ULONG
 #ifdef GPOS_DEBUG
@@ -199,9 +199,21 @@ CPhysicalSort::PrsRequired
 {
 	GPOS_ASSERT(0 == child_index);
 
-	// sort establishes rewindability on its own.
-	// Also it does not require motion hazard handling since it is inherently blocking.
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, CRewindabilitySpec::EmhtNoMotion);
+	// Sort establishes rewindability on its own. It does not require motion
+	// hazard handling since it is inherently blocking. However, if it contains
+	// outer refs in its subtree, a Rescannable request should be sent, so that
+	// an appropriate enforcer is added for any non-rescannable ops below (e.g
+	// the subtree contains a Filter with outer refs on top of a Motion op, a
+	// Spool op needs to be added above the Motion).
+	// NB: This logic should be implemented in any materializing ops (e.g Sort & Spool)
+	if (exprhdl.HasOuterRefs(0))
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, CRewindabilitySpec::EmhtNoMotion);
+	}
+	else
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, CRewindabilitySpec::EmhtNoMotion);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -215,7 +227,7 @@ CPhysicalSort::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalSort::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG
@@ -244,7 +256,7 @@ CPhysicalSort::PppsRequired
 CCTEReq *
 CPhysicalSort::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -293,7 +305,7 @@ CPhysicalSort::FProvidesReqdCols
 COrderSpec *
 CPhysicalSort::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle & // exprhdl
 	)
 	const
@@ -314,7 +326,7 @@ CPhysicalSort::PosDerive
 CDistributionSpec *
 CPhysicalSort::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -334,13 +346,13 @@ CPhysicalSort::PdsDerive
 CRewindabilitySpec *
 CPhysicalSort::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle & // exprhdl
 	)
 	const
 {
 	// rewindability of output is always true
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, CRewindabilitySpec::EmhtNoMotion);
+	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtMarkRestore, CRewindabilitySpec::EmhtNoMotion);
 }
 
 

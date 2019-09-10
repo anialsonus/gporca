@@ -53,7 +53,7 @@ InSubqWithPrjListOuterRefNoInnerRefColumnIn InSubqWithPrjListOuterRefNoInnerRefC
 NestedInSubqWithPrjListOuterRefNoInnerRef  InEqualityJoin Correlated-SemiJoin
 CorrelatedSemiJoin-True CorrelatedIN-LeftSemiJoin-True CorrelatedIN-LeftSemiNotIn-True
 InSubqWithPrjListOuterRefNoInnerRefColumnPlusConstIn CorrelatedIN-LeftSemiJoin-Limit
-CorrelatedLeftSemiNLJoinWithLimit PushFilterToSemiJoinLeftChild;
+CorrelatedLeftSemiNLJoinWithLimit PushFilterToSemiJoinLeftChild SubqOuterReferenceInClause;
 
 CAntiSemiJoinTest:
 AntiSemiJoin2Select-1 AntiSemiJoin2Select-2 NOT-IN-NotNullBoth NOT-IN-NullInner NOT-IN-NullOuter
@@ -61,12 +61,16 @@ Correlated-AntiSemiJoin CorrelatedAntiSemiJoin-True Correlated-LASJ-With-Outer-C
 Correlated-LASJ-With-Outer-Const Correlated-LASJ-With-Outer-Expr;
 
 CPredicateTest:
+ConvertBoolConstNullToConstTableFalseFilter 
 TranslateOneTimeFilterConjunctQuals TranslateFilterDisjunctQuals TranslateFilterWithCTEAndTableScanIntoFilterAndOneTimeFilter
-InferPredicates InferPredicatesForLimit OR-WithIsNullPred Int2Predicate IN-Numeric DeduplicatePredicates
+InferPredicates InferPredicatesForLimit InferPredicatesBCC-vc-vc InferPredicatesBCC-vc-txt
+InferPredicatesBCC-txt-txt InferPredicatesBCC-oid-oid InferPredicatesBCC-vcpart-txt
+OR-WithIsNullPred Int2Predicate IN-Numeric DeduplicatePredicates
 AddEqualityPredicates AddPredsInSubqueries ExtractPredicateFromDisjWithComputedColumns
 Join-With-Subq-Preds-1 Non-Hashjoinable-Pred Non-Hashjoinable-Pred-2 Factorized-Preds IN OR AvoidConstraintDerivationForLike
 NLJ-DistCol-No-Broadcast NLJ-EqAllCol-No-Broadcast NLJ-EqDistCol-InEqNonDistCol-No-Broadcast
-NLJ-InEqDistCol-EqNonDistCol-Redistribute CorrelatedNLJWithTrueCondition InferPredicatesInnerOfLOJ;
+NLJ-InEqDistCol-EqNonDistCol-Redistribute CorrelatedNLJWithTrueCondition InferPredicatesInnerOfLOJ
+InferredPredicatesConstraintSimplification;
 
 CLikeIDFTest:
 LIKE-Pattern-green LIKE-Pattern-green-2 LIKE-Pattern-Empty Nested-Or-Predicates Join-IDF
@@ -76,8 +80,12 @@ Join-INDF Join-INDF-NoBroadcast TimeTypeStatsNotComparable;
 
 CLeftOuterIndexApplyTest:
 IndexApply-LeftOuter-NLJoin LOJ-IndexApply-MultiIndexes LOJ-IndexApply-Negative-NonEqual-Predicate
-LOJ-IndexApply-DistKey-Multiple-Predicates LOJ-IndexApply-MasterOnly-Table LOJ-IndexApply-Negative-NonDistKey
-LOJ-IndexApply-CompsiteKey-Equiv LOJ-IndexApply-CompsiteKey-NoMotion LOJ-IndexApply-MultiDistKeys-IndexKeys;
+LOJ-IndexApply-DistKey-Multiple-Predicates LOJ-IndexApply-MasterOnly-Table LOJ-IndexApply-NonDistKey
+LOJ-IndexApply-CompsiteKey-Equiv LOJ-IndexApply-CompsiteKey-NoMotion LOJ-IndexApply-MultiDistKeys-IndexKeys
+LOJ-IndexApply-WithComplexPredicates LOJ-IndexApply-MultiDistKeys-WithComplexPreds
+LOJ-IndexApply-MultiDistKey-MultiIndexKey-NoExtraFilter LOJ-IndexApply-MultiDistKey-MultiIndexKey
+LOJ-IndexApply-MultiDistKeys-Bitmap LOJ-IndexApply-MultiDistKeys-Bitmap-WithComplexPreds
+LOJ-DynBitmapIndex LOJ-DynBitmapIndexWithSelect LOJ-DynBtreeIndex LOJ-DynBtreeIndexWithSelect;
 
 CTypeModifierTest:
 TypeModifierColumn TypeModifierCast TypeModifierConst TypeModifierDoubleMappableConst TypeModifierArrayRef;
@@ -97,7 +105,9 @@ IndexApply-PartTable IndexApply-Heterogeneous-NoDTS IndexApply-Heterogeneous-DTS
 IndexApply-No-Motion-Below-Join IndexApply-Redistribute-Const-Table IndexApply-PartResolverExpand
 IndexApply-InnerSelect-Basic IndexApply-InnerSelect-PartTable IndexApply-PartKey-Is-IndexKey
 IndexApply-InnerSelect-Heterogeneous-DTS IndexApply-Heterogeneous-BothSidesPartitioned
-IndexApply-InnerSelect-PartTable2 IndexApply-ForPartialIndex CastedScalarIf-On-Index-Key;
+IndexApply-InnerSelect-PartTable2 IndexApply-ForPartialIndex CastedScalarIf-On-Index-Key
+IndexApply-MultiDistKey-WithComplexPreds IndexApply-MultiDistKeys-Bitmap
+IndexApply-MultiDistKeys-Bitmap-WithComplexPreds;
 
 CDynamicIndexScanTest:
 DynamicIndexScan-Homogenous DynamicIndexScan-BoolTrue DynamicIndexScan-BoolFalse
@@ -127,10 +137,10 @@ CStatsTest:
 Stat-Derivation-Leaf-Pattern MissingBoolColStats JoinColWithOnlyNDV UnsupportedStatsPredicate;
 
 CICGMiscTest:
-OrderByNullsFirst ConvertHashToRandomSelect ConvertHashToRandomInsert HJN-DeeperOuter CTAS CTAS-Random CheckAsUser
+BroadcastSkewedHashjoin OrderByNullsFirst ConvertHashToRandomSelect ConvertHashToRandomInsert HJN-DeeperOuter CTAS CTAS-Random CheckAsUser
 ProjectRepeatedColumn1 ProjectRepeatedColumn2 NLJ-BC-Outer-Spool-Inner Self-Comparison Self-Comparison-Nullable
 SelectCheckConstraint ExpandJoinOrder SelectOnBpchar EqualityJoin EffectsOfJoinFilter InnerJoin-With-OuterRefs
-UDA-AnyElement-1 UDA-AnyElement-2 MinCardinalityNaryJoin Project-With-NonScalar-Func;
+UDA-AnyElement-1 UDA-AnyElement-2 MinCardinalityNaryJoin Project-With-NonScalar-Func SixWayDPv2;
 
 CArrayCmpTest:
 ArrayConcat ArrayRef FoldedArrayCmp IN-ArrayCmp NOT-IN-ArrayCmp ArrayCmpAll UDA-AnyArray InClauseWithMCV
@@ -173,7 +183,8 @@ CPartTbl5Test:
 PartTbl-IsNullPredicate PartTbl-IsNotNullPredicate PartTbl-IndexOnDefPartOnly
 PartTbl-SubqueryOuterRef PartTbl-CSQ-PartKey PartTbl-CSQ-NonPartKey
 PartTbl-LeftOuterHashJoin-DPE-IsNull PartTbl-LeftOuterNLJoin-DPE-IsNull
-PartTbl-List-DPE-Varchar-Predicates PartTbl-List-DPE-Int-Predicates;
+PartTbl-List-DPE-Varchar-Predicates PartTbl-List-DPE-Int-Predicates
+PartTbl-AggWithExistentialSubquery;
 
 CPartTbl6Test:
 PartTbl-PredicateWithCast PartTbl-IDFList PartTbl-IDFNull
@@ -186,7 +197,7 @@ PartTbl-WindowFuncNoDisjunctPredPushDown PartTbl-WindowFuncSinglePredPushDown;
 CSetop1Test:
 ValueScanWithDuplicateAndSelfComparison PushGbBelowNaryUnionAll
 PushGbBelowNaryUnion-1 PushGbBelowNaryUnion-2 MS-UnionAll-1
-MS-UnionAll-5 MS-UnionAll-6 MS-UnionAll-7;
+MS-UnionAll-5 MS-UnionAll-6 MS-UnionAll-7 ManyTextUnionsInSubquery;
 
 CSetop2Test:
 Cascaded-UnionAll-Same-Cols-Order Cascaded-UnionAll-Differing-Cols
@@ -196,7 +207,7 @@ Union-OuterRefs-Output Union-OuterRefs-Casting-Output
 Union-OuterRefs-InnerChild MS-UnionAll-2;
 
 CSetop3Test:
-UnionWithOuterRefs UnionAll Union-On-HJNs
+UnionWithOuterRefs UnionAll
 Union-Distributed-Table-With-Const-Table ExceptAllCompatibleDataType
 UnionAllCompatibleDataType UnionOfDQAQueries Union-Volatile-Func
 Intersect-Volatile-Func Except-Volatile-Func;
@@ -210,20 +221,31 @@ IndexScanWithNestedCTEAndSetOp Blocking-Spool-Parallel-Union-All;
 CEquivClassTest:
 Equiv-HashedDistr-1 Equiv-HashedDistr-2 EquivClassesAndOr EquivClassesLimit IndexNLJoin_Cast_NoMotion;
 
-COuterJoinTest:
-ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False FOJ-Condition-False FullOuterJoin FullOuterJoin2
+COuterJoin1Test:
+ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False
 LeftJoin-With-Pred-On-Inner LeftJoin-With-Pred-On-Inner2
-LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred
+LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred;
+
+COuterJoin2Test:
 LOJ-IsNullPred Select-Proj-OuterJoin OuterJoin-With-OuterRefs Join-Disj-Subqs
 EffectOfLocalPredOnJoin EffectOfLocalPredOnJoin2 EffectOfLocalPredOnJoin3
-LeftJoin-UnsupportedFilter-Cardinality LeftOuter2InnerUnionAllAntiSemiJoin
+LeftJoin-UnsupportedFilter-Cardinality LeftOuter2InnerUnionAllAntiSemiJoin;
+
+COuterJoin3Test:
 LOJ_IDF_no_convert_outer_ref_predicate_with_NULL
 LOJ_IDF_no_convert_outer_ref_predicate_with_inner_ref LOJ_convert_to_inner_with_inner_predicate_IDF
 LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inner_with_outer_predicate_INDF
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
 LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
-FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2;
+LOJ-HashJoin-MultiDistKeys-WithComplexPreds;
+
+CFullJoinTest:
+FOJ-Condition-False ExpandFullOuterJoin ExpandFullOuterJoin2 FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2
+FullJoin-InnerNotOnDistributionColumn FullJoin-NotOnDistributionColumn FullJoin-2PredicateOnDistColumns
+FullJoin-OnDistributionColumn FullJoin-SwappedPredicates FullJoin-Replicated 
+FullJoin-SubqueryWithRedistribute FullJoin-SubquerySingleton FullJoin-Subquery-CastedPredicates
+FullJoin-Caps;
 
 CJoinOrderGreedyTest:
 GreedyNAryJoin GreedyNAryDelayCrossJoin GreedyNAryOnlyCrossJoins GreedyNAryJoinWithDisconnectedEdges;
@@ -252,11 +274,14 @@ Gist-AOCOTable-NonLossy-BitmapIndexPlan Gist-NonPart-Lossy-BitmapIndexPlan Gist-
 Gist-PartTable-Lossy-IndexPlan Gist-PartTable-NonLossy-BitmapIndexPlan Gist-PartialIndex-TableScan
 Gist-NestedLoopJoin-Lossy-IndexPlan Gist-NestedLoopJoin-Postgis-IndexPlan Gist-OrderBy-BitmapPlan Gist-OrderBy-IndexPlan;
 
+CGinIndexTest:
+GinIndex GinIndexPathOpClass GinIndexSearchModeAll;
+
 CReplicatedTableTest:
 ReplicatedTableSelect ReplicatedTableInsert ReplicatedTable-CTAS ReplicatedHashJoinReplicated ReplicatedJoinHashDistributedTable ReplicatedJoinRandomDistributedTable ReplicatedLOJHashDistributedTable ReplicatedLOJRandomDistributedTable ReplicatedLOJReplicated ReplicatedNLJReplicated ReplicatedTableAggregate ReplicatedTableCTE ReplicatedTableGroupBy ReplicatedJoinPartitionedTable ReplicatedTableInClause;
 
 CDqaTest:
-DqaHavingMax DqaMax DqaMin DqaSubqueryMax;
+DqaHavingMax DqaMax DqaMin DqaSubqueryMax DqaNoRedistribute;
 
 CMCVCardinalityTest:
 BpCharMCVCardinalityEquals BpCharMCVCardinalityGreaterThan TextMCVCardinalityEquals TextMCVCardinalityGreaterThan VarcharMCVCardinalityEquals VarcharMCVCardinalityGreaterThan
@@ -379,6 +404,7 @@ add_orca_test(CBucketTest)
 add_orca_test(CHistogramTest)
 add_orca_test(CMCVTest)
 add_orca_test(CJoinCardinalityTest)
+add_orca_test(CJoinCardinalityNDVBasedEqPredTest)
 add_orca_test(CFilterCardinalityTest)
 add_orca_test(CTranslatorDXLToExprTest)
 add_orca_test(CTranslatorExprToDXLTest)
@@ -417,7 +443,6 @@ add_orca_test(CPredicateUtilsTest)
 add_orca_test(CPartConstraintTest)
 
 if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "SunOS"))
-  add_orca_test(CSchedulerTest)
   add_orca_test(CSearchStrategyTest)
 endif()
 

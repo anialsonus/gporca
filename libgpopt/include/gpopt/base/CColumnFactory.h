@@ -14,9 +14,7 @@
 #include "gpos/base.h"
 #include "gpos/common/CList.h"
 #include "gpos/common/CSyncHashtable.h"
-#include "gpos/sync/CAtomicCounter.h"
 
-#include "gpopt/spinlock.h"
 #include "gpopt/base/CColRefSet.h"
 #include "gpopt/metadata/CColumnDescriptor.h"
 
@@ -50,19 +48,18 @@ namespace gpopt
 		private:
 
 			// MTS memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 
 			// mapping between column id of computed column and a set of used column references
 			ColRefToColRefSetMap *m_phmcrcrs;
 
 			// id counter
-			CAtomicULONG m_aul;
+			ULONG m_aul;
 
 			// hash table
 			CSyncHashtable
 				<CColRef,
-				ULONG,
-				CSpinlockColumnFactory> m_sht;
+				ULONG> m_sht;
 
 			// private copy ctor
 			CColumnFactory(const CColumnFactory &);
@@ -74,7 +71,8 @@ namespace gpopt
 					const CColumnDescriptor *pcoldesc,
 					ULONG id,
 					const CName &name,
-					ULONG ulOpSource
+					ULONG ulOpSource,
+					BOOL mark_as_used=true
 					);
 
 		public:
@@ -99,7 +97,8 @@ namespace gpopt
 				(
 				const CColumnDescriptor *pcoldescr,
 				const CName &name,
-				ULONG ulOpSource
+				ULONG ulOpSource,
+				BOOL mark_as_used
 				);
 
 			// create a column reference given its type, attno, nullability and name

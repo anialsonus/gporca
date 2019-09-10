@@ -10,7 +10,6 @@
 //---------------------------------------------------------------------------
 
 #include "gpos/base.h"
-#include "gpos/sync/CAutoMutex.h"
 
 #include "gpopt/base/CDrvdPropPlan.h"
 #include "gpopt/base/CReqdPropPlan.h"
@@ -41,7 +40,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysical::CPhysical
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	COperator(mp),
@@ -80,9 +79,6 @@ CPhysical::UpdateOptRequests
 	)
 {
 	GPOS_ASSERT(ulPropIndex < GPOPT_PLAN_PROPS);
-
-	CAutoMutex am(m_mutex);
-	am.Lock();
 
 	// update property requests
 	m_rgulOptReqs[ulPropIndex] = ulRequests;
@@ -174,7 +170,7 @@ CPhysical::LookupRequest
 DrvdPropArray *
 CPhysical::PdpCreate
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -192,7 +188,7 @@ CPhysical::PdpCreate
 COperator *
 CPhysical::PopCopyWithRemappedColumns
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	UlongToColRefMap *, //colref_mapping,
 	BOOL //must_exist
 	)
@@ -212,7 +208,7 @@ CPhysical::PopCopyWithRemappedColumns
 CReqdProp *
 CPhysical::PrpCreate
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {
@@ -277,7 +273,7 @@ CPhysical::CReqdColsRequest::Equals
 CDistributionSpec *
 CPhysical::PdsCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CTableDescriptor *ptabdesc,
 	CColRefArray *pdrgpcrOutput
 	)
@@ -340,7 +336,7 @@ CPhysical::PdsCompute
 COrderSpec *
 CPhysical::PosPassThru
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &, // exprhdl
 	COrderSpec *posRequired,
 	ULONG // child_index
@@ -363,7 +359,7 @@ CPhysical::PosPassThru
 CDistributionSpec *
 CPhysical::PdsPassThru
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &, // exprhdl
 	CDistributionSpec *pdsRequired,
 	ULONG // child_index
@@ -389,7 +385,7 @@ CPhysical::PdsPassThru
 CDistributionSpec *
 CPhysical::PdsRequireSingletonOrReplicated
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -431,7 +427,7 @@ CPhysical::PdsRequireSingletonOrReplicated
 CDistributionSpec *
 CPhysical::PdsUnary
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -465,7 +461,7 @@ CPhysical::PdsUnary
 CRewindabilitySpec *
 CPhysical::PrsPassThru
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &, // exprhdl
 	CRewindabilitySpec *prsRequired,
 	ULONG // child_index
@@ -530,11 +526,22 @@ CPhysical::PdsDerivePassThruOuter
 CRewindabilitySpec *
 CPhysical::PrsDerivePassThruOuter
 	(
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
 	CRewindabilitySpec *prs = exprhdl.Pdpplan(0 /*child_index*/)->Prs();
-	prs->AddRef();
+
+	// I cannot derive mark-restorable just because my child is mark-restorable.
+	// However, I am rewindable.
+	if (CRewindabilitySpec::ErtMarkRestore == prs->Ert())
+	{
+		prs = GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prs->Emht());
+	}
+	else
+	{
+		prs->AddRef();
+	}
 
 	return prs;
 }
@@ -553,7 +560,7 @@ CPhysical::PrsDerivePassThruOuter
 CColRefSet *
 CPhysical::PcrsChildReqd
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -563,19 +570,14 @@ CPhysical::PcrsChildReqd
 	pcrsRequired->AddRef();
 	CReqdColsRequest *prcr = GPOS_NEW(mp) CReqdColsRequest(pcrsRequired, child_index, ulScalarIndex);
 	CColRefSet *pcrs = NULL;
-	{
-		// scope of AutoMutex
-		CAutoMutex am(m_mutex);
-		am.Lock();
 
-		// lookup required columns map first
-		pcrs = m_phmrcr->Find(prcr);
-		if (NULL != pcrs)
-		{
-			prcr->Release();
-			pcrs->AddRef();
-			return pcrs;
-		}
+	// lookup required columns map first
+	pcrs = m_phmrcr->Find(prcr);
+	if (NULL != pcrs)
+	{
+		prcr->Release();
+		pcrs->AddRef();
+		return pcrs;
 	}
 
 	// request was not found in map -- we need to compute it
@@ -590,33 +592,13 @@ CPhysical::PcrsChildReqd
 	// intersect computed column set with child's output columns
 	pcrs->Intersection(exprhdl.GetRelationalProperties(child_index)->PcrsOutput());
 
-	// lookup map again to handle concurrent map lookup/insertion
-	{
-		// scope of AutoMutex
-		CAutoMutex am(m_mutex);
-		am.Lock();
-
-		CColRefSet *pcrsFound = m_phmrcr->Find(prcr);
-		if (NULL != pcrsFound)
-		{
-			// request was found now -- release computed request and use the found request
-			prcr->Release();
-			pcrs->Release();
-
-			pcrsFound->AddRef();
-			pcrs = pcrsFound;
-		}
-		else
-		{
-			// new request -- insert request in map
-			pcrs->AddRef();
+	// insert request in map
+	pcrs->AddRef();
 #ifdef GPOS_DEBUG
-			BOOL fSuccess =
+	BOOL fSuccess =
 #endif // GPOS_DEBUG
-				m_phmrcr->Insert(prcr, pcrs);
-			GPOS_ASSERT(fSuccess);
-		}
-	}
+	m_phmrcr->Insert(prcr, pcrs);
+	GPOS_ASSERT(fSuccess);
 
 	return pcrs;
 }
@@ -656,7 +638,7 @@ CPhysical::FUnaryProvidesReqdCols
 CDistributionSpecSingleton *
 CPhysical::PdssMatching
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDistributionSpecSingleton *pdss
 	)
 {
@@ -680,7 +662,7 @@ CPhysical::PdssMatching
 CPartitionPropagationSpec *
 CPhysical::PppsRequiredPushThru
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *, // mp,
 	CExpressionHandle &, // exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG // child_index
@@ -724,7 +706,7 @@ CPhysical::PcterPushThru
 CCTEMap *
 CPhysical::PcmCombine
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDrvdProp2dArray *pdrgpdpCtxt
 	)
 {
@@ -757,7 +739,7 @@ CPhysical::PcmCombine
 CCTEReq *
 CPhysical::PcterNAry
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CCTEReq *pcter,
 	ULONG child_index,
@@ -810,7 +792,7 @@ CPhysical::PcterNAry
 CPartitionPropagationSpec *
 CPhysical::PppsRequiredPushThruNAry
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsReqd,
 	ULONG child_index
@@ -940,7 +922,7 @@ CPhysical::FCanPushPartReqToChild
 CPartitionPropagationSpec *
 CPhysical::PppsRequiredPushThruUnresolvedUnary
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	EPropogatePartConstraint eppcPropogate,
@@ -999,7 +981,7 @@ CPhysical::PppsRequiredPushThruUnresolvedUnary
 CPartIndexMap *
 CPhysical::PpimDeriveCombineRelational
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -1078,7 +1060,7 @@ CPhysical::PpfmPassThruOuter
 CPartFilterMap *
 CPhysical::PpfmDeriveCombineRelational
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 {
@@ -1109,7 +1091,7 @@ CPhysical::PpfmDeriveCombineRelational
 CCTEMap *
 CPhysical::PcmDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -1229,7 +1211,7 @@ CPhysical::EpetPartitionPropagation
 CDistributionSpec *
 CPhysical::PdsRequireSingleton
 		(
-		IMemoryPool *mp,
+		CMemoryPool *mp,
 		CExpressionHandle &exprhdl,
 		CDistributionSpec *pds,
 		ULONG child_index

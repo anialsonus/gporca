@@ -61,7 +61,7 @@ using namespace std;
 CDXLMinidump *
 CMinidumperUtils::PdxlmdLoad
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *file_name
 	)
 {
@@ -129,11 +129,6 @@ CMinidumperUtils::PdxlmdLoad
 	// cleanup
 	GPOS_DELETE(parse_handler_dxl);
 	
-	// reset time slice
-#ifdef GPOS_DEBUG
-    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-
 	return GPOS_NEW(mp) CDXLMinidump
 				(
 				pbs,
@@ -255,7 +250,7 @@ CMinidumperUtils::Finalize
 CDXLNode * 
 CMinidumperUtils::PdxlnExecuteMinidump
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CHAR *file_name,
 	ULONG ulSegments,
 	ULONG ulSessionId,
@@ -287,12 +282,7 @@ CMinidumperUtils::PdxlnExecuteMinidump
 
 	// cleanup
 	GPOS_DELETE(pdxlmd);
-	
-	// reset time slice
-#ifdef GPOS_DEBUG
-    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
-    
+
 	return pdxlnPlan;
 }
 
@@ -308,7 +298,7 @@ CMinidumperUtils::PdxlnExecuteMinidump
 CDXLNode * 
 CMinidumperUtils::PdxlnExecuteMinidump
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDXLMinidump *pdxlmd,
 	const CHAR *file_name,
 	ULONG ulSegments, 
@@ -342,7 +332,7 @@ CMinidumperUtils::PdxlnExecuteMinidump
 CDXLNode *
 CMinidumperUtils::PdxlnExecuteMinidump
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CMDAccessor *md_accessor,
 	CDXLMinidump *pdxlmd,
 	const CHAR *file_name,

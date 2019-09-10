@@ -32,18 +32,25 @@ namespace gpopt
 		private:
 
 			// type definition for of expression generator
-			typedef CExpression *(*Pfpexpr)(IMemoryPool*);
+			typedef CExpression *(*Pfpexpr)(CMemoryPool*);
 
 			// type definition for of optimize function
-			typedef void (*PfnOptimize)(IMemoryPool *, CExpression *, CSearchStageArray *);
+			typedef void (*PfnOptimize)(CMemoryPool *, CExpression *, CSearchStageArray *);
 
 			// generate random search strategy
 			static
-			CSearchStageArray *PdrgpssRandom(IMemoryPool *mp);
+			CSearchStageArray *PdrgpssRandom(CMemoryPool *mp);
 
 			// run optimize function on given expression
 			static
-			void Optimize(IMemoryPool *mp, Pfpexpr pfnGenerator, CSearchStageArray *search_stage_array, PfnOptimize pfnOptimize);
+			void Optimize(CMemoryPool *mp, Pfpexpr pfnGenerator, CSearchStageArray *search_stage_array, PfnOptimize pfnOptimize);
+
+			static void BuildMemo
+				(
+				 CMemoryPool *mp,
+				 CExpression *pexprInput,
+				 CSearchStageArray *search_stage_array
+				 );
 
 		public:
 

@@ -46,7 +46,7 @@ using namespace gpmd;
 //---------------------------------------------------------------------------
 CMDTypeGenericGPDB::CMDTypeGenericGPDB
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMDId *mdid,
 	CMDName *mdname,
 	BOOL is_redistributable,
@@ -66,6 +66,7 @@ CMDTypeGenericGPDB::CMDTypeGenericGPDB
 	IMDId *mdid_op_sum,
 	IMDId *mdid_op_count,
 	BOOL is_hashable,
+	BOOL is_merge_joinable,
 	BOOL is_composite_type,
 	IMDId *mdid_base_relation,
 	IMDId *mdid_type_array,
@@ -92,6 +93,7 @@ CMDTypeGenericGPDB::CMDTypeGenericGPDB
 	m_mdid_sum(mdid_op_sum),
 	m_mdid_count(mdid_op_count),
 	m_is_hashable(is_hashable),
+	m_is_merge_joinable(is_merge_joinable),
 	m_is_composite_type(is_composite_type),
 	m_mdid_base_relation(mdid_base_relation),
 	m_mdid_type_array(mdid_type_array),
@@ -297,7 +299,7 @@ CMDTypeGenericGPDB::GetDatumForDXLConstVal
 IDatum*
 CMDTypeGenericGPDB::GetDatumForDXLDatum
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CDXLDatum *dxl_datum
 	)
 	const
@@ -341,7 +343,7 @@ CMDTypeGenericGPDB::GetDatumForDXLDatum
 CDXLDatum *
 CMDTypeGenericGPDB::GetDatumVal
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IDatum *datum
 	)
 	const
@@ -400,7 +402,7 @@ CMDTypeGenericGPDB::IsAmbiguous() const
 CDXLDatum *
 CMDTypeGenericGPDB::CreateDXLDatumVal
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMDId *mdid,
 	INT type_modifier,
 	BOOL is_passed_by_value,
@@ -462,7 +464,7 @@ CMDTypeGenericGPDB::CreateDXLDatumVal
 CDXLDatum *
 CMDTypeGenericGPDB::CreateDXLDatumStatsDoubleMappable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMDId *mdid,
 	INT type_modifier,
 	BOOL is_passed_by_value,
@@ -489,7 +491,7 @@ CMDTypeGenericGPDB::CreateDXLDatumStatsDoubleMappable
 CDXLDatum *
 CMDTypeGenericGPDB::CreateDXLDatumStatsIntMappable
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IMDId *mdid,
 	INT type_modifier,
 	BOOL is_passed_by_value,
@@ -515,7 +517,7 @@ CMDTypeGenericGPDB::CreateDXLDatumStatsIntMappable
 CDXLScalarConstValue *
 CMDTypeGenericGPDB::GetDXLOpScConst
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	IDatum *datum
 	)
 	const
@@ -536,7 +538,7 @@ CMDTypeGenericGPDB::GetDXLOpScConst
 CDXLDatum *
 CMDTypeGenericGPDB::GetDXLDatumNull
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	const
 {

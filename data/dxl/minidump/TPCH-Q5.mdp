@@ -6,10 +6,10 @@
       <dxl:StatisticsConfig DampingFactorFilter="0.750000" DampingFactorJoin="0.010000" DampingFactorGroupBy="0.750000"/>
       <dxl:CTEConfig CTEInliningCutoff="0"/> 
       <dxl:WindowOids RowNumber="7000" Rank="7001"/>
-      <dxl:TraceFlags Value="103027,103001"/>
+      <dxl:TraceFlags Value="103027,102146,103001"/>
     </dxl:OptimizerConfig>
     <dxl:Metadata SystemIds="0.GPDB">
-      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.607.1.0"/>
         <dxl:InequalityOp Mdid="0.608.1.0"/>
         <dxl:LessThanOp Mdid="0.609.1.0"/>
@@ -24,7 +24,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.28.1.0" Name="xid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.352.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -39,7 +39,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.20.1.0" Name="Int8" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
+      <dxl:Type Mdid="0.20.1.0" Name="Int8" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
         <dxl:EqualityOp Mdid="0.410.1.0"/>
         <dxl:InequalityOp Mdid="0.411.1.0"/>
         <dxl:LessThanOp Mdid="0.412.1.0"/>
@@ -62,7 +62,7 @@
         <dxl:Commutator Mdid="0.96.1.0"/>
         <dxl:InverseOp Mdid="0.518.1.0"/>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
+      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
         <dxl:EqualityOp Mdid="0.91.1.0"/>
         <dxl:InequalityOp Mdid="0.85.1.0"/>
         <dxl:LessThanOp Mdid="0.58.1.0"/>
@@ -182,7 +182,7 @@
           <dxl:UpperBound Closed="true" TypeMdid="0.23.1.0" IsNull="false" IsByValue="true" Value="24"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.1114.1.0" Name="timestamp" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
+      <dxl:Type Mdid="0.1114.1.0" Name="timestamp" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
         <dxl:EqualityOp Mdid="0.2060.1.0"/>
         <dxl:InequalityOp Mdid="0.2061.1.0"/>
         <dxl:LessThanOp Mdid="0.2062.1.0"/>
@@ -205,7 +205,7 @@
         <dxl:Commutator Mdid="0.1096.1.0"/>
         <dxl:InverseOp Mdid="0.1095.1.0"/>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.1082.1.0" Name="date" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.1082.1.0" Name="date" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.1093.1.0"/>
         <dxl:InequalityOp Mdid="0.1094.1.0"/>
         <dxl:LessThanOp Mdid="0.1095.1.0"/>
@@ -228,7 +228,7 @@
         <dxl:Commutator Mdid="0.1054.1.0"/>
         <dxl:InverseOp Mdid="0.1057.1.0"/>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1054.1.0"/>
         <dxl:InequalityOp Mdid="0.1057.1.0"/>
         <dxl:LessThanOp Mdid="0.1058.1.0"/>
@@ -258,7 +258,7 @@
         <dxl:OpFunc Mdid="0.1726.1.0"/>
         <dxl:Commutator Mdid="0.1760.1.0"/>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.1700.1.0" Name="numeric" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1700.1.0" Name="numeric" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1752.1.0"/>
         <dxl:InequalityOp Mdid="0.1753.1.0"/>
         <dxl:LessThanOp Mdid="0.1754.1.0"/>
@@ -1794,7 +1794,7 @@
           <dxl:UpperBound Closed="true" TypeMdid="0.1042.1.0" IsNull="false" IsByValue="false" Value="AAAABVA=" LintValue="160825900"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="false" IsHashable="true" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.385.1.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -1809,7 +1809,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
+      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
         <dxl:EqualityOp Mdid="0.387.1.0"/>
         <dxl:InequalityOp Mdid="0.402.1.0"/>
         <dxl:LessThanOp Mdid="0.2799.1.0"/>
@@ -1824,7 +1824,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.96.1.0"/>
         <dxl:InequalityOp Mdid="0.518.1.0"/>
         <dxl:LessThanOp Mdid="0.97.1.0"/>
@@ -1948,7 +1948,7 @@
           <dxl:UpperBound Closed="true" TypeMdid="0.23.1.0" IsNull="false" IsByValue="true" Value="38399231"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -6497,10 +6497,10 @@
         </dxl:LogicalGroupBy>
       </dxl:LogicalLimit>
     </dxl:Query>
-    <dxl:Plan Id="0" SpaceSize="4576873056">
+    <dxl:Plan Id="0" SpaceSize="16918566576">
       <dxl:GatherMotion InputSegments="0,1" OutputSegments="-1">
         <dxl:Properties>
-          <dxl:Cost StartupCost="0" TotalCost="5609250879.218599" Rows="25.000000" Width="34"/>
+          <dxl:Cost StartupCost="0" TotalCost="5607982245.179001" Rows="25.000000" Width="34"/>
         </dxl:Properties>
         <dxl:ProjList>
           <dxl:ProjElem ColId="69" Alias="n_name">
@@ -6516,7 +6516,7 @@
         </dxl:SortingColumnList>
         <dxl:Sort SortDiscardDuplicates="false">
           <dxl:Properties>
-            <dxl:Cost StartupCost="0" TotalCost="5609250877.803560" Rows="25.000000" Width="34"/>
+            <dxl:Cost StartupCost="0" TotalCost="5607982243.763962" Rows="25.000000" Width="34"/>
           </dxl:Properties>
           <dxl:ProjList>
             <dxl:ProjElem ColId="69" Alias="n_name">
@@ -6534,7 +6534,7 @@
           <dxl:LimitOffset/>
           <dxl:Aggregate AggregationStrategy="Hashed" StreamSafe="false">
             <dxl:Properties>
-              <dxl:Cost StartupCost="0" TotalCost="5609250773.964259" Rows="25.000000" Width="34"/>
+              <dxl:Cost StartupCost="0" TotalCost="5607982139.924661" Rows="25.000000" Width="34"/>
             </dxl:Properties>
             <dxl:GroupingColumns>
               <dxl:GroupingColumn ColId="69"/>
@@ -6552,7 +6552,7 @@
             <dxl:Filter/>
             <dxl:RedistributeMotion InputSegments="0,1" OutputSegments="0,1">
               <dxl:Properties>
-                <dxl:Cost StartupCost="0" TotalCost="5609250770.474025" Rows="25.000000" Width="34"/>
+                <dxl:Cost StartupCost="0" TotalCost="5607982136.434426" Rows="25.000000" Width="34"/>
               </dxl:Properties>
               <dxl:ProjList>
                 <dxl:ProjElem ColId="69" Alias="n_name">
@@ -6571,7 +6571,7 @@
               </dxl:HashExprList>
               <dxl:Result>
                 <dxl:Properties>
-                  <dxl:Cost StartupCost="0" TotalCost="5609250769.058986" Rows="25.000000" Width="34"/>
+                  <dxl:Cost StartupCost="0" TotalCost="5607982135.019387" Rows="25.000000" Width="34"/>
                 </dxl:Properties>
                 <dxl:ProjList>
                   <dxl:ProjElem ColId="69" Alias="n_name">
@@ -6585,7 +6585,7 @@
                 <dxl:OneTimeFilter/>
                 <dxl:Aggregate AggregationStrategy="Hashed" StreamSafe="true">
                   <dxl:Properties>
-                    <dxl:Cost StartupCost="0" TotalCost="5609250769.058986" Rows="25.000000" Width="34"/>
+                    <dxl:Cost StartupCost="0" TotalCost="5607982135.019387" Rows="25.000000" Width="34"/>
                   </dxl:Properties>
                   <dxl:GroupingColumns>
                     <dxl:GroupingColumn ColId="69"/>
@@ -6609,7 +6609,7 @@
                   <dxl:Filter/>
                   <dxl:HashJoin JoinType="Inner">
                     <dxl:Properties>
-                      <dxl:Cost StartupCost="0" TotalCost="73709823.363295" Rows="67480880077.599854" Width="42"/>
+                      <dxl:Cost StartupCost="0" TotalCost="72441189.323697" Rows="67480880077.599854" Width="42"/>
                     </dxl:Properties>
                     <dxl:ProjList>
                       <dxl:ProjElem ColId="36" Alias="l_extendedprice">
@@ -6633,14 +6633,10 @@
                         <dxl:Ident ColId="3" ColName="c_nationkey" TypeMdid="0.23.1.0"/>
                         <dxl:Ident ColId="57" ColName="s_nationkey" TypeMdid="0.23.1.0"/>
                       </dxl:Comparison>
-                      <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.96.1.0">
-                        <dxl:Ident ColId="68" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
-                        <dxl:Ident ColId="57" ColName="s_nationkey" TypeMdid="0.23.1.0"/>
-                      </dxl:Comparison>
                     </dxl:HashCondList>
                     <dxl:HashJoin JoinType="Inner">
                       <dxl:Properties>
-                        <dxl:Cost StartupCost="0" TotalCost="64584080.220280" Rows="168702200.193471" Width="54"/>
+                        <dxl:Cost StartupCost="0" TotalCost="63974439.150187" Rows="168702200.193471" Width="50"/>
                       </dxl:Properties>
                       <dxl:ProjList>
                         <dxl:ProjElem ColId="3" Alias="c_nationkey">
@@ -6654,9 +6650,6 @@
                         </dxl:ProjElem>
                         <dxl:ProjElem ColId="37" Alias="l_discount">
                           <dxl:Ident ColId="37" ColName="l_discount" TypeMdid="0.1700.1.0"/>
-                        </dxl:ProjElem>
-                        <dxl:ProjElem ColId="68" Alias="n_nationkey">
-                          <dxl:Ident ColId="68" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
                         </dxl:ProjElem>
                         <dxl:ProjElem ColId="69" Alias="n_name">
                           <dxl:Ident ColId="69" ColName="n_name" TypeMdid="0.1042.1.0"/>
@@ -6692,21 +6685,9 @@
                         <dxl:TableDescriptor Mdid="0.447748.1.1" TableName="lineitem">
                           <dxl:Columns>
                             <dxl:Column ColId="31" Attno="1" ColName="l_orderkey" TypeMdid="0.23.1.0"/>
-                            <dxl:Column ColId="32" Attno="2" ColName="l_partkey" TypeMdid="0.23.1.0"/>
                             <dxl:Column ColId="33" Attno="3" ColName="l_suppkey" TypeMdid="0.23.1.0"/>
-                            <dxl:Column ColId="34" Attno="4" ColName="l_linenumber" TypeMdid="0.23.1.0"/>
-                            <dxl:Column ColId="35" Attno="5" ColName="l_quantity" TypeMdid="0.1700.1.0"/>
                             <dxl:Column ColId="36" Attno="6" ColName="l_extendedprice" TypeMdid="0.1700.1.0"/>
                             <dxl:Column ColId="37" Attno="7" ColName="l_discount" TypeMdid="0.1700.1.0"/>
-                            <dxl:Column ColId="38" Attno="8" ColName="l_tax" TypeMdid="0.1700.1.0"/>
-                            <dxl:Column ColId="39" Attno="9" ColName="l_returnflag" TypeMdid="0.1042.1.0" ColWidth="1"/>
-                            <dxl:Column ColId="40" Attno="10" ColName="l_linestatus" TypeMdid="0.1042.1.0" ColWidth="1"/>
-                            <dxl:Column ColId="41" Attno="11" ColName="l_shipdate" TypeMdid="0.1082.1.0"/>
-                            <dxl:Column ColId="42" Attno="12" ColName="l_commitdate" TypeMdid="0.1082.1.0"/>
-                            <dxl:Column ColId="43" Attno="13" ColName="l_receiptdate" TypeMdid="0.1082.1.0"/>
-                            <dxl:Column ColId="44" Attno="14" ColName="l_shipinstruct" TypeMdid="0.1042.1.0" ColWidth="25"/>
-                            <dxl:Column ColId="45" Attno="15" ColName="l_shipmode" TypeMdid="0.1042.1.0" ColWidth="10"/>
-                            <dxl:Column ColId="46" Attno="16" ColName="l_comment" TypeMdid="0.1043.1.0" ColWidth="44"/>
                             <dxl:Column ColId="47" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                             <dxl:Column ColId="48" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                             <dxl:Column ColId="49" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>
@@ -6719,7 +6700,7 @@
                       </dxl:TableScan>
                       <dxl:RedistributeMotion InputSegments="0,1" OutputSegments="0,1">
                         <dxl:Properties>
-                          <dxl:Cost StartupCost="0" TotalCost="6611932.798172" Rows="21392620.717043" Width="38"/>
+                          <dxl:Cost StartupCost="0" TotalCost="6420116.351459" Rows="21392620.717043" Width="34"/>
                         </dxl:Properties>
                         <dxl:ProjList>
                           <dxl:ProjElem ColId="3" Alias="c_nationkey">
@@ -6727,9 +6708,6 @@
                           </dxl:ProjElem>
                           <dxl:ProjElem ColId="15" Alias="o_orderkey">
                             <dxl:Ident ColId="15" ColName="o_orderkey" TypeMdid="0.23.1.0"/>
-                          </dxl:ProjElem>
-                          <dxl:ProjElem ColId="68" Alias="n_nationkey">
-                            <dxl:Ident ColId="68" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
                           </dxl:ProjElem>
                           <dxl:ProjElem ColId="69" Alias="n_name">
                             <dxl:Ident ColId="69" ColName="n_name" TypeMdid="0.1042.1.0"/>
@@ -6744,7 +6722,7 @@
                         </dxl:HashExprList>
                         <dxl:HashJoin JoinType="Inner">
                           <dxl:Properties>
-                            <dxl:Cost StartupCost="0" TotalCost="6214998.405962" Rows="21392620.717043" Width="38"/>
+                            <dxl:Cost StartupCost="0" TotalCost="6064964.421587" Rows="21392620.717043" Width="34"/>
                           </dxl:Properties>
                           <dxl:ProjList>
                             <dxl:ProjElem ColId="3" Alias="c_nationkey">
@@ -6752,9 +6730,6 @@
                             </dxl:ProjElem>
                             <dxl:ProjElem ColId="15" Alias="o_orderkey">
                               <dxl:Ident ColId="15" ColName="o_orderkey" TypeMdid="0.23.1.0"/>
-                            </dxl:ProjElem>
-                            <dxl:ProjElem ColId="68" Alias="n_nationkey">
-                              <dxl:Ident ColId="68" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
                             </dxl:ProjElem>
                             <dxl:ProjElem ColId="69" Alias="n_name">
                               <dxl:Ident ColId="69" ColName="n_name" TypeMdid="0.1042.1.0"/>
@@ -6815,13 +6790,7 @@
                                 <dxl:Columns>
                                   <dxl:Column ColId="15" Attno="1" ColName="o_orderkey" TypeMdid="0.23.1.0"/>
                                   <dxl:Column ColId="16" Attno="2" ColName="o_custkey" TypeMdid="0.23.1.0"/>
-                                  <dxl:Column ColId="17" Attno="3" ColName="o_orderstatus" TypeMdid="0.1042.1.0" ColWidth="1"/>
-                                  <dxl:Column ColId="18" Attno="4" ColName="o_totalprice" TypeMdid="0.1700.1.0"/>
                                   <dxl:Column ColId="19" Attno="5" ColName="o_orderdate" TypeMdid="0.1082.1.0"/>
-                                  <dxl:Column ColId="20" Attno="6" ColName="o_orderpriority" TypeMdid="0.1042.1.0" ColWidth="15"/>
-                                  <dxl:Column ColId="21" Attno="7" ColName="o_clerk" TypeMdid="0.1042.1.0" ColWidth="15"/>
-                                  <dxl:Column ColId="22" Attno="8" ColName="o_shippriority" TypeMdid="0.23.1.0"/>
-                                  <dxl:Column ColId="23" Attno="9" ColName="o_comment" TypeMdid="0.1043.1.0" ColWidth="79"/>
                                   <dxl:Column ColId="24" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                                   <dxl:Column ColId="25" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                                   <dxl:Column ColId="26" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>
@@ -6835,7 +6804,7 @@
                           </dxl:RedistributeMotion>
                           <dxl:HashJoin JoinType="Inner">
                             <dxl:Properties>
-                              <dxl:Cost StartupCost="0" TotalCost="450109.937500" Rows="7681740.000000" Width="38"/>
+                              <dxl:Cost StartupCost="0" TotalCost="450109.937500" Rows="7681740.000000" Width="34"/>
                             </dxl:Properties>
                             <dxl:ProjList>
                               <dxl:ProjElem ColId="0" Alias="c_custkey">
@@ -6843,9 +6812,6 @@
                               </dxl:ProjElem>
                               <dxl:ProjElem ColId="3" Alias="c_nationkey">
                                 <dxl:Ident ColId="3" ColName="c_nationkey" TypeMdid="0.23.1.0"/>
-                              </dxl:ProjElem>
-                              <dxl:ProjElem ColId="68" Alias="n_nationkey">
-                                <dxl:Ident ColId="68" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
                               </dxl:ProjElem>
                               <dxl:ProjElem ColId="69" Alias="n_name">
                                 <dxl:Ident ColId="69" ColName="n_name" TypeMdid="0.1042.1.0"/>
@@ -6875,13 +6841,7 @@
                               <dxl:TableDescriptor Mdid="0.447514.1.1" TableName="customer">
                                 <dxl:Columns>
                                   <dxl:Column ColId="0" Attno="1" ColName="c_custkey" TypeMdid="0.23.1.0"/>
-                                  <dxl:Column ColId="1" Attno="2" ColName="c_name" TypeMdid="0.1043.1.0" ColWidth="25"/>
-                                  <dxl:Column ColId="2" Attno="3" ColName="c_address" TypeMdid="0.1043.1.0" ColWidth="40"/>
                                   <dxl:Column ColId="3" Attno="4" ColName="c_nationkey" TypeMdid="0.23.1.0"/>
-                                  <dxl:Column ColId="4" Attno="5" ColName="c_phone" TypeMdid="0.1042.1.0" ColWidth="15"/>
-                                  <dxl:Column ColId="5" Attno="6" ColName="c_acctbal" TypeMdid="0.1700.1.0"/>
-                                  <dxl:Column ColId="6" Attno="7" ColName="c_mktsegment" TypeMdid="0.1042.1.0" ColWidth="10"/>
-                                  <dxl:Column ColId="7" Attno="8" ColName="c_comment" TypeMdid="0.1043.1.0" ColWidth="117"/>
                                   <dxl:Column ColId="8" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                                   <dxl:Column ColId="9" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                                   <dxl:Column ColId="10" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>
@@ -6947,7 +6907,6 @@
                                       <dxl:Column ColId="68" Attno="1" ColName="n_nationkey" TypeMdid="0.23.1.0"/>
                                       <dxl:Column ColId="69" Attno="2" ColName="n_name" TypeMdid="0.1042.1.0" ColWidth="25"/>
                                       <dxl:Column ColId="70" Attno="3" ColName="n_regionkey" TypeMdid="0.23.1.0"/>
-                                      <dxl:Column ColId="71" Attno="4" ColName="n_comment" TypeMdid="0.1043.1.0" ColWidth="152"/>
                                       <dxl:Column ColId="72" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                                       <dxl:Column ColId="73" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                                       <dxl:Column ColId="74" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>
@@ -6988,7 +6947,6 @@
                                       <dxl:Columns>
                                         <dxl:Column ColId="79" Attno="1" ColName="r_regionkey" TypeMdid="0.23.1.0"/>
                                         <dxl:Column ColId="80" Attno="2" ColName="r_name" TypeMdid="0.1042.1.0" ColWidth="25"/>
-                                        <dxl:Column ColId="81" Attno="3" ColName="r_comment" TypeMdid="0.1043.1.0" ColWidth="152"/>
                                         <dxl:Column ColId="82" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                                         <dxl:Column ColId="83" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                                         <dxl:Column ColId="84" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>
@@ -7036,12 +6994,7 @@
                         <dxl:TableDescriptor Mdid="0.447904.1.1" TableName="supplier">
                           <dxl:Columns>
                             <dxl:Column ColId="54" Attno="1" ColName="s_suppkey" TypeMdid="0.23.1.0"/>
-                            <dxl:Column ColId="55" Attno="2" ColName="s_name" TypeMdid="0.1042.1.0" ColWidth="25"/>
-                            <dxl:Column ColId="56" Attno="3" ColName="s_address" TypeMdid="0.1043.1.0" ColWidth="40"/>
                             <dxl:Column ColId="57" Attno="4" ColName="s_nationkey" TypeMdid="0.23.1.0"/>
-                            <dxl:Column ColId="58" Attno="5" ColName="s_phone" TypeMdid="0.1042.1.0" ColWidth="15"/>
-                            <dxl:Column ColId="59" Attno="6" ColName="s_acctbal" TypeMdid="0.1700.1.0"/>
-                            <dxl:Column ColId="60" Attno="7" ColName="s_comment" TypeMdid="0.1043.1.0" ColWidth="101"/>
                             <dxl:Column ColId="61" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                             <dxl:Column ColId="62" Attno="-3" ColName="xmin" TypeMdid="0.28.1.0"/>
                             <dxl:Column ColId="63" Attno="-4" ColName="cmin" TypeMdid="0.29.1.0"/>

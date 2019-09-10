@@ -38,7 +38,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CJoinOrderMinCard::CJoinOrderMinCard
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionArray *pdrgpexprComponents,
 	CExpressionArray *pdrgpexprConjuncts
 	)
@@ -124,7 +124,8 @@ CJoinOrderMinCard::PexprExpand()
 		if (pcompBest == NULL)
 		{
 			// ideally we should never have the best result as null
-			GPOS_RAISE(CException::ExmaInvalid, CException::ExmiInvalid);
+			GPOS_RAISE(CException::ExmaInvalid, CException::ExmiInvalid,
+					   GPOS_WSZ_LIT("Unable to find best join component"));
 		}
 #endif
 

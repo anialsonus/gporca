@@ -32,7 +32,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalSequence::CPhysicalSequence
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp),
@@ -99,7 +99,7 @@ CPhysicalSequence::Matches
 CColRefSet *
 CPhysicalSequence::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -132,7 +132,7 @@ CPhysicalSequence::PcrsRequired
 CPartitionPropagationSpec *
 CPhysicalSequence::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -156,7 +156,7 @@ CPhysicalSequence::PppsRequired
 CCTEReq *
 CPhysicalSequence::PcteRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CCTEReq *pcter,
 	ULONG child_index,
@@ -220,7 +220,7 @@ CPhysicalSequence::FProvidesReqdCols
 CDistributionSpec *
 CPhysicalSequence::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &
 #ifdef GPOS_DEBUG
 	exprhdl
@@ -291,7 +291,7 @@ CPhysicalSequence::PdsRequired
 COrderSpec *
 CPhysicalSequence::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &, // exprhdl,
 	COrderSpec * ,// posRequired,
 	ULONG , // child_index,
@@ -315,7 +315,7 @@ CPhysicalSequence::PosRequired
 CRewindabilitySpec *
 CPhysicalSequence::PrsRequired
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *, // mp,
 	CExpressionHandle &, // exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG , // child_index,
@@ -324,8 +324,11 @@ CPhysicalSequence::PrsRequired
 	)
 	const
 {
-	// no rewindability required on the children
-	return GPOS_NEW(m_mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, prsRequired->Emht());
+	// TODO: shardikar; Handle outer refs in the subtree correctly, by passing
+	// "Rescannable' Also, maybe it should pass through the prsRequired, since it
+	// doesn't materialize any results? It's important to consider performance
+	// consequences of that also.
+	return GPOS_NEW(m_mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, prsRequired->Emht());
 }
 
 //---------------------------------------------------------------------------
@@ -339,7 +342,7 @@ CPhysicalSequence::PrsRequired
 COrderSpec *
 CPhysicalSequence::PosDerive
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *, // mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -366,7 +369,7 @@ CPhysicalSequence::PosDerive
 CDistributionSpec *
 CPhysicalSequence::PdsDerive
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *, // mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -394,7 +397,7 @@ CPhysicalSequence::PdsDerive
 CRewindabilitySpec *
 CPhysicalSequence::PrsDerive
 	(
-	IMemoryPool *, //mp
+	CMemoryPool *, //mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -413,8 +416,10 @@ CPhysicalSequence::PrsDerive
 		}
 	}
 
-	// no rewindability by sequence
-	return GPOS_NEW(m_mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
+	// TODO: shardikar; Fix this implementation. Although CPhysicalSequence is
+	// not rewindable, all its children might be rewindable. This implementation
+	// ignores the rewindability of the op's children
+	return GPOS_NEW(m_mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, motion_hazard);
 }
 
 

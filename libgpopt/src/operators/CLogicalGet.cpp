@@ -26,6 +26,7 @@
 #include "gpopt/metadata/CTableDescriptor.h"
 #include "gpopt/metadata/CName.h"
 
+#include "gpopt/translate/CTranslatorDXLToExpr.h"
 
 using namespace gpopt;
 
@@ -40,7 +41,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CLogicalGet::CLogicalGet
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CLogical(mp),
@@ -63,7 +64,7 @@ CLogicalGet::CLogicalGet
 //---------------------------------------------------------------------------
 CLogicalGet::CLogicalGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CName *pnameAlias,
 	CTableDescriptor *ptabdesc
 	)
@@ -99,7 +100,7 @@ CLogicalGet::CLogicalGet
 //---------------------------------------------------------------------------
 CLogicalGet::CLogicalGet
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	const CName *pnameAlias,
 	CTableDescriptor *ptabdesc,
 	CColRefArray *pdrgpcrOutput
@@ -195,7 +196,7 @@ CLogicalGet::Matches
 COperator *
 CLogicalGet::PopCopyWithRemappedColumns
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	UlongToColRefMap *colref_mapping,
 	BOOL must_exist
 	)
@@ -226,12 +227,22 @@ CLogicalGet::PopCopyWithRemappedColumns
 CColRefSet *
 CLogicalGet::PcrsDeriveOutput
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle & // exprhdl
 	)
 {
 	CColRefSet *pcrs = GPOS_NEW(mp) CColRefSet(mp);
-	pcrs->Include(m_pdrgpcrOutput);
+	for (ULONG i = 0; i < m_pdrgpcrOutput->Size(); i++)
+	{
+		// We want to limit the output columns to only those which are referenced in the query
+		// We will know the entire list of columns which are referenced in the query only after
+		// translating the entire DXL to an expression. Hence we should not limit the output columns
+		// before we have processed the entire DXL.
+		if ((*m_pdrgpcrOutput)[i]->GetUsage() == CColRef::EUsed || (*m_pdrgpcrOutput)[i]->GetUsage() == CColRef::EUnknown)
+		{
+			pcrs->Include((*m_pdrgpcrOutput)[i]);
+		}
+	}
 
 	return pcrs;
 }
@@ -248,7 +259,7 @@ CLogicalGet::PcrsDeriveOutput
 CColRefSet *
 CLogicalGet::PcrsDeriveNotNull
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -299,7 +310,7 @@ CLogicalGet::FInputOrderSensitive() const
 CKeyCollection *
 CLogicalGet::PkcDeriveKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle & // exprhdl
 	)
 	const
@@ -321,7 +332,7 @@ CLogicalGet::PkcDeriveKeys
 CXformSet *
 CLogicalGet::PxfsCandidates
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	) 
 	const
 {
@@ -343,7 +354,7 @@ CLogicalGet::PxfsCandidates
 IStatistics *
 CLogicalGet::PstatsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	IStatisticsArray * // not used
 	)

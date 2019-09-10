@@ -30,7 +30,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalLimit::CPhysicalLimit
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COrderSpec *pos,
 	BOOL fGlobal,
 	BOOL fHasCount,
@@ -108,7 +108,7 @@ CPhysicalLimit::Matches
 CColRefSet *
 CPhysicalLimit::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -140,7 +140,7 @@ CPhysicalLimit::PcrsRequired
 COrderSpec *
 CPhysicalLimit::PosRequired
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &, // exprhdl
 	COrderSpec *, // posInput
 	ULONG
@@ -175,7 +175,7 @@ CPhysicalLimit::PosRequired
 CDistributionSpec *
 CPhysicalLimit::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
@@ -243,7 +243,7 @@ CPhysicalLimit::PdsRequired
 CRewindabilitySpec *
 CPhysicalLimit::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -253,6 +253,18 @@ CPhysicalLimit::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
+
+	if (exprhdl.HasOuterRefs())
+	{
+		// If the Limit op or its subtree contains an outer ref, then it must
+		// request rewindability with a motion hazard (a Blocking Spool) from its
+		// subtree. Otherwise, if a streaming Spool is added to the subtree, it will 
+		// only return tuples it materialized in its first execution (i.e with the
+		// first value of the outer ref) for every re-execution. This can produce
+		// wrong results.
+		// E.g select *, (select 1 from generate_series(1, 10) limit t1.a) from t1;
+		return GPOS_NEW(mp) CRewindabilitySpec(prsRequired->Ert(), CRewindabilitySpec::EmhtMotion);
+	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -268,7 +280,7 @@ CPhysicalLimit::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalLimit::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG
@@ -302,7 +314,7 @@ CPhysicalLimit::PppsRequired
 CCTEReq *
 CPhysicalLimit::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -351,7 +363,7 @@ CPhysicalLimit::FProvidesReqdCols
 COrderSpec *
 CPhysicalLimit::PosDerive
 	(
-	IMemoryPool *,// mp
+	CMemoryPool *,// mp
 	CExpressionHandle & // exprhdl
 	)
 	const
@@ -373,7 +385,7 @@ CPhysicalLimit::PosDerive
 CDistributionSpec*
 CPhysicalLimit::PdsDerive
 	(
-	IMemoryPool *,// mp
+	CMemoryPool *,// mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -393,12 +405,12 @@ CPhysicalLimit::PdsDerive
 CRewindabilitySpec *
 CPhysicalLimit::PrsDerive
 	(
-	IMemoryPool *, //mp
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	return PrsDerivePassThruOuter(exprhdl);
+	return PrsDerivePassThruOuter(mp, exprhdl);
 }
 
 

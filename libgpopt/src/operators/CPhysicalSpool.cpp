@@ -29,7 +29,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalSpool::CPhysicalSpool
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	BOOL eager
 	)
 	:
@@ -61,7 +61,7 @@ CPhysicalSpool::~CPhysicalSpool()
 CColRefSet *
 CPhysicalSpool::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -87,7 +87,7 @@ CPhysicalSpool::PcrsRequired
 COrderSpec *
 CPhysicalSpool::PosRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
@@ -113,7 +113,7 @@ CPhysicalSpool::PosRequired
 CDistributionSpec *
 CPhysicalSpool::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -138,7 +138,7 @@ CPhysicalSpool::PdsRequired
 CPartitionPropagationSpec *
 CPhysicalSpool::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -163,7 +163,7 @@ CPhysicalSpool::PppsRequired
 CCTEReq *
 CPhysicalSpool::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -191,8 +191,8 @@ CPhysicalSpool::PcteRequired
 CRewindabilitySpec *
 CPhysicalSpool::PrsRequired
 	(
-	IMemoryPool *mp,
-	CExpressionHandle &, // exprhdl,
+	CMemoryPool *mp,
+	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG
 #ifdef GPOS_DEBUG
@@ -206,11 +206,26 @@ CPhysicalSpool::PrsRequired
 {
 	GPOS_ASSERT(0 == child_index);
 
-	// spool establishes rewindability on its own
+	// A streaming (non-eager) spool requires motion hazard handling from its
+	// child. A blocking (eager) spool does not.
 	CRewindabilitySpec::EMotionHazardType motion_hazard = (prsRequired->HasMotionHazard() && !FEager()) ?
 														  CRewindabilitySpec::EmhtMotion :
 														  CRewindabilitySpec::EmhtNoMotion;
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
+
+	// Spool establishes rewindability on its own. However, if it contains outer
+	// refs in its subtree, a Rescannable request should be sent, so that an
+	// appropriate enforcer is added for any non-rescannable ops below (e.g the
+	// subtree contains a Filter with outer refs on top of a Motion op, a Spool
+	// op needs to be added above the Motion).
+	// NB: This logic should be implemented in any materializing ops (e.g Sort & Spool)
+	if (exprhdl.HasOuterRefs(0))
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, motion_hazard);
+	}
+	else
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, motion_hazard);
+	}
 }
 
 
@@ -225,7 +240,7 @@ CPhysicalSpool::PrsRequired
 COrderSpec *
 CPhysicalSpool::PosDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -245,7 +260,7 @@ CPhysicalSpool::PosDerive
 CDistributionSpec *
 CPhysicalSpool::PdsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *, // mp
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -265,18 +280,17 @@ CPhysicalSpool::PdsDerive
 CRewindabilitySpec *
 CPhysicalSpool::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	CRewindabilitySpec *prsChild = PrsDerivePassThruOuter(exprhdl);
+	CRewindabilitySpec *prsChild = exprhdl.Pdpplan(0 /*child_index*/)->Prs();
 	CRewindabilitySpec::EMotionHazardType motion_hazard = (!FEager() && prsChild->HasMotionHazard()) ?
 														  CRewindabilitySpec::EmhtMotion :
 														  CRewindabilitySpec::EmhtNoMotion;
-	prsChild->Release();
 
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
+	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtMarkRestore, motion_hazard);
 }
 
 
@@ -410,7 +424,7 @@ CPhysicalSpool::EpetRewindability
 BOOL
 CPhysicalSpool::FValidContext
 	(
-	IMemoryPool *,
+	CMemoryPool *,
 	COptimizationContext *poc,
 	COptimizationContextArray *pdrgpocChild
 	)

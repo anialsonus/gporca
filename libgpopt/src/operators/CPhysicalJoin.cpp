@@ -10,6 +10,7 @@
 //---------------------------------------------------------------------------
 
 #include "gpos/base.h"
+#include "gpopt/exception.h"
 
 #include "gpopt/base/CUtils.h"
 #include "gpopt/base/CCastUtils.h"
@@ -32,7 +33,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalJoin::CPhysicalJoin
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 	:
 	CPhysical(mp)
@@ -85,7 +86,7 @@ CPhysicalJoin::Matches
 COrderSpec *
 CPhysicalJoin::PosPropagateToOuter
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired
 	)
@@ -115,7 +116,7 @@ CPhysicalJoin::PosPropagateToOuter
 CColRefSet *
 CPhysicalJoin::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -140,7 +141,7 @@ CPhysicalJoin::PcrsRequired
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -164,7 +165,7 @@ CPhysicalJoin::PppsRequired
 CCTEReq *
 CPhysicalJoin::PcteRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CCTEReq *pcter,
 	ULONG child_index,
@@ -225,7 +226,7 @@ CPhysicalJoin::FProvidesReqdCols
 BOOL
 CPhysicalJoin::FSortColsInOuterChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	COrderSpec *pos
 	)
@@ -281,7 +282,7 @@ CPhysicalJoin::FOuterProvidesReqdCols
 CDistributionSpec *
 CPhysicalJoin::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -346,7 +347,7 @@ CPhysicalJoin::PdsRequired
 CDistributionSpec *
 CPhysicalJoin::PdsDerive
 	(
-	IMemoryPool *, // mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -354,17 +355,36 @@ CPhysicalJoin::PdsDerive
 	CDistributionSpec *pdsOuter = exprhdl.Pdpplan(0 /*child_index*/)->Pds();
 	CDistributionSpec *pdsInner = exprhdl.Pdpplan(1 /*child_index*/)->Pds();
 
+	CDistributionSpec *pds;
+
 	if (CDistributionSpec::EdtReplicated == pdsOuter->Edt() ||
 		CDistributionSpec::EdtUniversal == pdsOuter->Edt())
 	{
 		// if outer is replicated/universal, return inner distribution
-		pdsInner->AddRef();
-		return pdsInner;
+		pds = pdsInner;
+	}
+	else
+	{
+		// otherwise, return outer distribution
+		pds = pdsOuter;
 	}
 
-	// otherwise, return outer distribution
-	pdsOuter->AddRef();
-	return pdsOuter;
+	if (CDistributionSpec::EdtHashed == pds->Edt())
+	{
+		CDistributionSpecHashed *pdsHashed = CDistributionSpecHashed::PdsConvert(pds);
+
+		// Clean up any incomplete distribution specs since they can no longer be completed above
+		// Note that, since this is done at the lowest join, no relevant equivalent specs are lost.
+		if (!pdsHashed->HasCompleteEquivSpec(mp))
+		{
+			CExpressionArray *pdrgpexpr = pdsHashed->Pdrgpexpr();
+			pdrgpexpr->AddRef();
+			return GPOS_NEW(mp) CDistributionSpecHashed(pdrgpexpr, pdsHashed->FNullsColocated());
+		}
+	}
+
+	pds->AddRef();
+	return pds;
 }
 
 
@@ -379,7 +399,7 @@ CPhysicalJoin::PdsDerive
 CRewindabilitySpec *
 CPhysicalJoin::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -394,12 +414,29 @@ CPhysicalJoin::PrsDerive
 														  CRewindabilitySpec::EmhtMotion :
 														  CRewindabilitySpec::EmhtNoMotion;
 
-	if (!prsOuter->IsRewindable() || !prsInner->IsRewindable() || CUtils::FCorrelatedNLJoin(exprhdl.Pop()))
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
+	// TODO: shardikar; Implement a separate PrsDerive() for HashJoins since it
+	// is different from NLJ; the inner of a HJ child is rewindable (due to a
+	// Hash op on the inner side)
 
-	// else both the children are rewindable
-	GPOS_ASSERT(prsOuter->IsRewindable() && prsInner->IsRewindable());
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
+	// If both children are rewindable, the join is also rewinable
+	if (prsOuter->IsRewindable() && prsInner->IsRewindable())
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
+	}
+
+	// If either child is ErtNone (neither rewindable, rescannable nor mark-restore), then the join is also ErtNone
+	else if (prsOuter->Ert() == CRewindabilitySpec::ErtNone ||
+			prsInner->Ert() == CRewindabilitySpec::ErtNone)
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, motion_hazard);
+	}
+
+	// If the children are in any other combination, e.g (rescannable, rewindable, markrestore) etc,
+	// derive rescannable for the join
+	else
+	{
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, motion_hazard);
+	}
 }
 
 
@@ -432,33 +469,25 @@ CPhysicalJoin::EpetRewindability
 	return CEnfdProp::EpetRequired;
 }
 
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CPhysicalJoin::FHashJoinCompatible
-//
-//	@doc:
-//		Are the given predicate parts hash join compatible?
-//		predicate parts are obtained by splitting equality into outer
-//		and inner expressions
-//
-//---------------------------------------------------------------------------
+// Do each of the given predicate children use columns from a different
+// join child? For this method to return true, either:
+//   - pexprPredInner uses columns from pexprInner and pexprPredOuter uses
+//     columns from pexprOuter; or
+//   - pexprPredInner uses columns from pexprOuter and pexprPredOuter uses
+//     columns from pexprInner
 BOOL
-CPhysicalJoin::FHashJoinCompatible
+CPhysicalJoin::FPredKeysSeparated
 	(
-	CExpression *pexprOuter,	// outer child of the join
-	CExpression* pexprInner,	// inner child of the join
-	CExpression *pexprPredOuter,// outer part of join predicate
-	CExpression *pexprPredInner // inner part of join predicate
+	 CExpression *pexprInner,
+	 CExpression *pexprOuter,
+	 CExpression *pexprPredInner,
+	 CExpression *pexprPredOuter
 	)
 {
 	GPOS_ASSERT(NULL != pexprOuter);
 	GPOS_ASSERT(NULL != pexprInner);
 	GPOS_ASSERT(NULL != pexprPredOuter);
 	GPOS_ASSERT(NULL != pexprPredInner);
-
-	IMDId *pmdidTypeOuter = CScalar::PopConvert(pexprPredOuter->Pop())->MdidType();
-	IMDId *pmdidTypeInner = CScalar::PopConvert(pexprPredInner->Pop())->MdidType();
 
 	CColRefSet *pcrsUsedPredOuter = CDrvdPropScalar::GetDrvdScalarProps(pexprPredOuter->PdpDerive())->PcrsUsed();
 	CColRefSet *pcrsUsedPredInner = CDrvdPropScalar::GetDrvdScalarProps(pexprPredInner->PdpDerive())->PcrsUsed();
@@ -473,17 +502,9 @@ CPhysicalJoin::FHashJoinCompatible
 	BOOL fPredInnerUsesJoinOuterChild = (0 < pcrsUsedPredInner->Size()) && outer_refs->ContainsAll(pcrsUsedPredInner);
 	BOOL fPredInnerUsesJoinInnerChild = (0 < pcrsUsedPredInner->Size()) && pcrsInner->ContainsAll(pcrsUsedPredInner);
 
-	BOOL fHashJoinCompatiblePred =
-		(fPredOuterUsesJoinOuterChild && fPredInnerUsesJoinInnerChild) ||
+	return (fPredOuterUsesJoinOuterChild && fPredInnerUsesJoinInnerChild) ||
 		(fPredOuterUsesJoinInnerChild && fPredInnerUsesJoinOuterChild);
-
-	CMDAccessor *md_accessor = COptCtxt::PoctxtFromTLS()->Pmda();
-
-	return fHashJoinCompatiblePred &&
-					md_accessor->RetrieveType(pmdidTypeOuter)->IsHashable() &&
-					md_accessor->RetrieveType(pmdidTypeInner)->IsHashable();
 }
-
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -509,182 +530,157 @@ CPhysicalJoin::FHashJoinCompatible
 	GPOS_ASSERT(NULL != pexprInner);
 	GPOS_ASSERT(pexprOuter != pexprInner);
 
-	BOOL fCompatible = false;
-	if (CPredicateUtils::IsEqualityOp(pexprPred) || CPredicateUtils::FINDF(pexprPred))
-	{
-		CExpression *pexprPredOuter = NULL;
-		CExpression *pexprPredInner = NULL;
-		ExtractHashJoinExpressions(pexprPred, &pexprPredOuter, &pexprPredInner);
-		fCompatible = FHashJoinCompatible(pexprOuter, pexprInner, pexprPredOuter, pexprPredInner);
-	}
-
-	return fCompatible;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CPhysicalJoin::ExtractHashJoinExpressions
-//
-//	@doc:
-//		Extract expressions that can be used in hash-join from the given predicate
-//
-//---------------------------------------------------------------------------
-void
-CPhysicalJoin::ExtractHashJoinExpressions
-	(
-	CExpression *pexprPred,
-	CExpression **ppexprLeft,
-	CExpression **ppexprRight
-	)
-{
-	GPOS_ASSERT(NULL != ppexprLeft);
-	GPOS_ASSERT(NULL != ppexprRight);
-
-	*ppexprLeft = NULL;
-	*ppexprRight = NULL;
-
-	// extract outer and inner expressions from predicate
-	CExpression *pexpr = pexprPred;
-	if (!CPredicateUtils::IsEqualityOp(pexprPred))
-	{
-		GPOS_ASSERT(CPredicateUtils::FINDF(pexpr));
-		pexpr = (*pexprPred)[0];
-	}
-
-	*ppexprLeft = (*pexpr)[0];
-	*ppexprRight = (*pexpr)[1];
-}
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CPhysicalJoin::AddHashKeys
-//
-//	@doc:
-//		Helper for adding a pair of hash join keys to given arrays
-//
-//---------------------------------------------------------------------------
-void
-CPhysicalJoin::AddHashKeys
-	(
-	CExpression *pexprPred,	// equality predicate in the form (ColRef1 = ColRef2) or
-							// in the form (ColRef1 is not distinct from ColRef2)
-	CExpression *pexprOuter,
-	CExpression *
-#ifdef GPOS_DEBUG
-		pexprInner
-#endif // GPOS_DEBUG
-	,
-	CExpressionArray *pdrgpexprOuter,	// array of outer hash keys
-	CExpressionArray *pdrgpexprInner	// array of inner hash keys
-	)
-{
-	GPOS_ASSERT(FHashJoinCompatible(pexprPred, pexprOuter, pexprInner));
-
-	// output of outer side
-	CColRefSet *outer_refs = CDrvdPropRelational::GetRelationalProperties(pexprOuter->PdpDerive())->PcrsOutput();
-
-#ifdef GPOS_DEBUG
-	// output of inner side
-	CColRefSet *pcrsInner = CDrvdPropRelational::GetRelationalProperties(pexprInner->PdpDerive())->PcrsOutput();
-#endif // GPOS_DEBUG
-
-	// extract outer and inner columns from predicate
 	CExpression *pexprPredOuter = NULL;
 	CExpression *pexprPredInner = NULL;
-	ExtractHashJoinExpressions(pexprPred, &pexprPredOuter, &pexprPredInner);
-	GPOS_ASSERT(NULL != pexprPredOuter);
-	GPOS_ASSERT(NULL != pexprPredInner);
-
-	CColRefSet *pcrsPredOuter = CDrvdPropScalar::GetDrvdScalarProps(pexprPredOuter->PdpDerive())->PcrsUsed();
-#ifdef GPOS_DEBUG
-	CColRefSet *pcrsPredInner = CDrvdPropScalar::GetDrvdScalarProps(pexprPredInner->PdpDerive())->PcrsUsed();
-#endif // GPOS_DEBUG
-
-	// determine outer and inner hash keys
-	CExpression *pexprKeyOuter = NULL;
-	CExpression *pexprKeyInner = NULL;
-	if (outer_refs->ContainsAll(pcrsPredOuter))
+	if (CPredicateUtils::IsEqualityOp(pexprPred))
 	{
-		pexprKeyOuter = pexprPredOuter;
-		GPOS_ASSERT(pcrsInner->ContainsAll(pcrsPredInner));
-
-		pexprKeyInner = pexprPredInner;
+		pexprPredOuter = (*pexprPred)[0];
+		pexprPredInner = (*pexprPred)[1];
+	}
+	else if (CPredicateUtils::FINDF(pexprPred))
+	{
+		CExpression *pexpr = (*pexprPred)[0];
+		pexprPredOuter = (*pexpr)[0];
+		pexprPredInner = (*pexpr)[1];
 	}
 	else
 	{
-		GPOS_ASSERT(outer_refs->ContainsAll(pcrsPredInner));
-		pexprKeyOuter = pexprPredInner;
-
-		GPOS_ASSERT(pcrsInner->ContainsAll(pcrsPredOuter));
-		pexprKeyInner = pexprPredOuter;
+		return false;
 	}
-	pexprKeyOuter->AddRef();
-	pexprKeyInner->AddRef();
 
-	pdrgpexprOuter->Append(pexprKeyOuter);
-	pdrgpexprInner->Append(pexprKeyInner);
+	IMDId *pmdidTypeOuter = CScalar::PopConvert(pexprPredOuter->Pop())->MdidType();
+	IMDId *pmdidTypeInner = CScalar::PopConvert(pexprPredInner->Pop())->MdidType();
 
-	GPOS_ASSERT(pdrgpexprInner->Size() == pdrgpexprOuter->Size());
+	CMDAccessor *md_accessor = COptCtxt::PoctxtFromTLS()->Pmda();
+
+	if (md_accessor->RetrieveType(pmdidTypeOuter)->IsHashable() &&
+		md_accessor->RetrieveType(pmdidTypeInner)->IsHashable())
+	{
+		return  FPredKeysSeparated(pexprInner, pexprOuter,
+								pexprPredInner, pexprPredOuter);
+	}
+
+	return false;
 }
 
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CPhysicalJoin::FHashJoinPossible
-//
-//	@doc:
-//		Check if predicate is hashjoin-able and extract arrays of hash keys
-//
-//---------------------------------------------------------------------------
 BOOL
-CPhysicalJoin::FHashJoinPossible
+CPhysicalJoin::FMergeJoinCompatible
 	(
-	IMemoryPool *mp,
-	CExpression *pexpr,
-	CExpressionArray *pdrgpexprOuter,
-	CExpressionArray *pdrgpexprInner,
-	CExpression **ppexprResult // output : join expression to be transformed to hash join
+	CExpression *pexprPred,		// predicate in question
+	CExpression *pexprOuter,	// outer child of the join
+	CExpression* pexprInner		// inner child of the join
 	)
 {
-	GPOS_ASSERT(COperator::EopLogicalNAryJoin != pexpr->Pop()->Eopid() &&
-		CUtils::FLogicalJoin(pexpr->Pop()));
+	GPOS_ASSERT(NULL != pexprPred);
+	GPOS_ASSERT(NULL != pexprOuter);
+	GPOS_ASSERT(NULL != pexprInner);
+	GPOS_ASSERT(pexprOuter != pexprInner);
 
-	// we should not be here if there are outer references
-	GPOS_ASSERT(!CUtils::HasOuterRefs(pexpr));
-	GPOS_ASSERT(NULL != ppexprResult);
-
-	// introduce explicit casting, if needed
-	CExpressionArray *pdrgpexpr = CCastUtils::PdrgpexprCastEquality(mp,  (*pexpr)[2]);
-
-	// identify hashkeys
-	ULONG ulPreds = pdrgpexpr->Size();
-	for (ULONG ul = 0; ul < ulPreds; ul++)
+	CExpression *pexprPredOuter = NULL;
+	CExpression *pexprPredInner = NULL;
+	// Only merge join between ScalarIdents of the same types is currently supported
+	if (CPredicateUtils::FEqIdentsOfSameType(pexprPred))
 	{
-		CExpression *pexprPred = (*pdrgpexpr)[ul];
-		if (FHashJoinCompatible(pexprPred, (*pexpr)[0], (*pexpr)[1]))
-		{
-			AddHashKeys(pexprPred, (*pexpr)[0], (*pexpr)[1], pdrgpexprOuter, pdrgpexprInner);
-		}
+		pexprPredOuter = (*pexprPred)[0];
+		pexprPredInner = (*pexprPred)[1];
+		GPOS_ASSERT(CUtils::FScalarIdent(pexprPredOuter));
+		GPOS_ASSERT(CUtils::FScalarIdent(pexprPredInner));
 	}
-	
-	// construct output join expression
-	pexpr->Pop()->AddRef();
-	(*pexpr)[0]->AddRef();
-	(*pexpr)[1]->AddRef();
-	*ppexprResult =
-		GPOS_NEW(mp) CExpression
-			(
-			mp,
-			pexpr->Pop(),
-			(*pexpr)[0],
-			(*pexpr)[1],
-			CPredicateUtils::PexprConjunction(mp, pdrgpexpr)
-			);
+	else
+	{
+		return false;
+	}
 
-	return (0 != pdrgpexprInner->Size());
+	IMDId *pmdidTypeOuter = CScalar::PopConvert(pexprPredOuter->Pop())->MdidType();
+	IMDId *pmdidTypeInner = CScalar::PopConvert(pexprPredInner->Pop())->MdidType();
+
+	// MJ sends a distribution request for merge clauses on both sides, they
+	// must, therefore, be hashable and merge joinable.
+	CMDAccessor *md_accessor = COptCtxt::PoctxtFromTLS()->Pmda();
+
+	if (md_accessor->RetrieveType(pmdidTypeOuter)->IsHashable() &&
+		md_accessor->RetrieveType(pmdidTypeInner)->IsHashable() &&
+		md_accessor->RetrieveType(pmdidTypeOuter)->IsMergeJoinable() &&
+		md_accessor->RetrieveType(pmdidTypeInner)->IsMergeJoinable())
+	{
+		return FPredKeysSeparated(pexprInner, pexprOuter,
+								  pexprPredInner, pexprPredOuter);
+	}
+
+	return false;
 }
 
+// Check for equality and INDFs in the predicates, and also aligns the expressions inner and outer keys with the predicates
+// For example foo (a int, b int) and bar (c int, d int), will need to be aligned properly if the predicate is d = a)
+void
+CPhysicalJoin::AlignJoinKeyOuterInner
+	(
+	CExpression *pexprPred,
+	CExpression *pexprOuter,
+#ifdef GPOS_DEBUG
+	CExpression *pexprInner,
+#else
+	CExpression *,
+#endif // GPOS_DEBUG
+	CExpression **ppexprKeyOuter,
+	CExpression **ppexprKeyInner
+	)
+{
+	// we should not be here if there are outer references
+	GPOS_ASSERT(NULL != ppexprKeyOuter);
+	GPOS_ASSERT(NULL != ppexprKeyInner);
+
+	CExpression *pexprPredOuter = NULL;
+	CExpression *pexprPredInner = NULL;
+
+	// extract left & right children from pexprPred for all supported ops
+	if (CPredicateUtils::IsEqualityOp(pexprPred))
+	{
+		pexprPredOuter = (*pexprPred)[0];
+		pexprPredInner = (*pexprPred)[1];
+	}
+	else if (CPredicateUtils::FINDF(pexprPred))
+	{
+		CExpression *pexpr = (*pexprPred)[0];
+		pexprPredOuter = (*pexpr)[0];
+		pexprPredInner = (*pexpr)[1];
+	}
+	else
+	{
+		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiUnsupportedOp,
+				   GPOS_WSZ_LIT("Invalid join expression in AlignJoinKeyOuterInner"));
+	}
+
+	GPOS_ASSERT(NULL != pexprPredOuter);
+	GPOS_ASSERT(NULL != pexprPredInner);
+
+	CColRefSet *pcrsOuter = CDrvdPropRelational::GetRelationalProperties(pexprOuter->Pdp(DrvdPropArray::EptRelational))->PcrsOutput();
+	CColRefSet *pcrsPredOuter = CDrvdPropScalar::GetDrvdScalarProps(pexprPredOuter->PdpDerive())->PcrsUsed();
+
+#ifdef GPOS_DEBUG
+	CColRefSet *pcrsInner = CDrvdPropRelational::GetRelationalProperties(pexprInner->Pdp(DrvdPropArray::EptRelational))->PcrsOutput();
+	CColRefSet *pcrsPredInner = CDrvdPropScalar::GetDrvdScalarProps(pexprPredInner->PdpDerive())->PcrsUsed();
+#endif // GPOS_DEBUG
+
+	CExpression *pexprOuterKeyWithoutBCC = CCastUtils::PexprWithoutBinaryCoercibleCasts(pexprPredOuter);
+	CExpression *pexprInnerKeyWithoutBCC = CCastUtils::PexprWithoutBinaryCoercibleCasts(pexprPredInner);
+
+	if (pcrsOuter->ContainsAll(pcrsPredOuter))
+	{
+		*ppexprKeyOuter = pexprOuterKeyWithoutBCC;
+		GPOS_ASSERT(pcrsInner->ContainsAll(pcrsPredInner));
+
+		*ppexprKeyInner = pexprInnerKeyWithoutBCC;
+	}
+	else
+	{
+		GPOS_ASSERT(pcrsOuter->ContainsAll(pcrsPredInner));
+		*ppexprKeyOuter = pexprInnerKeyWithoutBCC;
+
+		GPOS_ASSERT(pcrsInner->ContainsAll(pcrsPredOuter));
+		*ppexprKeyInner = pexprOuterKeyWithoutBCC;
+	}
+}
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -697,7 +693,7 @@ CPhysicalJoin::FHashJoinPossible
 void
 CPhysicalJoin::AddFilterOnPartKey
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	BOOL fNLJoin,
 	CExpression *pexprScalar,
 	CPartIndexMap *ppimSource,
@@ -797,7 +793,7 @@ CPhysicalJoin::FProcessingChildWithPartConsumer
 CExpression *
 CPhysicalJoin::PexprJoinPredOnPartKeys
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprScalar,
 	CPartIndexMap *ppimSource,
 	ULONG part_idx_id,
@@ -884,7 +880,7 @@ CPhysicalJoin::UlDistrRequestsForCorrelatedJoin()
 CRewindabilitySpec *
 CPhysicalJoin::PrsRequiredCorrelatedJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -906,50 +902,12 @@ CPhysicalJoin::PrsRequiredCorrelatedJoin
 															   CRewindabilitySpec::EmhtMotion :
 															   CRewindabilitySpec::EmhtNoMotion;
 
-		// if there are outer references, then we need a materialize on inner child
-		if (exprhdl.HasOuterRefs())
-		{
-			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
-		}
-		else
-		{
-			// if inner child has no outer refs (i.e. subplan with no params) then we need a materialize
-			if (!exprhdl.HasOuterRefs(1))
-			{
-				return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, motion_hazard);
-			}
 
-			// inner child has no rewindability requirement. if there is something
-			// below that needs rewindability (e.g. filter, computescalar, agg), it
-			// will be requested where needed. Also we must warn the inner child
-			// about motion hazard, such that it can make appropriate rewindability
-			// request.
-			return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, motion_hazard);
-		}
-
+		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRescannable, motion_hazard);
 	}
 
 	GPOS_ASSERT(0 == child_index);
 
-	return PrsRequiredForNLJoinOuterChild(mp, exprhdl, prsRequired);
-}
-
-// generate/pass through rewindability request to outer child
-CRewindabilitySpec *
-CPhysicalJoin::PrsRequiredForNLJoinOuterChild
-	(
-	IMemoryPool *mp,
-	CExpressionHandle &exprhdl,
-	CRewindabilitySpec *prsRequired
-	)
-{
-	// if there are outer references, then we need a materialize on outer child
-	if (exprhdl.HasOuterRefs())
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
-
-	// pass through requirements to outer child
 	return PrsPassThru(mp, exprhdl, prsRequired, 0 /*child_index*/);
 }
 
@@ -964,7 +922,7 @@ CPhysicalJoin::PrsRequiredForNLJoinOuterChild
 CDistributionSpec *
 CPhysicalJoin::PdsRequiredCorrelatedJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
@@ -1088,7 +1046,7 @@ CPhysicalJoin::CPartPropReq::Equals
 CPhysicalJoin::CPartPropReq *
 CPhysicalJoin::PpprCreate
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index
@@ -1114,7 +1072,7 @@ CPhysicalJoin::PpprCreate
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequiredCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -1210,7 +1168,7 @@ CPhysicalJoin::PppsRequiredCompute
 CPartitionPropagationSpec *
 CPhysicalJoin::PppsRequiredJoinChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
@@ -1225,9 +1183,6 @@ CPhysicalJoin::PppsRequiredJoinChild
 	{
 		return PppsRequiredCompute(mp, exprhdl, pppsRequired, child_index, fNLJoin);
 	}
-
-	CAutoMutex am(m_mutexJoin);
-	am.Lock();
 
 	CPartitionPropagationSpec *ppps = m_phmpp->Find(pppr);
 	if (NULL == ppps)

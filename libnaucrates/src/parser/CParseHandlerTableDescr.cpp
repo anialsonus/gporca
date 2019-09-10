@@ -33,7 +33,7 @@ XERCES_CPP_NAMESPACE_USE
 //---------------------------------------------------------------------------
 CParseHandlerTableDescr::CParseHandlerTableDescr
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CParseHandlerManager *parse_handler_mgr,
 	CParseHandlerBase *parse_handler_root
 	)
@@ -58,7 +58,7 @@ CParseHandlerTableDescr::~CParseHandlerTableDescr()
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CParseHandlerTableDescr::MakeDXLTableDescr
+//		CParseHandlerTableDescr::GetDXLTableDescr
 //
 //	@doc:
 //		Returns the table descriptor constructed by the parse handler

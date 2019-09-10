@@ -19,7 +19,6 @@
 #include "unittest/base.h"
 #include "unittest/gpopt/CTestUtils.h"
 #include "unittest/gpopt/engine/CEngineTest.h"
-#include "unittest/gpopt/search/CSchedulerTest.h"
 #include "unittest/gpopt/search/CSearchStrategyTest.h"
 
 #include "naucrates/dxl/CDXLUtils.h"
@@ -72,7 +71,7 @@ CSearchStrategyTest::EresUnittest()
 void
 CSearchStrategyTest::Optimize
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	Pfpexpr pfnGenerator,
 	CSearchStageArray *search_stage_array,
 	PfnOptimize pfnOptimize
@@ -113,7 +112,7 @@ GPOS_RESULT
 CSearchStrategyTest::EresUnittest_RecursiveOptimize()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	Optimize(mp, CTestUtils::PexprLogicalSelectOnOuterJoin, PdrgpssRandom(mp), CEngineTest::BuildMemoRecursive);
 
 	return GPOS_OK;
@@ -133,8 +132,8 @@ GPOS_RESULT
 CSearchStrategyTest::EresUnittest_MultiThreadedOptimize()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
-	Optimize(mp, CTestUtils::PexprLogicalSelectOnOuterJoin, PdrgpssRandom(mp), CSchedulerTest::BuildMemoMultiThreaded);
+	CMemoryPool *mp = amp.Pmp();
+	Optimize(mp, CTestUtils::PexprLogicalSelectOnOuterJoin, PdrgpssRandom(mp), BuildMemo);
 
 	return GPOS_OK;
 }
@@ -152,7 +151,7 @@ GPOS_RESULT
 CSearchStrategyTest::EresUnittest_Parsing()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	CParseHandlerDXL *pphDXL = CDXLUtils::GetParseHandlerForDXLFile(mp,"../data/dxl/search/strategy0.xml", NULL);
 	CSearchStageArray *search_stage_array = pphDXL->GetSearchStageArray();
 	const ULONG size = search_stage_array->Size();
@@ -162,7 +161,7 @@ CSearchStrategyTest::EresUnittest_Parsing()
 		(*search_stage_array)[ul]->OsPrint(at.Os());
 	}
 	search_stage_array->AddRef();
-	Optimize(mp, CTestUtils::PexprLogicalSelectOnOuterJoin, search_stage_array, CSchedulerTest::BuildMemoMultiThreaded);
+	Optimize(mp, CTestUtils::PexprLogicalSelectOnOuterJoin, search_stage_array, BuildMemo);
 
 	GPOS_DELETE(pphDXL);
 
@@ -183,12 +182,12 @@ GPOS_RESULT
 CSearchStrategyTest::EresUnittest_Timeout()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	CAutoTraceFlag atf(EopttracePrintOptimizationStatistics, true);
 	CParseHandlerDXL *pphDXL = CDXLUtils::GetParseHandlerForDXLFile(mp,"../data/dxl/search/timeout-strategy.xml", NULL);
 	CSearchStageArray *search_stage_array = pphDXL->GetSearchStageArray();
 	search_stage_array->AddRef();
-	Optimize(mp, CTestUtils::PexprLogicalNAryJoin, search_stage_array, CSchedulerTest::BuildMemoMultiThreaded);
+	Optimize(mp, CTestUtils::PexprLogicalNAryJoin, search_stage_array, BuildMemo);
 
 	GPOS_DELETE(pphDXL);
 
@@ -209,7 +208,7 @@ CSearchStrategyTest::EresUnittest_ParsingWithException()
 {
 
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 	CParseHandlerDXL *pphDXL = CDXLUtils::GetParseHandlerForDXLFile(mp,"../data/dxl/search/wrong-strategy.xml", NULL);
 	GPOS_DELETE(pphDXL);
 
@@ -228,7 +227,7 @@ CSearchStrategyTest::EresUnittest_ParsingWithException()
 CSearchStageArray *
 CSearchStrategyTest::PdrgpssRandom
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	CSearchStageArray *search_stage_array = GPOS_NEW(mp) CSearchStageArray(mp);
@@ -251,5 +250,51 @@ CSearchStrategyTest::PdrgpssRandom
 	return search_stage_array;
 }
 
+//---------------------------------------------------------------------------
+//	@function:
+//		CSearchStrategyTest::BuildMemo
+//
+//	@doc:
+//		Run the optimizer
+//
+//---------------------------------------------------------------------------
+void
+CSearchStrategyTest::BuildMemo
+	(
+	 CMemoryPool *mp,
+	 CExpression *pexprInput,
+	 CSearchStageArray *search_stage_array
+	)
+{
+	CQueryContext *pqc = CTestUtils::PqcGenerate(mp, pexprInput);
+	GPOS_CHECK_ABORT;
+
+	// enable space pruning
+	CAutoTraceFlag atf(EopttraceEnableSpacePruning, true /*value*/);
+
+	CWStringDynamic str(mp);
+	COstreamString oss(&str);
+	oss << std::endl << std::endl;
+	oss << "INPUT EXPRESSION:" <<std::endl;
+	(void) pexprInput->OsPrint(oss);
+
+	CEngine eng(mp);
+	eng.Init(pqc, search_stage_array);
+	eng.Optimize();
+
+	CExpression *pexprPlan = eng.PexprExtractPlan();
+
+	(void) pexprPlan->PrppCompute(mp, pqc->Prpp());
+
+	oss << std::endl << "OUTPUT PLAN:" <<std::endl;
+	(void) pexprPlan->OsPrint(oss);
+	oss << std::endl << std::endl;
+
+	GPOS_TRACE(str.GetBuffer());
+	pexprPlan->Release();
+	GPOS_DELETE(pqc);
+
+	GPOS_CHECK_ABORT;
+}
 
 // EOF

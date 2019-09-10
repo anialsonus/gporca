@@ -46,7 +46,7 @@ using namespace gpnaucrates;
 //---------------------------------------------------------------------------
 CCostContext::CCostContext
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	COptimizationContext *poc,
 	ULONG ulOptReq,
 	CGroupExpression *pgexpr
@@ -227,7 +227,7 @@ CCostContext::DeriveStats()
 void
 CCostContext::DerivePlanProps
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL != m_pdrgpoc);
@@ -279,7 +279,7 @@ CCostContext::operator ==
 BOOL
 CCostContext::IsValid
 	(
-	IMemoryPool *mp
+	CMemoryPool *mp
 	)
 {
 	GPOS_ASSERT(NULL != m_poc);
@@ -302,7 +302,9 @@ CCostContext::IsValid
 		IOstream &os = at.Os();
 
 		os << std::endl << "PROPERTY MISMATCH:" << std::endl;
-		os << std::endl << "GEXPR:" << std::endl << Pgexpr();
+		os << std::endl << "GROUP ID: " << Pgexpr()->Pgroup()->Id() << std::endl;
+		os << std::endl << "GEXPR:" << std::endl;
+		Pgexpr()->OsPrint(at.Os());
 		os << std::endl << "REQUIRED PROPERTIES:" << std::endl << *(m_poc->Prpp());
 		os << std::endl << "DERIVED PROPERTIES:" << std::endl << *pdprel << std::endl << *m_pdpplan;
 	}
@@ -573,7 +575,7 @@ CCostContext::IsThreeStageScalarDQACostCtxt
 CCost
 CCostContext::CostCompute
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CCostArray *pdrgpcostChildren
 	)
 {
@@ -618,6 +620,10 @@ CCostContext::CostCompute
 		GPOS_ASSERT(NULL != pccChild);
 
 		IStatistics *child_stats = pccChild->Pstats();
+
+		child_stats->AddRef();
+		ci.SetChildStats(ul, GPOS_NEW(mp) ICostModel::CCostingStats(child_stats));
+
 		DOUBLE dRowsChild = child_stats->Rows().Get();
 		if (CDistributionSpec::EdptPartitioned == pccChild->Pdpplan()->Pds()->Edpt())
 		{

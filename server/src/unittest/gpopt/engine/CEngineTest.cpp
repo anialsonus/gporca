@@ -69,13 +69,12 @@ GPOS_RESULT
 CEngineTest::EresUnittest_Basic()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTraceFlag atf1(EopttracePrintOptimizationStatistics, true);
 	CAutoTraceFlag atf2(EopttracePrintMemoAfterExploration, true);
 	CAutoTraceFlag atf3(EopttracePrintMemoAfterImplementation, true);
 	CAutoTraceFlag atf4(EopttracePrintMemoAfterOptimization, true);
-	CAutoTraceFlag atf5(EopttraceParallel, false);
 	CAutoTraceFlag atf6(EopttracePrintXform, true);
 	CAutoTraceFlag atf7(EopttracePrintGroupProperties, true);
 	CAutoTraceFlag atf8(EopttracePrintOptimizationContext, true);
@@ -149,7 +148,7 @@ CEngineTest::EresOptimize
 	GPOS_ASSERT(NULL != pbs);
 
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -214,7 +213,7 @@ GPOS_RESULT
 CEngineTest::EresUnittest_BuildMemo()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// array of relation names
 	CWStringConst rgscRel[] =
@@ -262,7 +261,7 @@ GPOS_RESULT
 CEngineTest::EresUnittest_AppendStats()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	CAutoTraceFlag atf(EopttracePrintGroupProperties, true);
 
@@ -356,7 +355,7 @@ GPOS_RESULT
 CEngineTest::EresUnittest_BuildMemoLargeJoins()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// array of relation names
 	CWStringConst rgscRel[] =
@@ -401,7 +400,7 @@ CEngineTest::EresUnittest_BuildMemoLargeJoins()
 void
 CEngineTest::BuildMemoRecursive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprInput,
 	CSearchStageArray *search_stage_array
 	)
@@ -460,7 +459,7 @@ CEngineTest::EresTestEngine
 	)
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -504,7 +503,7 @@ CEngineTest::EresTestEngine
 GPOS_RESULT
 CEngineTest::EresUnittest_BuildMemoWithSubqueries()
 {
-	typedef CExpression *(*Pfpexpr)(IMemoryPool*, BOOL);
+	typedef CExpression *(*Pfpexpr)(CMemoryPool*, BOOL);
 	Pfpexpr rgpf[] =
 		{
 		CSubqueryTestUtils::PexprSelectWithAllAggSubquery,
@@ -549,7 +548,7 @@ CEngineTest::EresUnittest_BuildMemoWithSubqueries()
 		for (ULONG ul = m_ulTestCounterSubq; ul < size; ul++)
 		{
 			CAutoMemoryPool amp;
-			IMemoryPool *mp = amp.Pmp();
+			CMemoryPool *mp = amp.Pmp();
 
 			// setup a file-based provider
 			CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;
@@ -684,7 +683,7 @@ GPOS_RESULT
 CEngineTest::EresUnittest_BuildMemoWithCTE()
 {
 	CAutoMemoryPool amp;
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// setup a file-based provider
 	CMDProviderMemory *pmdp = CTestUtils::m_pmdpf;

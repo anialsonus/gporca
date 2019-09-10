@@ -106,7 +106,7 @@ CNormalizer::FPushableThruSeqPrjChild
 	{
 		GPOS_ASSERT(NULL == CDistributionSpecHashed::PdsConvert(pds)->PdshashedEquiv());
 		CAutoMemoryPool amp;
-		IMemoryPool *mp = amp.Pmp();
+		CMemoryPool *mp = amp.Pmp();
 		CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprPred->PdpDerive())->PcrsUsed();
 		CColRefSet *pcrsPartCols = CUtils::PcrsExtractColumns(mp, CDistributionSpecHashed::PdsConvert(pds)->Pdrgpexpr());
 		if (pcrsPartCols->ContainsAll(pcrsUsed))
@@ -161,7 +161,7 @@ CNormalizer::FPushable
 CExpression *
 CNormalizer::PexprRecursiveNormalize
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -194,7 +194,7 @@ CNormalizer::PexprRecursiveNormalize
 void
 CNormalizer::SplitConjunct
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpression *pexprConj,
 	CExpressionArray **ppdrgpexprPushable,
@@ -243,7 +243,7 @@ CNormalizer::SplitConjunct
 void
 CNormalizer::PushThruOuterChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -352,7 +352,7 @@ CNormalizer::PushThruOuterChild
 BOOL
 CNormalizer::FSimplifySelectOnOuterJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprOuterJoin,
 	CExpression *pexprPred, // selection predicate
 	CExpression **ppexprResult
@@ -410,7 +410,7 @@ CNormalizer::FSimplifySelectOnOuterJoin
 BOOL
 CNormalizer::FSimplifySelectOnFullJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprFullJoin,
 	CExpression *pexprPred, // selection predicate
 	CExpression **ppexprResult
@@ -477,7 +477,7 @@ CNormalizer::FSimplifySelectOnFullJoin
 void
 CNormalizer::PushThruSelect
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSelect,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -553,7 +553,7 @@ CNormalizer::PushThruSelect
 CExpression *
 CNormalizer::PexprSelect
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CExpressionArray *pdrgpexpr
 	)
@@ -619,7 +619,7 @@ CNormalizer::PexprSelect
 void
 CNormalizer::PushThruUnaryWithoutScalarChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprLogical,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -661,7 +661,7 @@ CNormalizer::PushThruUnaryWithoutScalarChild
 void
 CNormalizer::PushThruUnaryWithScalarChild
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprLogical,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -706,7 +706,7 @@ CNormalizer::PushThruUnaryWithScalarChild
 void
 CNormalizer::SplitConjunctForSeqPrj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSeqPrj,
 	CExpression *pexprConj,
 	CExpressionArray **ppdrgpexprPushable,
@@ -750,7 +750,7 @@ CNormalizer::SplitConjunctForSeqPrj
 void
 CNormalizer::PushThruSeqPrj
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSeqPrj,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -807,7 +807,7 @@ CNormalizer::PushThruSeqPrj
 void
 CNormalizer::PushThruSetOp
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprSetOp,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -878,7 +878,7 @@ CNormalizer::PushThruSetOp
 void
 CNormalizer::PushThruJoin
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprJoin,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -952,7 +952,32 @@ CNormalizer::PushThruJoin
 
 	// create a new join expression
 	pop->AddRef();
-	*ppexprResult = GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+	CExpression *pexprJoinWithInferredPred = GPOS_NEW(mp) CExpression(mp, pop, pdrgpexprChildren);
+	CExpression *pexprJoinWithoutInferredPred = NULL;
+
+	// remove inferred predicate from the join expression. inferred predicate can impact the cost
+	// of the join node as the node will have to project more columns even though they are not
+	// used by the above nodes. So, better to remove them from the join after all the inferred predicates
+	// are pushed down.
+	// We don't do this for CTE as removing inferred predicates from CTE with inlining enabled may
+	// cause the relational properties of two group to be same and can result in group merges,
+	// which can lead to circular derivations, we should fix the bug to avoid circular references
+	// before we enable it for Inlined CTEs.
+	if (CUtils::CanRemoveInferredPredicates(pop->Eopid()) && !COptCtxt::PoctxtFromTLS()->Pcteinfo()->FEnableInlining())
+	{
+		// Subqueries should be un-nested first so that we can infer any predicates if possible,
+		// if they are not un-nested, they don't have any inferred predicates to remove.
+		// ORCA only infers predicates for subqueries after they are un-nested.
+		BOOL has_subquery = CUtils::FHasSubqueryOrApply(pexprJoinWithInferredPred);
+		if (!has_subquery)
+		{
+			pexprJoinWithoutInferredPred = CUtils::MakeJoinWithoutInferredPreds(mp, pexprJoinWithInferredPred);
+			pexprJoinWithInferredPred->Release();
+			*ppexprResult = pexprJoinWithoutInferredPred;
+			return;
+		}
+	}
+	*ppexprResult = pexprJoinWithInferredPred;
 }
 
 //---------------------------------------------------------------------------
@@ -995,7 +1020,7 @@ CNormalizer::FChild
 void
 CNormalizer::PushThru
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprLogical,
 	CExpression *pexprConj,
 	CExpression **ppexprResult
@@ -1059,7 +1084,7 @@ CNormalizer::PushThru
 void
 CNormalizer::PushThru
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexprLogical,
 	CExpressionArray *pdrgpexprConjuncts,
 	CExpression **ppexprResult,
@@ -1115,7 +1140,7 @@ CNormalizer::PushThru
 CExpression *
 CNormalizer::PexprNormalize
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1185,7 +1210,7 @@ CNormalizer::PexprNormalize
 CExpression *
 CNormalizer::PexprPullUpAndCombineProjects
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	BOOL *pfSuccess		// output to indicate whether anything was pulled up
 	)
@@ -1296,7 +1321,7 @@ CNormalizer::PexprPullUpAndCombineProjects
 CExpression *
 CNormalizer::PexprPullUpProjectElements
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr,
 	CColRefSet *pcrsUsed,
 	CColRefSet *pcrsOutput,
@@ -1373,7 +1398,7 @@ CNormalizer::PexprPullUpProjectElements
 CExpression *
 CNormalizer::PexprPullUpProjections
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {
@@ -1410,7 +1435,7 @@ CNormalizer::PexprPullUpProjections
 BOOL
 CNormalizer::FLocalColsSubsetOfInputCols
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpression *pexpr
 	)
 {

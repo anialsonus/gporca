@@ -42,6 +42,7 @@ CColRef::CColRef
 	m_pmdtype(pmdtype),
 	m_type_modifier(type_modifier),
 	m_pname(pname),
+	m_used(EUnknown),
 	m_id(id)
 {
 	GPOS_ASSERT(NULL != pmdtype);
@@ -133,7 +134,7 @@ CColRef::OsPrint
 ULongPtrArray *
 CColRef::Pdrgpul
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array
 	)
 {
@@ -204,7 +205,7 @@ CColRef::Equals
 void
 CColRef::DbgPrint() const
 {
-	IMemoryPool *pmp = COptCtxt::PoctxtFromTLS()->Pmp();
+	CMemoryPool *pmp = COptCtxt::PoctxtFromTLS()->Pmp();
 	CAutoTrace at(pmp);
 	(void) this->OsPrint(at.Os());
 }

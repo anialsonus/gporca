@@ -33,7 +33,7 @@ using namespace gpopt;
 BOOL
 CPhysicalMotion::FValidContext
 	(
-	IMemoryPool *,
+	CMemoryPool *,
 	COptimizationContext *poc,
 	COptimizationContextArray *pdrgpocChild
 	)
@@ -75,7 +75,7 @@ CPhysicalMotion::FValidContext
 CDistributionSpec *
 CPhysicalMotion::PdsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &, // exprhdl
 	CDistributionSpec *pdsRequired,
 	ULONG
@@ -162,7 +162,7 @@ CPhysicalMotion::PdsRequired
 CRewindabilitySpec *
 CPhysicalMotion::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &, // exprhdl
 	CRewindabilitySpec *, // prsRequired
 	ULONG
@@ -177,9 +177,10 @@ CPhysicalMotion::PrsRequired
 {
 	GPOS_ASSERT(0 == child_index);
 
-	// motion does not preserve rewindability;
-	// child does not need to be rewindable
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, CRewindabilitySpec::EmhtNoMotion);
+	// A motion is a hard barrier for rewindability since it executes in a
+	// different slice; and thus it cannot require any rewindability property
+	// from its child
+	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, CRewindabilitySpec::EmhtNoMotion);
 }
 
 //---------------------------------------------------------------------------
@@ -193,7 +194,7 @@ CPhysicalMotion::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalMotion::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG 
@@ -252,7 +253,7 @@ CPhysicalMotion::PppsRequired
 CCTEReq *
 CPhysicalMotion::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -280,7 +281,7 @@ CPhysicalMotion::PcteRequired
 CDistributionSpec *
 CPhysicalMotion::PdsDerive
 	(
-	IMemoryPool */*mp*/,
+	CMemoryPool */*mp*/,
 	CExpressionHandle &/*exprhdl*/
 	)
 	const
@@ -303,13 +304,13 @@ CPhysicalMotion::PdsDerive
 CRewindabilitySpec *
 CPhysicalMotion::PrsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle & // exprhdl
 	)
 	const
 {
-	// output of motion is non-rewindable and imposes a motion hazard
-	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNotRewindable, CRewindabilitySpec::EmhtMotion);
+	// A motion does not preserve rewindability and is also not rescannable.
+	return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtNone, CRewindabilitySpec::EmhtMotion);
 }
 
 

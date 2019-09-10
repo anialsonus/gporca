@@ -94,7 +94,7 @@ CDrvdPropPlan::Pdpplan
 void
 CDrvdPropPlan::Derive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDrvdPropCtxt *pdpctxt
 	)
@@ -132,7 +132,7 @@ CDrvdPropPlan::Derive
 void
 CDrvdPropPlan::CopyCTEProducerPlanProps
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CDrvdPropCtxt *pdpctxt,
 	COperator *pop
 	)
@@ -231,7 +231,7 @@ CDrvdPropPlan::Equals
 	const
 {
 	return m_pos->Matches(pdpplan->Pos()) &&
-			m_pds->Matches(pdpplan->Pds()) &&
+			m_pds->Equals(pdpplan->Pds()) &&
 			m_prs->Matches(pdpplan->Prs()) &&
 			m_ppim->Equals(pdpplan->Ppim()) &&
 			m_pcm->Equals(pdpplan->GetCostModel());

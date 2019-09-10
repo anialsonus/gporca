@@ -147,17 +147,13 @@ CMemoryPoolBasicTest::EresTestType
 {
 	if (GPOS_OK != EresNewDelete(eat) ||
 	    GPOS_OK != EresTestExpectedError(EresOOM, eat, CException::ExmiOOM) ||
-	    GPOS_OK != EresTestExpectedError(EresThrowingCtor, eat, CException::ExmiOOM) ||
+	    GPOS_OK != EresTestExpectedError(EresThrowingCtor, eat, CException::ExmiOOM)
 
 #ifdef GPOS_DEBUG
+		||
 	    GPOS_OK != EresTestExpectedError(EresLeak, eat, CException::ExmiAssert) ||
-	    GPOS_OK != EresTestExpectedError(EresLeakByException, eat, CException::ExmiAssert) ||
+	    GPOS_OK != EresTestExpectedError(EresLeakByException, eat, CException::ExmiAssert)
 #endif // GPOS_DEBUG
-	    GPOS_OK != EresConcurrency(eat)
-#if defined(GPOS_64BIT) && defined(GPOS_DEBUG)
-	    ||
-	    GPOS_OK != EresStress(eat)
-#endif
 	    )
 	{
 		return GPOS_FAILED;
@@ -223,7 +219,7 @@ CMemoryPoolBasicTest::EresNewDelete
 	// create memory pool
 	CAutoTimer at("NewDelete test", true /*fPrint*/);
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, false /*fThreadSafe*/);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	WCHAR rgwszText[] = GPOS_WSZ_LIT(
 							"This is a lengthy test string. "
@@ -289,7 +285,7 @@ CMemoryPoolBasicTest::EresOOM
 		false /*fThreadSafe*/,
 		4 * 1024 * 1024 /*ullMaxSize*/
 		);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// OOM
 	GPOS_NEW_ARRAY(mp, BYTE, 128 * 1024 * 1024);
@@ -316,7 +312,7 @@ CMemoryPoolBasicTest::EresThrowingCtor
 
 	// create memory pool
 	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, false /*fThreadSafe*/);
-	IMemoryPool *mp = amp.Pmp();
+	CMemoryPool *mp = amp.Pmp();
 
 	// malicious test class
 	class CMyTestClass
@@ -367,7 +363,7 @@ CMemoryPoolBasicTest::EresLeak
 			false /*fThreadSafe*/,
 			4 * 1024 * 1024 /*ullMaxSize*/
 			);
-		IMemoryPool *mp = amp.Pmp();
+		CMemoryPool *mp = amp.Pmp();
 
 		for (ULONG i = 0; i < 10; i++)
 		{
@@ -414,7 +410,7 @@ CMemoryPoolBasicTest::EresLeakByException
 			false /*fThreadSafe*/,
 			4 * 1024 * 1024 /*ullMaxSize*/
 			);
-		IMemoryPool *mp = amp.Pmp();
+		CMemoryPool *mp = amp.Pmp();
 
 		for (ULONG i = 0; i < 10; i++)
 		{
@@ -430,167 +426,6 @@ CMemoryPoolBasicTest::EresLeakByException
 }
 
 #endif // GPOS_DEBUG
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::EresConcurrency
-//
-//	@doc:
-//		Concurrency test
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMemoryPoolBasicTest::EresConcurrency
-	(
-	CMemoryPoolManager::AllocType eat
-	)
-{
-	CAutoTimer at("Concurrency test", true /*fPrint*/);
-
-	// create memory pool
-	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, true /*fThreadSafe*/);
-	IMemoryPool *mp = amp.Pmp();
-	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
-
-	// scope for ATP
-	{
-		CAutoTaskProxy atp(mp, pwpm);
-		CTask *rgptsk[GPOS_MEM_TEST_STRESS_TASKS];
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk) / 2; i++)
-		{
-			rgptsk[i] = atp.Create(AllocateSerial, mp);
-		}
-
-		for (ULONG i = GPOS_ARRAY_SIZE(rgptsk) / 2; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			rgptsk[i] = atp.Create(AllocateRepeated, mp);
-		}
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			atp.Schedule(rgptsk[i]);
-		}
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			atp.Wait(rgptsk[i]);
-		}
-	}
-
-	return GPOS_OK;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::AllocateSerial
-//
-//	@doc:
-//		Allocate and release memory serially
-//
-//---------------------------------------------------------------------------
-void *
-CMemoryPoolBasicTest::AllocateSerial
-	(
-	void *pv
-	)
-{
-	GPOS_ASSERT(NULL != pv);
-
-	IMemoryPool *mp = static_cast<IMemoryPool*>(pv);
-
-	Allocate(mp, GPOS_MEM_TEST_LOOP_LONG);
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::AllocateRepeated
-//
-//	@doc:
-//		Repeat loops of memory allocation and release
-//
-//---------------------------------------------------------------------------
-void *
-CMemoryPoolBasicTest::AllocateRepeated
-	(
-	void *pv
-	)
-{
-	GPOS_ASSERT(NULL != pv);
-
-	IMemoryPool *mp = static_cast<IMemoryPool*>(pv);
-
-	for (ULONG i = 0; i < GPOS_MEM_TEST_REPEAT_SHORT; i++)
-	{
-		Allocate(mp, GPOS_MEM_TEST_LOOP_SHORT);
-	}
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::Allocate
-//
-//	@doc:
-//		Allocate and release memory in batches
-//
-//---------------------------------------------------------------------------
-void
-CMemoryPoolBasicTest::Allocate
-	(
-	IMemoryPool *mp,
-	ULONG count
-	)
-{
-	BYTE **rgpb = GPOS_NEW_ARRAY(mp, BYTE*, count);
-
-	for (ULONG i = 0; i < count; i++)
-	{
-		const ULONG size = Size(i);
-		rgpb[i] = GPOS_NEW_ARRAY(mp, BYTE, size);
-#ifdef GPOS_DEBUG
-		(void) clib::Memset(rgpb[i], 1, size);
-#endif // GPOS_DEBUG
-
-		if (0 == i % GPOS_MEM_TEST_CFA)
-		{
-			GPOS_CHECK_ABORT;
-		}
-	}
-
-	GPOS_CHECK_ABORT;
-
-	for (ULONG i = 0; i < count; i++)
-	{
-#ifdef GPOS_DEBUG
-		GPOS_ASSERT(NULL != rgpb[i]);
-
-		const ULONG size = Size(i);
-		for (ULONG j = 0; j < size; j++)
-		{
-			GPOS_ASSERT(1 == rgpb[i][j]);
-		}
-#endif // GPOS_DEBUG
-
-		GPOS_DELETE_ARRAY(rgpb[i]);
-
-		if (0 == i % GPOS_MEM_TEST_CFA)
-		{
-			GPOS_CHECK_ABORT;
-		}
-	}
-
-	GPOS_CHECK_ABORT;
-
-	GPOS_DELETE_ARRAY(rgpb);
-}
 
 
 //---------------------------------------------------------------------------
@@ -613,130 +448,5 @@ CMemoryPoolBasicTest::Size
 	}
 	return GPOS_MEM_TEST_ALLOC_LARGE;
 }
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::EresStress
-//
-//	@doc:
-//		Stress test
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMemoryPoolBasicTest::EresStress
-	(
-	CMemoryPoolManager::AllocType eat
-	)
-{
-	CAutoTimer at("Stress test", true /*fPrint*/);
-
-	// create memory pool
-	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, true /*fThreadSafe*/);
-	IMemoryPool *mp = amp.Pmp();
-	CWorkerPoolManager *pwpm = CWorkerPoolManager::WorkerPoolManager();
-
-	// scope for ATP
-	{
-		CAutoTaskProxy atp(mp, pwpm);
-		CTask *rgptsk[GPOS_MEM_TEST_STRESS_TASKS];
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			rgptsk[i] = atp.Create(AllocateStress, mp);
-		}
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			atp.Schedule(rgptsk[i]);
-		}
-
-		for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgptsk); i++)
-		{
-			atp.Wait(rgptsk[i]);
-		}
-	}
-
-	return GPOS_OK;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::AllocateStress
-//
-//	@doc:
-//		Repeat loops of random memory allocation and release
-//
-//---------------------------------------------------------------------------
-void *
-CMemoryPoolBasicTest::AllocateStress
-	(
-	void *pv
-	)
-{
-	GPOS_ASSERT(NULL != pv);
-
-	IMemoryPool *mp = static_cast<IMemoryPool*>(pv);
-
-	for (ULONG i = 0; i < GPOS_MEM_TEST_LOOP_SHORT; i++)
-	{
-		AllocateRandom(mp);
-	}
-
-	return NULL;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::AllocateRandom
-//
-//	@doc:
-//		Allocate and release memory randomly
-//
-//---------------------------------------------------------------------------
-void
-CMemoryPoolBasicTest::AllocateRandom
-	(
-	IMemoryPool *mp
-	)
-{
-	BYTE *rgpb[GPOS_MEM_TEST_LOOP_STRESS];
-
-	ULONG seed = 0;
-	const ULONG ulMaxPower = 6;
-	const ULONG ulMask = 128;
-
-	for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgpb); i++)
-	{
-		ULONG ulRand = clib::Rand(&seed);
-		ULONG ulExp = (1 << (ulRand % ulMaxPower));
-		ULONG ulFactor = ulRand % ulMask + 1;
-		ULONG size = ulFactor * ulExp * ulExp;
-		rgpb[i] = GPOS_NEW_ARRAY(mp, BYTE, size);
-
-		if (0 == i % GPOS_MEM_TEST_CFA)
-		{
-			GPOS_CHECK_ABORT;
-		}
-	}
-
-	GPOS_CHECK_ABORT;
-
-	for (ULONG i = 0; i < GPOS_ARRAY_SIZE(rgpb); i++)
-	{
-		GPOS_ASSERT(NULL != rgpb[i]);
-		GPOS_DELETE_ARRAY(rgpb[i]);
-
-		if (0 == i % GPOS_MEM_TEST_CFA)
-		{
-			GPOS_CHECK_ABORT;
-		}
-	}
-
-	GPOS_CHECK_ABORT;
-}
-
 
 // EOF

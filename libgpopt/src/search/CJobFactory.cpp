@@ -31,7 +31,7 @@ using namespace gpos;
 //---------------------------------------------------------------------------
 CJobFactory::CJobFactory
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG ulJobs
 	)
 	:
@@ -251,10 +251,6 @@ CJobFactory::Truncate
 				GPOS_ASSERT(!"Invalid job type");
 		}
 	}
-
-#ifdef GPOS_DEBUG
-    CWorker::Self()->ResetTimeSlice();
-#endif // GPOS_DEBUG
 }
 
 // EOF

@@ -648,7 +648,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:PartConstraint DefaultPartition="0" Unbounded="true">
         </dxl:PartConstraint>
       </dxl:Relation>
-      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
+      <dxl:Type Mdid="0.16.1.0" Name="bool" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="1" PassByValue="true">
         <dxl:EqualityOp Mdid="0.91.1.0"/>
         <dxl:InequalityOp Mdid="0.85.1.0"/>
         <dxl:LessThanOp Mdid="0.58.1.0"/>
@@ -663,7 +663,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -678,7 +678,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.20.1.0" Name="Int8" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
+      <dxl:Type Mdid="0.20.1.0" Name="Int8" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
         <dxl:EqualityOp Mdid="0.410.1.0"/>
         <dxl:InequalityOp Mdid="0.411.1.0"/>
         <dxl:LessThanOp Mdid="0.412.1.0"/>
@@ -693,7 +693,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.2107.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.23.1.0" Name="int4" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.96.1.0"/>
         <dxl:InequalityOp Mdid="0.518.1.0"/>
         <dxl:LessThanOp Mdid="0.97.1.0"/>
@@ -708,7 +708,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.2108.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -955,7 +955,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
           <dxl:UpperBound Closed="true" TypeMdid="0.20.1.0" IsNull="false" IsByValue="true" Value="27961338"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.26.1.0" Name="oid" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.607.1.0"/>
         <dxl:InequalityOp Mdid="0.608.1.0"/>
         <dxl:LessThanOp Mdid="0.609.1.0"/>
@@ -970,7 +970,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
+      <dxl:Type Mdid="0.27.1.0" Name="tid" IsRedistributable="true" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="6" PassByValue="false">
         <dxl:EqualityOp Mdid="0.387.1.0"/>
         <dxl:InequalityOp Mdid="0.402.1.0"/>
         <dxl:LessThanOp Mdid="0.2799.1.0"/>
@@ -985,7 +985,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1184.1.0" Name="timestamptz" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
+      <dxl:Type Mdid="0.1184.1.0" Name="timestamptz" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="8" PassByValue="true">
         <dxl:EqualityOp Mdid="0.1320.1.0"/>
         <dxl:InequalityOp Mdid="0.1321.1.0"/>
         <dxl:LessThanOp Mdid="0.1322.1.0"/>
@@ -2528,7 +2528,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
           <dxl:UpperBound Closed="true" TypeMdid="0.1043.1.0" IsNull="false" IsByValue="false" Value="AAAADzY0MjcyOTU3MjI0" LintValue="1046905780"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.1082.1.0" Name="date" IsRedistributable="true" IsHashable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.1082.1.0" Name="date" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.1093.1.0"/>
         <dxl:InequalityOp Mdid="0.1094.1.0"/>
         <dxl:LessThanOp Mdid="0.1095.1.0"/>
@@ -3731,7 +3731,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
           <dxl:OpClass Mdid="0.3040.1.0"/>
         </dxl:OpClasses>
       </dxl:GPDBScalarOp>
-      <dxl:Type Mdid="0.2278.1.0" Name="void" IsRedistributable="false" IsHashable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
+      <dxl:Type Mdid="0.2278.1.0" Name="void" IsRedistributable="false" IsHashable="false" IsMergeJoinable="false" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.0.0.0"/>
         <dxl:InequalityOp Mdid="0.0.0.0"/>
         <dxl:LessThanOp Mdid="0.0.0.0"/>
@@ -5167,7 +5167,7 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
         </dxl:And>
       </dxl:LogicalJoin>
     </dxl:Query>
-    <dxl:Plan Id="0" SpaceSize="8">
+    <dxl:Plan Id="0" SpaceSize="7">
       <dxl:GatherMotion InputSegments="0,1" OutputSegments="-1">
         <dxl:Properties>
           <dxl:Cost StartupCost="0" TotalCost="1999181.471894" Rows="170321006.931670" Width="564"/>
@@ -5347,62 +5347,8 @@ where d.msisdn=f.subscriberaddress and f.sessioncreationtimestamp >= d.start_dtm
             <dxl:TableDescriptor Mdid="0.1279380.1.1" TableName="stg_xdr_crce_cdr">
               <dxl:Columns>
                 <dxl:Column ColId="0" Attno="1" ColName="id" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="1" Attno="2" ColName="headerversion" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="2" Attno="3" ColName="tickettypeid" TypeMdid="0.23.1.0"/>
-                <dxl:Column ColId="3" Attno="4" ColName="success" TypeMdid="0.16.1.0"/>
-                <dxl:Column ColId="4" Attno="5" ColName="provider" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="5" Attno="6" ColName="application" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="6" Attno="7" ColName="tickettype" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="7" Attno="8" ColName="nodeid" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="8" Attno="9" ColName="tickettimestamp" TypeMdid="0.1184.1.0"/>
                 <dxl:Column ColId="9" Attno="10" ColName="sessioncreationtimestamp" TypeMdid="0.1184.1.0"/>
-                <dxl:Column ColId="10" Attno="11" ColName="sessionid" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="11" Attno="12" ColName="transactionid" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="12" Attno="13" ColName="sequenceid" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="13" Attno="14" ColName="subscriberid" TypeMdid="0.1043.1.0" ColWidth="128"/>
                 <dxl:Column ColId="14" Attno="15" ColName="subscriberaddress" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="15" Attno="16" ColName="subscribertype" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="16" Attno="17" ColName="errorcode" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="17" Attno="18" ColName="groupid" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="18" Attno="19" ColName="subscriberstate" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="19" Attno="20" ColName="subscriberstateinfo" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="20" Attno="21" ColName="languageid" TypeMdid="0.23.1.0"/>
-                <dxl:Column ColId="21" Attno="22" ColName="chargenotification" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="22" Attno="23" ColName="recordversion" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="23" Attno="24" ColName="crceoperation" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="24" Attno="25" ColName="chargemode" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="25" Attno="26" ColName="imsi" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="26" Attno="27" ColName="callingmsisdn" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="27" Attno="28" ColName="clipsuppressnumber" TypeMdid="0.16.1.0"/>
-                <dxl:Column ColId="28" Attno="29" ColName="calledmsisdn" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="29" Attno="30" ColName="destinationnetwork" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="30" Attno="31" ColName="destinationzone" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="31" Attno="32" ColName="traffictype" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="32" Attno="33" ColName="messagetypeindicator" TypeMdid="0.1043.1.0" ColWidth="32"/>
-                <dxl:Column ColId="33" Attno="34" ColName="bearertype" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="34" Attno="35" ColName="subscriberlocation" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="35" Attno="36" ColName="locationnetwork" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="36" Attno="37" ColName="answertime" TypeMdid="0.1184.1.0"/>
-                <dxl:Column ColId="37" Attno="38" ColName="maxcallcost" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="38" Attno="39" ColName="callduration" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="39" Attno="40" ColName="chargedduration" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="40" Attno="41" ColName="referencenumber" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="41" Attno="42" ColName="chargefreeaction" TypeMdid="0.16.1.0"/>
-                <dxl:Column ColId="42" Attno="43" ColName="tariff" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="43" Attno="44" ColName="accountid" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="44" Attno="45" ColName="accountdifference" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="45" Attno="46" ColName="chargeamount" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="46" Attno="47" ColName="currency" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="47" Attno="48" ColName="closingbalance" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="48" Attno="49" ColName="crceresultcode" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="49" Attno="50" ColName="transparentdata" TypeMdid="0.25.1.0"/>
-                <dxl:Column ColId="50" Attno="51" ColName="additionalratinginfo" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="51" Attno="52" ColName="apn" TypeMdid="0.1043.1.0" ColWidth="255"/>
-                <dxl:Column ColId="52" Attno="53" ColName="transferredunits" TypeMdid="0.20.1.0"/>
-                <dxl:Column ColId="53" Attno="54" ColName="accounttype" TypeMdid="0.1043.1.0" ColWidth="128"/>
-                <dxl:Column ColId="54" Attno="55" ColName="ratinggroup" TypeMdid="0.23.1.0"/>
-                <dxl:Column ColId="55" Attno="56" ColName="roaming" TypeMdid="0.16.1.0"/>
-                <dxl:Column ColId="56" Attno="57" ColName="nrofsegments" TypeMdid="0.20.1.0"/>
                 <dxl:Column ColId="57" Attno="-1" ColName="ctid" TypeMdid="0.27.1.0"/>
                 <dxl:Column ColId="58" Attno="-7" ColName="tableoid" TypeMdid="0.26.1.0"/>
                 <dxl:Column ColId="59" Attno="-8" ColName="gp_segment_id" TypeMdid="0.23.1.0"/>

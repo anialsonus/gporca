@@ -34,7 +34,7 @@ using namespace gpopt;
 //---------------------------------------------------------------------------
 CPhysicalAgg::CPhysicalAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array,
 	CColRefArray *pdrgpcrMinimal, // minimal grouping columns based on FD's
 	COperator::EGbAggType egbaggtype,
@@ -86,9 +86,13 @@ CPhysicalAgg::CPhysicalAgg
 		if (pdrgpcrArgDQA != NULL && 0 != pdrgpcrArgDQA->Size())
 		{
 			// If the local aggregate has distinct columns we generate
-			// one optimization requests for its children:
-			// (1) hash distribution on the distinct columns
-			ulDistrReqs = 1;
+			// two optimization requests for its children:
+			// (1) hash distribution on the distinct columns only
+			// (2) hash distribution on the grouping and distinct
+			//     columns (only if the grouping columns are not empty)
+			if (0 == m_pdrgpcr->Size()) {
+				ulDistrReqs = 1;
+			}
 		}
 	}
 	else if (COperator::EgbaggtypeIntermediate == egbaggtype)
@@ -147,7 +151,7 @@ CPhysicalAgg::~CPhysicalAgg()
 CColRefSet *
 CPhysicalAgg::PcrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -171,7 +175,7 @@ CPhysicalAgg::PcrsRequired
 CColRefSet *
 CPhysicalAgg::PcrsRequiredAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
@@ -205,7 +209,7 @@ CPhysicalAgg::PcrsRequiredAgg
 CDistributionSpec *
 CPhysicalAgg::PdsRequiredAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
@@ -235,8 +239,21 @@ CPhysicalAgg::PdsRequiredAgg
 
 	if (COperator::EgbaggtypeLocal == m_egbaggtype && m_pdrgpcrArgDQA != NULL && 0 != m_pdrgpcrArgDQA->Size())
 	{
-		GPOS_ASSERT(0 == ulOptReq);
-		return PdsMaximalHashed(mp, m_pdrgpcrArgDQA);
+		if (ulOptReq == 0)
+		{
+			return PdsMaximalHashed(mp, m_pdrgpcrArgDQA);
+		}
+		else
+		{
+			GPOS_ASSERT(1 == ulOptReq);
+			GPOS_ASSERT(0 < m_pdrgpcr->Size());
+			CColRefArray *grpAndDistinctCols = GPOS_NEW(mp) CColRefArray(mp);
+			grpAndDistinctCols->AppendArray(m_pdrgpcr);
+			grpAndDistinctCols->AppendArray(m_pdrgpcrArgDQA);
+			CDistributionSpec *pdsSpec = PdsMaximalHashed(mp, grpAndDistinctCols);
+			grpAndDistinctCols->Release();
+			return pdsSpec;
+		}
 	}
 
 	GPOS_ASSERT(0 == ulOptReq || 1 == ulOptReq);
@@ -262,7 +279,7 @@ CPhysicalAgg::PdsRequiredAgg
 CDistributionSpec *
 CPhysicalAgg::PdsMaximalHashed
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CColRefArray *colref_array
 	)
 {
@@ -296,7 +313,7 @@ CPhysicalAgg::PdsMaximalHashed
 CDistributionSpec *
 CPhysicalAgg::PdsRequiredGlobalAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
@@ -352,7 +369,7 @@ CPhysicalAgg::PdsRequiredGlobalAgg
 CDistributionSpec *
 CPhysicalAgg::PdsRequiredIntermediateAgg
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	ULONG  ulOptReq
 	)
 	const
@@ -390,7 +407,7 @@ CPhysicalAgg::PdsRequiredIntermediateAgg
 CRewindabilitySpec *
 CPhysicalAgg::PrsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
@@ -400,13 +417,6 @@ CPhysicalAgg::PrsRequired
 	const
 {
 	GPOS_ASSERT(0 == child_index);
-
-	// if there are outer refs that are not coming from the child, this means
-	// that the grouping columns have outer refs, so we need a materialize
-	if (exprhdl.HasOuterRefs() && !exprhdl.HasOuterRefs(0))
-	{
-		return GPOS_NEW(mp) CRewindabilitySpec(CRewindabilitySpec::ErtRewindable, prsRequired->Emht());
-	}
 
 	return PrsPassThru(mp, exprhdl, prsRequired, child_index);
 }
@@ -422,7 +432,7 @@ CPhysicalAgg::PrsRequired
 CPartitionPropagationSpec *
 CPhysicalAgg::PppsRequired
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG 
@@ -451,7 +461,7 @@ CPhysicalAgg::PppsRequired
 CCTEReq *
 CPhysicalAgg::PcteRequired
 	(
-	IMemoryPool *, //mp,
+	CMemoryPool *, //mp,
 	CExpressionHandle &, //exprhdl,
 	CCTEReq *pcter,
 	ULONG
@@ -513,7 +523,7 @@ CPhysicalAgg::FProvidesReqdCols
 CDistributionSpec *
 CPhysicalAgg::PdsDerive
 	(
-	IMemoryPool *mp,
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
@@ -542,12 +552,12 @@ CPhysicalAgg::PdsDerive
 CRewindabilitySpec *
 CPhysicalAgg::PrsDerive
 	(
-	IMemoryPool *, // mp
+	CMemoryPool *mp,
 	CExpressionHandle &exprhdl
 	)
 	const
 {
-	return PrsDerivePassThruOuter(exprhdl);
+	return PrsDerivePassThruOuter(mp, exprhdl);
 }
 
 //---------------------------------------------------------------------------

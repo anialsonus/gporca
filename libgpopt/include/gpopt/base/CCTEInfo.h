@@ -14,8 +14,6 @@
 #include "gpos/base.h"
 #include "gpos/common/CHashMap.h"
 #include "gpos/common/CStack.h"
-#include "gpos/sync/CMutex.h"
-#include "gpos/sync/CAtomicCounter.h"
 
 #include "gpopt/base/CColumnFactory.h"
 #include "gpopt/operators/CExpression.h"
@@ -66,9 +64,6 @@ namespace gpopt
 					ULONG m_ulCount;
 
 				public:
-
-					// mutex for locking entry when changing member variables
-					CMutex m_mutex;
 
 					// ctor
 					explicit
@@ -125,7 +120,7 @@ namespace gpopt
 				private:
 
 					// memory pool
-					IMemoryPool *m_mp;
+					CMemoryPool *m_mp;
 
 					// logical producer expression
 					CExpression *m_pexprCTEProducer;
@@ -138,12 +133,9 @@ namespace gpopt
 
 				public:
 
-					// mutex for locking entry when changing member variables when deriving stats
-					CMutex m_mutex;
-
 					// ctors
-					CCTEInfoEntry(IMemoryPool *mp, CExpression *pexprCTEProducer);
-					CCTEInfoEntry(IMemoryPool *mp, CExpression *pexprCTEProducer, BOOL fUsed);
+					CCTEInfoEntry(CMemoryPool *mp, CExpression *pexprCTEProducer);
+					CCTEInfoEntry(CMemoryPool *mp, CExpression *pexprCTEProducer, BOOL fUsed);
 
 					// dtor
 					~CCTEInfoEntry();
@@ -186,13 +178,13 @@ namespace gpopt
 							CleanupDelete<ULONG>, CleanupRelease<CCTEInfoEntry> > UlongToCTEInfoEntryMapIter;
 
 			// memory pool
-			IMemoryPool *m_mp;
+			CMemoryPool *m_mp;
 
 			// mapping from cte producer id -> cte info entry
 			UlongToCTEInfoEntryMap *m_phmulcteinfoentry;
 
 			// next available CTE Id
-			CAtomicULONG m_ulNextCTEId;
+			ULONG m_ulNextCTEId;
 
 			// whether or not to inline CTE consumers
 			BOOL m_fEnableInlining;
@@ -218,7 +210,7 @@ namespace gpopt
 		public:
 			// ctor
 			explicit
-			CCTEInfo(IMemoryPool *mp);
+			CCTEInfo(CMemoryPool *mp);
 
 			//dtor
 			virtual
@@ -247,7 +239,7 @@ namespace gpopt
 			// next available CTE id
 			ULONG next_id()
 			{
-				return m_ulNextCTEId.Incr();
+				return m_ulNextCTEId++;
 			}
 
 			// derive the statistics on the CTE producer
@@ -258,10 +250,10 @@ namespace gpopt
 				);
 
 			// return a CTE requirement with all the producers as optional
-			CCTEReq *PcterProducers(IMemoryPool *mp) const;
+			CCTEReq *PcterProducers(CMemoryPool *mp) const;
 
 			// return an array of all stored CTE expressions
-			CExpressionArray *PdrgPexpr(IMemoryPool *mp) const;
+			CExpressionArray *PdrgPexpr(CMemoryPool *mp) const;
 
 			// disable CTE inlining
 			void DisableInlining()
@@ -289,7 +281,7 @@ namespace gpopt
 			ULONG UlConsumerColPos(ULONG ulCTEId, CColRef *colref);
 
 			// return a map from Id's of consumer columns in the given column set to their corresponding producer columns
-			UlongToColRefMap *PhmulcrConsumerToProducer(IMemoryPool *mp, ULONG ulCTEId, CColRefSet *pcrs, CColRefArray *pdrgpcrProducer);
+			UlongToColRefMap *PhmulcrConsumerToProducer(CMemoryPool *mp, ULONG ulCTEId, CColRefSet *pcrs, CColRefArray *pdrgpcrProducer);
 
 	}; // CCTEInfo
 }

@@ -137,7 +137,7 @@ CStatsTest:
 Stat-Derivation-Leaf-Pattern MissingBoolColStats JoinColWithOnlyNDV UnsupportedStatsPredicate;
 
 CICGMiscTest:
-OrderByNullsFirst ConvertHashToRandomSelect ConvertHashToRandomInsert HJN-DeeperOuter CTAS CTAS-Random CheckAsUser
+BroadcastSkewedHashjoin OrderByNullsFirst ConvertHashToRandomSelect ConvertHashToRandomInsert HJN-DeeperOuter CTAS CTAS-Random CheckAsUser
 ProjectRepeatedColumn1 ProjectRepeatedColumn2 NLJ-BC-Outer-Spool-Inner Self-Comparison Self-Comparison-Nullable
 SelectCheckConstraint ExpandJoinOrder SelectOnBpchar EqualityJoin EffectsOfJoinFilter InnerJoin-With-OuterRefs
 UDA-AnyElement-1 UDA-AnyElement-2 MinCardinalityNaryJoin Project-With-NonScalar-Func SixWayDPv2;
@@ -158,7 +158,7 @@ PartTbl-DPE PartTbl-DPE-WindowFunction PartTbl-DPE-GroupBy PartTbl-DPE-Limit
 PartSelectorOnJoinSide PartSelectorOnJoinSide2;
 
 CPartTbl2Test:
-DPE-SemiJoin DPE-IN DPE-NOT-IN HJN-DPE-Bitmap-Outer-Child
+DPE-with-unsupported-pred DPE-SemiJoin DPE-IN DPE-NOT-IN HJN-DPE-Bitmap-Outer-Child
 NLJ-Broadcast-DPE-Outer-Child Part-Selection-IN Part-Selection-NOT-IN
 Part-Selection-ConstArray-1 Part-Selection-ConstArray-2 PartTbl-WindowFunction
 PartTbl-MultiWayJoin PartTbl-MultiWayJoinWithDPE PartTbl-MultiWayJoinWithDPE-2
@@ -183,7 +183,8 @@ CPartTbl5Test:
 PartTbl-IsNullPredicate PartTbl-IsNotNullPredicate PartTbl-IndexOnDefPartOnly
 PartTbl-SubqueryOuterRef PartTbl-CSQ-PartKey PartTbl-CSQ-NonPartKey
 PartTbl-LeftOuterHashJoin-DPE-IsNull PartTbl-LeftOuterNLJoin-DPE-IsNull
-PartTbl-List-DPE-Varchar-Predicates PartTbl-List-DPE-Int-Predicates;
+PartTbl-List-DPE-Varchar-Predicates PartTbl-List-DPE-Int-Predicates
+PartTbl-AggWithExistentialSubquery;
 
 CPartTbl6Test:
 PartTbl-PredicateWithCast PartTbl-IDFList PartTbl-IDFNull

@@ -112,7 +112,7 @@ CPhysicalLimit::PcrsRequired
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 {
@@ -148,7 +148,7 @@ CPhysicalLimit::PosRequired
 		child_index
 #endif // GPOS_DEBUG
 	,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -179,7 +179,7 @@ CPhysicalLimit::PdsRequired
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -225,7 +225,7 @@ CPhysicalLimit::PdsRequired
 
 	// no local limits are generated if there are outer references, so if this
 	// is a local limit, there should be no outer references
-	GPOS_ASSERT(0 == exprhdl.GetRelationalProperties()->PcrsOuter()->Size());
+	GPOS_ASSERT(0 == exprhdl.DeriveOuterReferences()->Size());
 
 	// for local limit, we impose no distribution requirements
 	return GPOS_NEW(mp) CDistributionSpecAny(this->Eopid());
@@ -247,7 +247,7 @@ CPhysicalLimit::PrsRequired
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -288,7 +288,7 @@ CPhysicalLimit::PppsRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt
+	CDrvdPropArray *, //pdrgpdpCtxt
 	ULONG //ulOptReq
 	)
 {
@@ -322,7 +322,7 @@ CPhysicalLimit::PcteRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 	const

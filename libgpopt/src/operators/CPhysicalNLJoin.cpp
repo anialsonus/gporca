@@ -78,7 +78,7 @@ CPhysicalNLJoin::PosRequired
 	CExpressionHandle &exprhdl,
 	COrderSpec *posInput,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -110,7 +110,7 @@ CPhysicalNLJoin::PrsRequired
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *pdrgpdpCtxt,
+	CDrvdPropArray *pdrgpdpCtxt,
 	ULONG // ulOptReq
 	)
 	const
@@ -157,7 +157,7 @@ CPhysicalNLJoin::PcrsRequired
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 {
@@ -172,7 +172,7 @@ CPhysicalNLJoin::PcrsRequired
 	// so we can use the outer refs of the inner child as required from outer child
 	if (0 == child_index)
 	{
-		CColRefSet *outer_refs = exprhdl.GetRelationalProperties(1)->PcrsOuter();
+		CColRefSet *outer_refs = exprhdl.DeriveOuterReferences(1);
 		pcrs->Include(outer_refs);
 	}
 
@@ -232,7 +232,7 @@ CPhysicalNLJoin::PppsRequiredNLJoinChild
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *pdrgpdpCtxt,
+	CDrvdPropArray *pdrgpdpCtxt,
 	ULONG ulOptReq
 	)
 {

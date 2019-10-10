@@ -50,7 +50,7 @@ SELECT * FROM foo WHERE id::text = 'foo';
         <dxl:SumAgg Mdid="0.2108.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -189,7 +189,7 @@ SELECT * FROM foo WHERE id::text = 'foo';
           <dxl:CoerceViaIO TypeMdid="0.25.1.0" CoercionForm="1" Location="0">
             <dxl:Ident ColId="1" ColName="id" TypeMdid="0.23.1.0"/>
           </dxl:CoerceViaIO>
-          <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAAB2Zvbw==" LintValue="563733292"/>
+          <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAAB2Zvbw==" LintValue="563733292"/>
         </dxl:Comparison>
         <dxl:LogicalGet>
           <dxl:TableDescriptor Mdid="0.2560411.1.1" TableName="foo">
@@ -233,7 +233,7 @@ SELECT * FROM foo WHERE id::text = 'foo';
               <dxl:CoerceViaIO TypeMdid="0.25.1.0" CoercionForm="1" Location="0">
                 <dxl:Ident ColId="0" ColName="id" TypeMdid="0.23.1.0"/>
               </dxl:CoerceViaIO>
-              <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAAB2Zvbw==" LintValue="563733292"/>
+              <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAAB2Zvbw==" LintValue="563733292"/>
             </dxl:Comparison>
           </dxl:Filter>
           <dxl:TableDescriptor Mdid="0.2560411.1.1" TableName="foo">

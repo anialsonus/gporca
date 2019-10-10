@@ -204,7 +204,7 @@ namespace gpmd
 			virtual
 			ULONG Length () const
 			{
-				return m_length;
+				return m_gpdb_length;
 			}
 			
 			virtual
@@ -267,7 +267,7 @@ namespace gpmd
 			IDatum *GetDatumForDXLDatum(CMemoryPool *mp, const CDXLDatum *dxl_datum) const;
 
 			// return the GPDB length
-			INT
+			virtual INT
 			GetGPDBLength() const
 			{
 				return m_gpdb_length;
@@ -309,7 +309,6 @@ namespace gpmd
 						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
-						BOOL is_passed_by_value,
 						BOOL is_null,
 						BYTE *byte_array,
 						ULONG length,
@@ -324,7 +323,6 @@ namespace gpmd
 						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
-						BOOL is_passed_by_value,
 						BOOL is_null,
 						BYTE *byte_array,
 						ULONG length,
@@ -339,7 +337,6 @@ namespace gpmd
 						CMemoryPool *mp,
 						IMDId *mdid,
 						INT type_modifier,
-						BOOL is_passed_by_value,
 						BOOL is_null,
 						BYTE *byte_array,
 						ULONG length,

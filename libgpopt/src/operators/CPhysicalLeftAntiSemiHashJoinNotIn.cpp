@@ -51,7 +51,7 @@ CPhysicalLeftAntiSemiHashJoinNotIn::PdsRequired
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
-	CDrvdProp2dArray *pdrgpdpCtxt,
+	CDrvdPropArray *pdrgpdpCtxt,
 	ULONG ulOptReq // identifies which optimization request should be created
 	)
 	const
@@ -60,8 +60,8 @@ CPhysicalLeftAntiSemiHashJoinNotIn::PdsRequired
 	GPOS_ASSERT(ulOptReq < UlDistrRequests());
 
 	if (0 == ulOptReq && 1 == child_index &&
-			(FNullableHashKeys(exprhdl.GetRelationalProperties(0)->PcrsNotNull(), false /*fInner*/) ||
-			FNullableHashKeys(exprhdl.GetRelationalProperties(1)->PcrsNotNull(), true /*fInner*/)) )
+			(FNullableHashKeys(exprhdl.DeriveNotNullColumns(0), false /*fInner*/) ||
+			FNullableHashKeys(exprhdl.DeriveNotNullColumns(1), true /*fInner*/)) )
 	{
 		// we need to replicate the inner if any of the following is true:
 		// a. if the outer hash keys are nullable, because the executor needs to detect

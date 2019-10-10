@@ -155,7 +155,7 @@ CPhysicalAgg::PcrsRequired
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 {
@@ -346,7 +346,7 @@ CPhysicalAgg::PdsRequiredGlobalAgg
 	}
 
 	if (0 == ulOptReq &&
-		(IMDFunction::EfsVolatile == exprhdl.GetRelationalProperties(0)->Pfp()->Efs()))
+		(IMDFunction::EfsVolatile == exprhdl.DeriveFunctionProperties(0)->Efs()))
 	{
 		// request a singleton distribution if child has volatile functions
 		return GPOS_NEW(mp) CDistributionSpecSingleton();
@@ -411,7 +411,7 @@ CPhysicalAgg::PrsRequired
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -440,7 +440,7 @@ CPhysicalAgg::PppsRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 {
@@ -469,7 +469,7 @@ CPhysicalAgg::PcteRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 	const

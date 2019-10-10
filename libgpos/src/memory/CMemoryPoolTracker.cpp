@@ -7,13 +7,9 @@
 //		CMemoryPoolTracker.cpp
 //
 //	@doc:
-//		Implementation for memory pool that allocates from an underlying
-//		allocator and adds synchronization, statistics, debugging information
+//		Implementation for memory pool that allocates from Malloc
+//		and adds synchronization, statistics, debugging information
 //		and memory tracing.
-//
-//	@owner:
-//
-//	@test:
 //
 //---------------------------------------------------------------------------
 
@@ -46,19 +42,11 @@ using namespace gpos;
 //---------------------------------------------------------------------------
 CMemoryPoolTracker::CMemoryPoolTracker
 	(
-	CMemoryPool *underlying_memory_pool,
-	ULLONG max_size,
-	BOOL thread_safe,
-	BOOL owns_underlying_memory_pool
 	)
 	:
-	CMemoryPool(underlying_memory_pool, owns_underlying_memory_pool, thread_safe),
-	m_alloc_sequence(0),
-	m_capacity(max_size),
-	m_reserved(0)
+	CMemoryPool(),
+	m_alloc_sequence(0)
 {
-	GPOS_ASSERT(NULL != underlying_memory_pool);
-
 	m_allocations_list.Init(GPOS_OFFSET(SAllocHeader, m_link));
 }
 
@@ -96,24 +84,13 @@ CMemoryPoolTracker::Allocate
 	GPOS_ASSERT(GPOS_MEM_ALLOC_MAX >= bytes);
 
 	ULONG alloc = GPOS_MEM_BYTES_TOTAL(bytes);
-	const BOOL mem_available = Reserve(alloc);
 
-	// allocate from underlying
 	void *ptr;
-	if (mem_available)
-	{
-		ptr = GetUnderlyingMemoryPool()->Allocate(alloc, file, line);
-	}
-	else
-	{
-		ptr = NULL;
-	}
+	ptr = clib::Malloc(alloc);
 
 	// check if allocation failed
 	if (NULL == ptr)
 	{
-		Unreserve(alloc, mem_available);
-
 		return NULL;
 	}
 
@@ -140,65 +117,6 @@ CMemoryPoolTracker::Allocate
 	return ptr_result;
 }
 
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolTracker::Reserve
-//
-//	@doc:
-//		Attempt to reserve memory for allocation
-//
-//---------------------------------------------------------------------------
-BOOL
-CMemoryPoolTracker::Reserve
-	(
-	ULONG alloc
-	)
-{
-	BOOL mem_available = false;
-
-	if (gpos::ullong_max == m_capacity)
-	{
-		mem_available = true;
-	}
-	else
-	{
-		if (alloc + m_reserved <= m_capacity)
-		{
-			m_reserved += alloc;
-			mem_available = true;
-		}
-	}
-
-	return mem_available;
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolTracker::Unreserve
-//
-//	@doc:
-//		Revert memory reservation
-//
-//---------------------------------------------------------------------------
-void
-CMemoryPoolTracker::Unreserve
-	(
-	ULONG alloc,
-	BOOL mem_available
-	)
-{
-	// return reserved memory
-	if (mem_available)
-	{
-		m_reserved -= alloc;
-	}
-
-	m_memory_pool_statistics.RecordFailedAllocation();
-}
-
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CMemoryPoolTracker::Free
@@ -218,7 +136,7 @@ CMemoryPoolTracker::Free
 
 #ifdef GPOS_DEBUG
 	// mark user memory as unused in debug mode
-	clib::Memset(ptr, GPOS_MEM_INIT_PATTERN_CHAR, user_size);
+	clib::Memset(ptr, GPOS_MEM_FREED_PATTERN_CHAR, user_size);
 #endif // GPOS_DEBUG
 
 	ULONG total_size = GPOS_MEM_BYTES_TOTAL(user_size);
@@ -227,14 +145,7 @@ CMemoryPoolTracker::Free
 	m_memory_pool_statistics.RecordFree(user_size, total_size);
 	m_allocations_list.Remove(header);
 
-	// pass request to underlying memory pool;
-	GetUnderlyingMemoryPool()->Free(header);
-
-	// update committed memory value
-	if (m_capacity != gpos::ullong_max)
-	{
-		m_reserved -= total_size;
-	}
+	clib::Free(header);
 }
 
 
@@ -256,8 +167,6 @@ CMemoryPoolTracker::TearDown()
 		void *user_data = header + 1;
 		Free(user_data);
 	}
-
-	CMemoryPool::TearDown();
 }
 
 
@@ -303,24 +212,6 @@ CMemoryPoolTracker::WalkLiveObjects
 
 		header = m_allocations_list.Next(header);
 	}
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolTracker::UpdateStatistics
-//
-//	@doc:
-//		Update statistics.
-//
-//---------------------------------------------------------------------------
-void
-CMemoryPoolTracker::UpdateStatistics
-	(
-	CMemoryPoolStatistics &memory_pool_statistics
-	)
-{
-	memory_pool_statistics = m_memory_pool_statistics;
 }
 
 

@@ -1673,7 +1673,7 @@ CPredicateUtils::PexprExtractPredicatesOnPartKeys
 	CColRefSetArray *pdrgpcrsChild = NULL;
 	CConstraint *pcnstr = NULL;
 	(void) pexprScalar->PdpDerive();
-	CDrvdPropScalar *pdpScalar = CDrvdPropScalar::GetDrvdScalarProps(pexprScalar->Pdp(DrvdPropArray::EptScalar));
+	CDrvdPropScalar *pdpScalar = pexprScalar->GetDrvdPropScalar();
 	if (pdpScalar->FHasScalarArrayCmp() &&
 	    !GPOS_FTRACE(EopttraceArrayConstraints))
 	{
@@ -2400,8 +2400,8 @@ CPredicateUtils::FValidSemiJoinCorrelations
 	GPOS_ASSERT(NULL != pexprOuter);
 	GPOS_ASSERT(NULL != pexprInner);
 
-	CColRefSet *pcrsOuterOuput = CDrvdPropRelational::GetRelationalProperties(pexprOuter->PdpDerive())->PcrsOutput();
-	CColRefSet *pcrsInnerOuput = CDrvdPropRelational::GetRelationalProperties(pexprInner->PdpDerive())->PcrsOutput();
+	CColRefSet *pcrsOuterOuput = pexprOuter->DeriveOutputColumns();
+	CColRefSet *pcrsInnerOuput = pexprInner->DeriveOutputColumns();
 
 	// collect output columns of both children
 	CColRefSet *pcrsChildren = GPOS_NEW(mp) CColRefSet(mp, *pcrsOuterOuput);

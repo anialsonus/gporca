@@ -470,7 +470,7 @@ CPhysicalPartitionSelector::PcrsRequired
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsInput,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 {
@@ -479,7 +479,7 @@ CPhysicalPartitionSelector::PcrsRequired
 
 	CColRefSet *pcrs = GPOS_NEW(mp) CColRefSet(mp, *pcrsInput);
 	pcrs->Union(CDrvdPropScalar::GetDrvdScalarProps(m_pexprCombinedPredicate->PdpDerive())->PcrsUsed());
-	pcrs->Intersection(exprhdl.GetRelationalProperties(child_index)->PcrsOutput());
+	pcrs->Intersection(exprhdl.DeriveOutputColumns(child_index));
 
 	return pcrs;
 }
@@ -499,7 +499,7 @@ CPhysicalPartitionSelector::PosRequired
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -524,15 +524,14 @@ CPhysicalPartitionSelector::PdsRequired
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
 {
 	GPOS_ASSERT(0 == child_index);
 
-	CDrvdPropRelational *pdprelDrvd = exprhdl.GetRelationalProperties();
-	CPartInfo *ppartinfo = pdprelDrvd->Ppartinfo();
+	CPartInfo *ppartinfo = exprhdl.DerivePartitionInfo();
 	BOOL fCovered = ppartinfo->FContainsScanId(m_scan_id);
 
 	if (fCovered)
@@ -561,7 +560,7 @@ CPhysicalPartitionSelector::PrsRequired
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -590,7 +589,7 @@ CPhysicalPartitionSelector::PppsRequired
 	child_index
 #endif // GPOS_DEBUG
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 {
@@ -605,7 +604,7 @@ CPhysicalPartitionSelector::PppsRequired
 	CPartIndexMap *ppim = GPOS_NEW(mp) CPartIndexMap(mp);
 	CPartFilterMap *ppfm = GPOS_NEW(mp) CPartFilterMap(mp);
 
-	CPartInfo *ppartinfo = exprhdl.GetRelationalProperties(0)->Ppartinfo();
+	CPartInfo *ppartinfo = exprhdl.DerivePartitionInfo(0);
 
 	const ULONG ulScanIds = pdrgpulInputScanIds->Size();
 
@@ -665,7 +664,7 @@ CPhysicalPartitionSelector::PcteRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 	const

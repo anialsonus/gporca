@@ -361,22 +361,11 @@ namespace gpopt
 			
 			// create container for derived properties
 			virtual
-			DrvdPropArray *PdpCreate(CMemoryPool *mp) const = 0;
+			CDrvdProp *PdpCreate(CMemoryPool *mp) const = 0;
 
 			// create container for required properties
 			virtual
 			CReqdProp *PrpCreate(CMemoryPool *mp) const = 0;
-
-			// return empty container;
-			// caller adds outer references using property derivation
-			virtual
-			CColRefSet *PcrsOuter
-				(
-				CMemoryPool *mp
-				)
-			{
-				return GPOS_NEW(mp) CColRefSet(mp);
-			}
 
 			// return a copy of the operator with remapped columns
 			virtual

@@ -35,16 +35,7 @@ namespace gpos
 	//
 	//---------------------------------------------------------------------------
 	class CMemoryPoolManager
-	{	
-		public:
-
-			// different types of pools
-			enum AllocType
-			{
-				EatTracker,
-				EatStack
-			};
-
+	{
 		private:
 
 			typedef CSyncHashtableAccessByKey<CMemoryPool, ULONG_PTR>
@@ -55,10 +46,6 @@ namespace gpos
 
 			typedef CSyncHashtableAccessByIter<CMemoryPool, ULONG_PTR>
 				MemoryPoolIterAccessor;
-
-			// memory pool used to get memory from the underlying system
-			// all created pools use this as their underlying allocator
-			CMemoryPool *m_base_memory_pool;
 
 			// memory pool in which all objects created by the manager itself
 			// are allocated - must be thread-safe
@@ -72,37 +59,13 @@ namespace gpos
 			BOOL m_allow_global_new;
 
 			// hash table to maintain created pools
-			CSyncHashtable<CMemoryPool, ULONG_PTR> m_hash_table;
+			CSyncHashtable<CMemoryPool, ULONG_PTR> *m_ht_all_pools;
 
 			// global instance
 			static CMemoryPoolManager *m_memory_pool_mgr;
 
-			// private ctor
-			CMemoryPoolManager
-				(
-				CMemoryPool *internal,
-				CMemoryPool *base
-				);
-
 			// create new pool of given type
-			CMemoryPool *New
-				(
-				AllocType alloc_type,
-				CMemoryPool *underlying_memory_pool,
-				ULLONG capacity,
-				BOOL thread_safe,
-				BOOL owns_underlying_memory_pool
-				);
-
-#ifdef GPOS_DEBUG
-			// surround new pool with tracker pools
-			CMemoryPool *CreatePoolStack
-				(
-				AllocType type,
-				ULLONG capacity,
-				BOOL thread_safe
-				);
-#endif // GPOS_DEBUG
+			virtual CMemoryPool *NewMemoryPool();
 
 			// no copy ctor
 			CMemoryPoolManager(const CMemoryPoolManager&);
@@ -114,22 +77,69 @@ namespace gpos
 			static
 			void DestroyMemoryPoolAtShutdown(CMemoryPool *mp);
 
+			// Set up CMemoryPoolManager's internals
+			void Setup();
+
+		protected:
+
+			// Used for debugging. Indicates what type of memory pool the manager handles .
+			// EMemoryPoolTracker indicates the manager handles CTrackerMemoryPools.
+			// EMemoryPoolExternal indicates the manager handles memory pools with logic outside
+			// the gporca framework (e.g.: CPallocMemoryPool which is declared in GPDB)
+			enum EMemoryPoolType
+			{
+				EMemoryPoolTracker = 0,
+				EMemoryPoolExternal,
+				EMemoryPoolSentinel
+			};
+
+			EMemoryPoolType m_memory_pool_type;
+
+			// ctor
+			CMemoryPoolManager(CMemoryPool *internal, EMemoryPoolType memory_pool_type);
+
+			CMemoryPool *GetInternalMemoryPool()
+			{
+				return m_internal_memory_pool;
+			}
+
+		template<typename ManagerType, typename PoolType>
+		static
+		GPOS_RESULT SetupMemoryPoolManager()
+		{
+			// raw allocation of memory for internal memory pools
+			void *alloc_internal = gpos::clib::Malloc(sizeof(PoolType));
+
+			// create internal memory pool
+			CMemoryPool *internal = new(alloc_internal) PoolType();
+
+			// instantiate manager
+			GPOS_TRY
+			{
+				m_memory_pool_mgr = GPOS_NEW(internal) ManagerType(internal, EMemoryPoolTracker);
+				m_memory_pool_mgr->Setup();
+			}
+			GPOS_CATCH_EX(ex)
+			{
+				if (GPOS_MATCH_EX(ex, CException::ExmaSystem, CException::ExmiOOM))
+				{
+					gpos::clib::Free(alloc_internal);
+
+					return GPOS_OOM;
+				}
+			}
+			GPOS_CATCH_END;
+			return GPOS_OK;
+		}
+
 		public:
 
 			// create new memory pool
-			CMemoryPool *Create
-				(
-				CMemoryPoolManager::AllocType alloc_type,
-				BOOL thread_safe,
-				ULLONG capacity
-				);
-				
+			CMemoryPool *CreateMemoryPool();
+
 			// release memory pool
 			void Destroy(CMemoryPool *);
 
-			// delete a pool that is not registered with the memory pool manager
-			void DeleteUnregistered(CMemoryPool *);
-			
 #ifdef GPOS_DEBUG
 			// print internal contents of allocated memory pools
 			IOstream &OsPrint(IOstream &os);
@@ -145,6 +155,11 @@ namespace gpos
 			CMemoryPool *GetGlobalMemoryPool()
 			{
 				return m_global_memory_pool;
+			}
+
+			virtual
+			~CMemoryPoolManager()
+			{
 			}
 
 			// are allocations using global new operator allowed?
@@ -168,9 +183,9 @@ namespace gpos
 			// return total allocated size in bytes
 			ULLONG TotalAllocatedSize();
 
-			// initialize global instance
+			// Initialize global memory pool manager using given types
 			static
-			GPOS_RESULT Init(void* (*) (SIZE_T), void (*) (void*));
+			GPOS_RESULT Init();
 
 			// global accessor
 			static

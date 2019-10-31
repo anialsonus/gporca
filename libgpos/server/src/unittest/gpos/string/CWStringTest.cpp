@@ -129,10 +129,7 @@ CWStringTest::EresUnittest_AppendFormat()
 {
 	CAutoMemoryPool amp
 		(
-		CAutoMemoryPool::ElcExc,
-		CMemoryPoolManager::EatTracker,
-		false /*fThreadSafe*/,
-		1024 * 1024 /*ullSizeMax*/
+		CAutoMemoryPool::ElcExc
 		);
 	CMemoryPool *mp = amp.Pmp();
 
@@ -159,24 +156,6 @@ CWStringTest::EresUnittest_AppendFormat()
 
 	GPOS_RESULT eres = GPOS_OK;
 
-	GPOS_TRY
-	{
-		// exhaust memory pool
-		for (ULONG i = 0; i < gpos::ulong_max; i++)
-		{
-			pstr1->AppendFormat(GPOS_WSZ_LIT("%ls world %d"), cstr1.GetBuffer(), 123);
-		}
-
-		eres = GPOS_FAILED;
-	}
-	GPOS_CATCH_EX(ex)
-	{
-		GPOS_ASSERT(GPOS_MATCH_EX(ex, CException::ExmaSystem, CException::ExmiOOM));
-
-		GPOS_RESET_EX;
-	}
-	GPOS_CATCH_END;
-
 	// cleanup
 	GPOS_DELETE(pstr1);
 
@@ -195,10 +174,7 @@ CWStringTest::EresUnittest_AppendFormatInvalidLocale()
 {
 	CAutoMemoryPool amp
 		(
-		CAutoMemoryPool::ElcExc,
-		CMemoryPoolManager::EatTracker,
-		false /*fThreadSafe*/,
-		1024 * 1024 /*ullSizeMax*/
+		CAutoMemoryPool::ElcExc
 		);
 	CMemoryPool *mp = amp.Pmp();
 

@@ -18,10 +18,7 @@
 #include "gpos/error/CFSimulator.h" // for GPOS_FPSIMULATOR
 #include "gpos/error/CAutoTrace.h"
 #include "gpos/memory/CMemoryPool.h"
-#include "gpos/memory/CMemoryPoolAlloc.h"
-#include "gpos/memory/CMemoryPoolInjectFault.h"
 #include "gpos/memory/CMemoryPoolManager.h"
-#include "gpos/memory/CMemoryPoolStack.h"
 #include "gpos/memory/CMemoryPoolTracker.h"
 #include "gpos/memory/CMemoryVisitorPrint.h"
 #include "gpos/task/CAutoSuspendAbort.h"
@@ -45,20 +42,30 @@ CMemoryPoolManager *CMemoryPoolManager::m_memory_pool_mgr = NULL;
 CMemoryPoolManager::CMemoryPoolManager
 	(
 	CMemoryPool *internal,
-	CMemoryPool *base
+	EMemoryPoolType memory_pool_type
 	)
 	:
-	m_base_memory_pool(base),
 	m_internal_memory_pool(internal),
-	m_global_memory_pool(NULL),
-	m_allow_global_new(true)
+	m_allow_global_new(true),
+	m_ht_all_pools(NULL),
+	m_memory_pool_type(memory_pool_type)
 {
 	GPOS_ASSERT(NULL != internal);
-	GPOS_ASSERT(NULL != base);
-	GPOS_ASSERT(GPOS_OFFSET(CMemoryPool, m_link) == GPOS_OFFSET(CMemoryPoolAlloc, m_link));
 	GPOS_ASSERT(GPOS_OFFSET(CMemoryPool, m_link) == GPOS_OFFSET(CMemoryPoolTracker, m_link));
 
-	m_hash_table.Init
+}
+
+// Set up CMemoryPoolManager's internals.
+// This must be done here instead of the constructor because CMemoryPoolManager
+// uses virtual methods for determining the correct CMemoryPool for
+// allocations; and these virtual methods must not be called in the
+// constructor, or else it will use the base class allocator instead of the one
+// defined in derived-class virtual function.
+void
+CMemoryPoolManager::Setup()
+{
+	m_ht_all_pools = GPOS_NEW(m_internal_memory_pool) CSyncHashtable<CMemoryPool, ULONG_PTR>();
+	m_ht_all_pools->Init
 		(
 		m_internal_memory_pool,
 		GPOS_MEMORY_POOL_HT_SIZE,
@@ -70,108 +77,33 @@ CMemoryPoolManager::CMemoryPoolManager
 		);
 
 	// create pool used in allocations made using global new operator
-	m_global_memory_pool = Create(EatTracker, true, gpos::ullong_max);
+	m_global_memory_pool = CreateMemoryPool();
 }
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolManager::Init
-//
-//	@doc:
-//		Initializer for global memory pool manager
-//
-//---------------------------------------------------------------------------
+// Initialize global memory pool manager using CMemoryPoolTracker
 GPOS_RESULT
-CMemoryPoolManager::Init
-	(
-		void* (*alloc) (SIZE_T),
-		void (*free_func) (void*)
-	)
+CMemoryPoolManager::Init()
 {
-	GPOS_ASSERT(NULL == CMemoryPoolManager::m_memory_pool_mgr);
-
-	// raw allocation of memory for internal memory pools
-	void *alloc_base = Malloc(sizeof(CMemoryPoolAlloc));
-	void *alloc_internal = Malloc(sizeof(CMemoryPoolTracker));
-
-	// check if any allocation failed
-	if (NULL == alloc_internal ||
-		NULL == alloc_base)
+	if (NULL == CMemoryPoolManager::m_memory_pool_mgr)
 	{
-		Free(alloc_base);
-		Free(alloc_internal);
-
-		return GPOS_OOM;
+		return SetupMemoryPoolManager<CMemoryPoolManager, CMemoryPoolTracker>();
 	}
-
-	// create base memory pool
-	CMemoryPool *base = new(alloc_base) CMemoryPoolAlloc(alloc, free_func);
-
-	// create internal memory pool
-	CMemoryPool *internal = new(alloc_internal) CMemoryPoolTracker
-			(
-			base,
-			gpos::ullong_max, // ullMaxMemory
-			true, // IsThreadSafe
-			false //fOwnsUnderlyingPmp
-			);
-
-	// instantiate manager
-	GPOS_TRY
-	{
-		CMemoryPoolManager::m_memory_pool_mgr = GPOS_NEW(internal) CMemoryPoolManager
-				(
-				internal,
-				base
-				);
-	}
-	GPOS_CATCH_EX(ex)
-	{
-		if (GPOS_MATCH_EX(ex, CException::ExmaSystem, CException::ExmiOOM))
-		{
-			Free(alloc_base);
-			Free(alloc_internal);
-
-			return GPOS_OOM;
-		}
-
-		return GPOS_FAILED;
-	}
-	GPOS_CATCH_END;
 
 	return GPOS_OK;
 }
 
 
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolManager::Create
-//
-//	@doc:
-//		Create new memory pool
-//
-//---------------------------------------------------------------------------
 CMemoryPool *
-CMemoryPoolManager::Create
-	(
-	AllocType alloc_type,
-	BOOL thread_safe,
-	ULLONG capacity
-	)
+CMemoryPoolManager::CreateMemoryPool()
 {
-	CMemoryPool *mp =
-#ifdef GPOS_DEBUG
-			CreatePoolStack(alloc_type, capacity, thread_safe);
-#else
-			New(alloc_type, m_base_memory_pool, capacity, thread_safe, false /*owns_underlying_memory_pool*/);
-#endif // GPOS_DEBUG
+	CMemoryPool *mp = NewMemoryPool();
 
 	// accessor scope
 	{
 		// HERE BE DRAGONS
 		// See comment in CCache::InsertEntry
 		const ULONG_PTR hashKey = mp->GetHashKey();
-		MemoryPoolKeyAccessor acc(m_hash_table, hashKey);
+		MemoryPoolKeyAccessor acc(*m_ht_all_pools, hashKey);
 		acc.Insert(mp);
 	}
 
@@ -181,157 +113,16 @@ CMemoryPoolManager::Create
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CMemoryPoolManager::New
+//		CMemoryPoolManager::NewMemoryPool
 //
 //	@doc:
-//		Create new pool of given type
+//		Create new pool
 //
 //---------------------------------------------------------------------------
 CMemoryPool *
-CMemoryPoolManager::New
-	(
-	AllocType alloc_type,
-	CMemoryPool *underlying_memory_pool,
-	ULLONG capacity,
-	BOOL thread_safe,
-	BOOL owns_underlying_memory_pool
-	)
+CMemoryPoolManager::NewMemoryPool()
 {
-	switch (alloc_type)
-	{
-		case CMemoryPoolManager::EatTracker:
-			return GPOS_NEW(m_internal_memory_pool) CMemoryPoolTracker
-						(
-						underlying_memory_pool,
-						capacity,
-						thread_safe,
-						owns_underlying_memory_pool
-						);
-
-		case CMemoryPoolManager::EatStack:
-			return GPOS_NEW(m_internal_memory_pool) CMemoryPoolStack
-						(
-						underlying_memory_pool,
-						capacity,
-						thread_safe,
-						owns_underlying_memory_pool
-						);
-	}
-
-	GPOS_ASSERT(!"No matching pool type found");
-	return NULL;
-}
-
-
-#ifdef GPOS_DEBUG
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolManager::CreatePoolStack
-//
-//	@doc:
-//		Surround new pool with tracker pools
-//
-//---------------------------------------------------------------------------
-CMemoryPool *
-CMemoryPoolManager::CreatePoolStack
-	(
-	AllocType alloc_type,
-	ULLONG capacity,
-	BOOL thread_safe
-	)
-{
-	CMemoryPool *base = m_base_memory_pool;
-	BOOL malloc_type = (EatTracker == alloc_type);
-
-	// check if tracking and fault injection on internal allocations
-	// of memory pools is enabled
-	if (NULL != ITask::Self() && !malloc_type  && GPOS_FTRACE(EtraceTestMemoryPools))
-	{
-		// put fault injector on top of base pool
-		CMemoryPool *FPSim_low = GPOS_NEW(m_internal_memory_pool) CMemoryPoolInjectFault
-				(
-				base,
-				false /*owns_underlying_memory_pool*/
-				);
-
-		// put tracker on top of fault injector
-		base = New
-				(
-				EatTracker,
-				FPSim_low,
-				capacity,
-				thread_safe,
-				true /*owns_underlying_memory_pool*/
-				);
-	}
-
-	// tracker pool goes on top
-	CMemoryPool *requested = base;
-	if (!malloc_type)
-	{
-		// put requested pool on top of underlying pool
-		requested = New
-				(
-				alloc_type,
-				base,
-				capacity,
-				thread_safe,
-				base != m_base_memory_pool
-				);
-	}
-
-	// put fault injector on top of requested pool
-	CMemoryPool *FPSim = GPOS_NEW(m_internal_memory_pool) CMemoryPoolInjectFault
-				(
-				requested,
-				!malloc_type
-				);
-
-	// put tracker on top of the stack
-	return New(EatTracker, FPSim, capacity, thread_safe, true /*fOwnsUnderlying*/);
-}
-
-#endif // GPOS_DEBUG
-
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolManager::DeleteUnregistered
-//
-//	@doc:
-//		Release returned pool
-//
-//---------------------------------------------------------------------------
-void
-CMemoryPoolManager::DeleteUnregistered
-	(
-	CMemoryPool *mp
-	)
-{
-	GPOS_ASSERT(mp != NULL);
-
-#ifdef GPOS_DEBUG
-	// accessor's scope
-	{
-		// HERE BE DRAGONS
-		// See comment in CCache::InsertEntry
-		ULONG_PTR hashKey = mp->GetHashKey();
-		MemoryPoolKeyAccessor acc(m_hash_table, hashKey);
-
-		// make sure that this pool is not in the hash table
-		CMemoryPool *found = acc.Find();
-		while (NULL != found)
-		{
-			GPOS_ASSERT(found != mp && "Attempt to delete a registered memory pool");
-
-			found = acc.Next(found);
-		}
-	}
-#endif // GPOS_DEBUG
-
-	GPOS_DELETE(mp);
+	return GPOS_NEW(m_internal_memory_pool) CMemoryPoolTracker();
 }
 
 
@@ -356,7 +147,7 @@ CMemoryPoolManager::Destroy
 		// HERE BE DRAGONS
 		// See comment in CCache::InsertEntry
 		const ULONG_PTR hashKey = mp->GetHashKey();
-		MemoryPoolKeyAccessor acc(m_hash_table, hashKey);
+		MemoryPoolKeyAccessor acc(*m_ht_all_pools, hashKey);
 		acc.Remove(mp);
 	}
 
@@ -378,7 +169,7 @@ ULLONG
 CMemoryPoolManager::TotalAllocatedSize()
 {
 	ULLONG total_size = 0;
-	MemoryPoolIter iter(m_hash_table);
+	MemoryPoolIter iter(*m_ht_all_pools);
 	while (iter.Advance())
 	{
 		MemoryPoolIterAccessor acc(iter);
@@ -411,7 +202,7 @@ CMemoryPoolManager::OsPrint
 {
 	os << "Print memory pools: " << std::endl;
 
-	MemoryPoolIter iter(m_hash_table);
+	MemoryPoolIter iter(*m_ht_all_pools);
 	while (iter.Advance())
 	{
 		CMemoryPool *mp = NULL;
@@ -450,7 +241,7 @@ CMemoryPoolManager::PrintOverSizedPools
 	CAutoTraceFlag Net(EtraceSimulateNetError, false);
 	CAutoTraceFlag IO(EtraceSimulateIOError, false);
 
-	MemoryPoolIter iter(m_hash_table);
+	MemoryPoolIter iter(*m_ht_all_pools);
 	while (iter.Advance())
 	{
 		MemoryPoolIterAccessor acc(iter);
@@ -519,7 +310,8 @@ CMemoryPoolManager::Cleanup()
 
 	// cleanup left-over memory pools;
 	// any such pool means that we have a leak
-	m_hash_table.DestroyEntries(DestroyMemoryPoolAtShutdown);
+	m_ht_all_pools->DestroyEntries(DestroyMemoryPoolAtShutdown);
+	GPOS_DELETE(m_ht_all_pools);
 }
 
 
@@ -539,18 +331,15 @@ CMemoryPoolManager::Shutdown()
 
 	// save off pointers for explicit deletion
 	CMemoryPool *internal = m_internal_memory_pool;
-	CMemoryPool *base = m_base_memory_pool;
 
 	GPOS_DELETE(CMemoryPoolManager::m_memory_pool_mgr);
 	CMemoryPoolManager::m_memory_pool_mgr = NULL;
 
 #ifdef GPOS_DEBUG
 	internal->AssertEmpty(oswcerr);
-	base->AssertEmpty(oswcerr);
 #endif // GPOS_DEBUG
 
 	Free(internal);
-	Free(base);
 }
 
 // EOF

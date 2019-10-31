@@ -7,7 +7,7 @@
 //		CMemoryPoolTracker.h
 //
 //	@doc:
-//		Memory pool that allocates from an underlying allocator and adds on
+//		Memory pool that allocates from malloc() and adds on
 //		statistics and debugging
 //
 //	@owner:
@@ -70,22 +70,8 @@ namespace gpos
 			// allocation sequence number
 			ULONG m_alloc_sequence;
 
-			// memory pool capacity;
-			// if equal to ULLONG, checks for exceeding max memory are bypassed
-			const ULLONG m_capacity;
-
-			// size of reserved memory;
-			// this includes total allocated memory and pending allocations;
-			ULLONG m_reserved;
-
 			// list of allocated (live) objects
 			CList<SAllocHeader> m_allocations_list;
-
-			// attempt to reserve memory for allocation
-			BOOL Reserve(ULONG ulAlloc);
-
-			// revert memory reservation
-			void Unreserve(ULONG alloc, BOOL mem_available);
 
 			// private copy ctor
 			CMemoryPoolTracker(CMemoryPoolTracker &);
@@ -99,13 +85,7 @@ namespace gpos
 		public:
 
 			// ctor
-			CMemoryPoolTracker
-				(
-				CMemoryPool *underlying_memory_pool,
-				ULLONG size,
-				BOOL thread_safe,
-				BOOL owns_underlying_memory_pool
-				);
+			CMemoryPoolTracker();
 
 			// allocate memory
 			virtual
@@ -123,14 +103,6 @@ namespace gpos
 			// prepare the memory pool to be deleted
 			virtual
 			void TearDown();
-
-			// check if the pool stores a pointer to itself at the end of
-			// the header of each allocated object;
-			virtual
-			BOOL StoresPoolPointer() const
-			{
-				return true;
-			}
 
 			// return total allocated size
 			virtual
@@ -151,17 +123,6 @@ namespace gpos
 			// walk the live objects
 			virtual
 			void WalkLiveObjects(gpos::IMemoryVisitor *visitor);
-
-			// check if statistics tracking is supported
-			virtual
-			BOOL SupportsStatistics() const
-			{
-				return true;
-			}
-
-			// return the current statistics
-			virtual
-			void UpdateStatistics(CMemoryPoolStatistics &memory_pool_statistics);
 
 #endif // GPOS_DEBUG
 

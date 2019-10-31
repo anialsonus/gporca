@@ -29,53 +29,6 @@ const ULONG_PTR CMemoryPool::m_invalid = ULONG_PTR_MAX;
 
 //---------------------------------------------------------------------------
 //	@function:
-//		CMemoryPool::CMemoryPool
-//
-//	@doc:
-//		Ctor
-//
-//---------------------------------------------------------------------------
-CMemoryPool::CMemoryPool
-	(
-	CMemoryPool *underlying_memory_pool,
-	BOOL owns_underlying_memory_pool,
-	BOOL thread_safe
-	)
-	:
-	m_ref_counter(0),
-	m_hash_key(0),
-	m_underlying_memory_pool(underlying_memory_pool),
-	m_owns_underlying_memory_pool(owns_underlying_memory_pool),
-	m_thread_safe(thread_safe)
-{
-	GPOS_ASSERT_IMP(owns_underlying_memory_pool, NULL != underlying_memory_pool);
-
-	m_hash_key = reinterpret_cast<ULONG_PTR>(this);
-#ifdef GPOS_DEBUG
-	m_stack_desc.BackTrace();
-#endif // GPOS_DEBUG
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPool::~CMemoryPool
-//
-//	@doc:
-//		Dtor
-//
-//---------------------------------------------------------------------------
-CMemoryPool::~CMemoryPool()
-{
-	if (m_owns_underlying_memory_pool)
-	{
-		CMemoryPoolManager::GetMemoryPoolMgr()->DeleteUnregistered(m_underlying_memory_pool);
-	}
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
 //		CMemoryPool::FinalizeAlloc
 //
 //	@doc:

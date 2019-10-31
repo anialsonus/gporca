@@ -104,7 +104,7 @@ CPhysicalComputeScalar::PcrsRequired
 	CExpressionHandle &exprhdl,
 	CColRefSet *pcrsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 {
@@ -134,7 +134,7 @@ CPhysicalComputeScalar::PosRequired
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -174,7 +174,7 @@ CPhysicalComputeScalar::PdsRequired
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG ulOptReq
 	)
 	const
@@ -270,7 +270,7 @@ CPhysicalComputeScalar::PrsRequired
 	CExpressionHandle &exprhdl,
 	CRewindabilitySpec *prsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -295,7 +295,7 @@ CPhysicalComputeScalar::PppsRequired
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 {
@@ -324,7 +324,7 @@ CPhysicalComputeScalar::PcteRequired
 	child_index
 #endif
 	,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 	const
@@ -358,7 +358,7 @@ CPhysicalComputeScalar::FProvidesReqdCols
 	pcrs->Union(exprhdl.GetDrvdScalarProps(1 /*child_index*/)->PcrsDefined());
 
 	// include output columns of the relational child
-	pcrs->Union(exprhdl.GetRelationalProperties(0 /*child_index*/)->PcrsOutput());
+	pcrs->Union(exprhdl.DeriveOutputColumns(0 /*child_index*/));
 
 	BOOL fProvidesCols = pcrs->ContainsAll(pcrsRequired);
 	pcrs->Release();
@@ -509,7 +509,7 @@ CPhysicalComputeScalar::EpetRewindability
 	const
 {
 	CColRefSet *pcrsUsed = exprhdl.GetDrvdScalarProps(1 /*ulChidIndex*/)->PcrsUsed();
-	CColRefSet *pcrsCorrelatedApply = exprhdl.GetRelationalProperties()->PcrsCorrelatedApply();
+	CColRefSet *pcrsCorrelatedApply = exprhdl.DeriveCorrelatedApplyColumns();
 	if (!pcrsUsed->IsDisjoint(pcrsCorrelatedApply))
 	{
 		// columns are used from inner children of correlated-apply expressions,

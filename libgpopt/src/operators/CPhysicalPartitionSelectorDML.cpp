@@ -119,7 +119,7 @@ CPhysicalPartitionSelectorDML::PdsRequired
 	CExpressionHandle &exprhdl,
 	CDistributionSpec *pdsInput,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -168,7 +168,7 @@ CPhysicalPartitionSelectorDML::PosRequired
 	CExpressionHandle &exprhdl,
 	COrderSpec *posRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, // pdrgpdpCtxt
+	CDrvdPropArray *, // pdrgpdpCtxt
 	ULONG // ulOptReq
 	)
 	const
@@ -217,7 +217,7 @@ CPhysicalPartitionSelectorDML::FProvidesReqdCols
 	pcrs->Include(m_pcrOid);
 
 	// include output columns of the relational child
-	pcrs->Union(exprhdl.GetRelationalProperties(0 /*child_index*/)->PcrsOutput());
+	pcrs->Union(exprhdl.DeriveOutputColumns(0 /*child_index*/));
 
 	BOOL fProvidesCols = pcrs->ContainsAll(pcrsRequired);
 	pcrs->Release();
@@ -240,7 +240,7 @@ CPhysicalPartitionSelectorDML::PppsRequired
 	CExpressionHandle &exprhdl,
 	CPartitionPropagationSpec *pppsRequired,
 	ULONG child_index,
-	CDrvdProp2dArray *, //pdrgpdpCtxt,
+	CDrvdPropArray *, //pdrgpdpCtxt,
 	ULONG //ulOptReq
 	)
 {

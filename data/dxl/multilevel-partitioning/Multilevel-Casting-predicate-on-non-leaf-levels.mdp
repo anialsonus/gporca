@@ -54,7 +54,7 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -109,7 +109,7 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
         </dxl:OpClasses>
       </dxl:GPDBScalarOp>
       <dxl:MDCast Mdid="3.25.1.0;1043.1.0" Name="varchar" BinaryCoercible="true" SourceTypeId="0.25.1.0" DestinationTypeId="0.1043.1.0" CastFuncId="0.0.0.0"/>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -210,7 +210,7 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1700.1.0" Name="numeric" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" PassByValue="false">
+      <dxl:Type Mdid="0.1700.1.0" Name="numeric" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1752.1.0"/>
         <dxl:InequalityOp Mdid="0.1753.1.0"/>
         <dxl:LessThanOp Mdid="0.1754.1.0"/>
@@ -393,11 +393,11 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
             <dxl:Cast TypeMdid="0.25.1.0" FuncId="0.0.0.0">
               <dxl:Ident ColId="2" ColName="p1" TypeMdid="0.1043.1.0"/>
             </dxl:Cast>
-            <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAABWE=" LintValue="160440876"/>
+            <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAABWE=" LintValue="160440876"/>
           </dxl:Comparison>
           <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.1093.1.0">
             <dxl:Ident ColId="3" ColName="p2" TypeMdid="0.1082.1.0"/>
-            <dxl:ConstValue TypeMdid="0.1082.1.0" IsNull="false" IsByValue="true" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
+            <dxl:ConstValue TypeMdid="0.1082.1.0" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
           </dxl:Comparison>
         </dxl:And>
         <dxl:LogicalGet>
@@ -464,20 +464,20 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
             </dxl:Properties>
             <dxl:ProjList/>
             <dxl:PartEqFilters>
-              <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAABWE=" LintValue="160440876"/>
-              <dxl:ConstValue TypeMdid="0.1082.1.0" IsNull="false" IsByValue="true" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
-              <dxl:ConstValue TypeMdid="0.16.1.0" IsNull="false" IsByValue="true" Value="true"/>
+              <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAABWE=" LintValue="160440876"/>
+              <dxl:ConstValue TypeMdid="0.1082.1.0" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
+              <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
             </dxl:PartEqFilters>
             <dxl:PartFilters>
-              <dxl:ConstValue TypeMdid="0.16.1.0" IsNull="false" IsByValue="true" Value="true"/>
-              <dxl:ConstValue TypeMdid="0.16.1.0" IsNull="false" IsByValue="true" Value="true"/>
-              <dxl:ConstValue TypeMdid="0.16.1.0" IsNull="false" IsByValue="true" Value="true"/>
+              <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
+              <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
+              <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
             </dxl:PartFilters>
             <dxl:ResidualFilter>
-              <dxl:ConstValue TypeMdid="0.16.1.0" IsNull="false" IsByValue="true" Value="true"/>
+              <dxl:ConstValue TypeMdid="0.16.1.0" Value="true"/>
             </dxl:ResidualFilter>
             <dxl:PropagationExpression>
-              <dxl:ConstValue TypeMdid="0.23.1.0" IsNull="false" IsByValue="true" Value="1"/>
+              <dxl:ConstValue TypeMdid="0.23.1.0" Value="1"/>
             </dxl:PropagationExpression>
             <dxl:PrintableFilter>
               <dxl:And>
@@ -485,11 +485,11 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
                   <dxl:Cast TypeMdid="0.25.1.0" FuncId="0.0.0.0">
                     <dxl:Ident ColId="1" ColName="p1" TypeMdid="0.1043.1.0"/>
                   </dxl:Cast>
-                  <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAABWE=" LintValue="160440876"/>
+                  <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAABWE=" LintValue="160440876"/>
                 </dxl:Comparison>
                 <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.1093.1.0">
                   <dxl:Ident ColId="2" ColName="p2" TypeMdid="0.1082.1.0"/>
-                  <dxl:ConstValue TypeMdid="0.1082.1.0" IsNull="false" IsByValue="true" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
+                  <dxl:ConstValue TypeMdid="0.1082.1.0" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
                 </dxl:Comparison>
               </dxl:And>
             </dxl:PrintableFilter>
@@ -518,11 +518,11 @@ explain select * from TestPartitionFilterCasting where p1 = 'a' and p2 = '2015-0
                   <dxl:Cast TypeMdid="0.25.1.0" FuncId="0.0.0.0">
                     <dxl:Ident ColId="1" ColName="p1" TypeMdid="0.1043.1.0"/>
                   </dxl:Cast>
-                  <dxl:ConstValue TypeMdid="0.25.1.0" IsNull="false" IsByValue="false" Value="AAAABWE=" LintValue="160440876"/>
+                  <dxl:ConstValue TypeMdid="0.25.1.0" Value="AAAABWE=" LintValue="160440876"/>
                 </dxl:Comparison>
                 <dxl:Comparison ComparisonOperator="=" OperatorMdid="0.1093.1.0">
                   <dxl:Ident ColId="2" ColName="p2" TypeMdid="0.1082.1.0"/>
-                  <dxl:ConstValue TypeMdid="0.1082.1.0" IsNull="false" IsByValue="true" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
+                  <dxl:ConstValue TypeMdid="0.1082.1.0" Value="ZxUAAA==" DoubleValue="473385600000000.000000"/>
                 </dxl:Comparison>
               </dxl:And>
             </dxl:Filter>

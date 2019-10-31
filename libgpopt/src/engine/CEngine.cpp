@@ -165,7 +165,7 @@ CEngine::Init
 	GPOS_ASSERT(NULL != pqc);
 	GPOS_ASSERT_IMP
 		(
-		0 == CDrvdPropRelational::GetRelationalProperties(pqc->Pexpr()->PdpDerive())->PcrsOutput()->Size(),
+		0 == pqc->Pexpr()->DeriveOutputColumns()->Size(),
 		0 == pqc->Prpp()->PcrsRequired()->Size() &&
 		"requiring columns from a zero column expression"
 		);
@@ -427,7 +427,7 @@ CEngine::FPossibleDuplicateGroups
 
 	// right now we only check the output columns, but we may possibly need to
 	// check other properties as well
-	return pdprelFst->PcrsOutput()->Equals(pdprelSnd->PcrsOutput());
+	return pdprelFst->GetOutputColumns()->Equals(pdprelSnd->GetOutputColumns());
 }
 
 //---------------------------------------------------------------------------
@@ -611,7 +611,7 @@ CEngine::FSafeToPruneWithDPEStats
 		// group expression has not been optimized yet
 
 		CDrvdPropRelational *pdprel = CDrvdPropRelational::GetRelationalProperties(pgexpr->Pgroup()->Pdp());
-		if (0 < pdprel->Ppartinfo()->UlConsumers())
+		if (0 < pdprel->GetPartitionInfo()->UlConsumers())
 		{
 			// we cannot bound cost here because of possible DPE that can happen below the operator
 			return false;
@@ -625,7 +625,7 @@ CEngine::FSafeToPruneWithDPEStats
 	exprhdl.Attach(pgexpr);
 	ULONG ulNextChild = exprhdl.UlNextOptimizedChildIndex(child_index);
 	CDrvdPropRelational *pdprelChild = CDrvdPropRelational::GetRelationalProperties((*pgexpr)[ulNextChild]->Pdp());
-	if (0 < pdprelChild->Ppartinfo()->UlConsumers())
+	if (0 < pdprelChild->GetPartitionInfo()->UlConsumers())
 	{
 		// we cannot bound cost here because of possible DPE that can happen for the unoptimized child
 		return false;
@@ -941,7 +941,7 @@ CEngine::PocChild
 	COptimizationContext *pocOrigin, // optimization context of parent operator
 	CExpressionHandle &exprhdlPlan, // handle to compute required plan properties
 	CExpressionHandle &exprhdlRel, // handle to compute required relational properties
-	CDrvdProp2dArray *pdrgpdpChildren, // derived plan properties of optimized children
+	CDrvdPropArray *pdrgpdpChildren, // derived plan properties of optimized children
 	IStatisticsArray *pdrgpstatCurrentCtxt,
 	ULONG child_index,
 	ULONG ulOptReq
@@ -1006,7 +1006,7 @@ CEngine::PccOptimizeChild
 	CExpressionHandle &exprhdl, // initialized with required properties
 	CExpressionHandle &exprhdlRel,
 	COptimizationContext *pocOrigin, // optimization context of parent operator
-	CDrvdProp2dArray *pdrgpdp,
+	CDrvdPropArray *pdrgpdp,
 	IStatisticsArray *pdrgpstatCurrentCtxt,
 	ULONG child_index,
 	ULONG ulOptReq
@@ -1083,7 +1083,7 @@ CEngine::PdrgpocOptimizeChildren
 	}
 
 	// create array of child derived properties
-	CDrvdProp2dArray *pdrgpdp = GPOS_NEW(m_mp) CDrvdProp2dArray(m_mp);
+	CDrvdPropArray *pdrgpdp = GPOS_NEW(m_mp) CDrvdPropArray(m_mp);
 
 	// initialize current stats context with input stats context
 	IStatisticsArray *pdrgpstatCurrentCtxt = GPOS_NEW(m_mp) IStatisticsArray(m_mp);
@@ -1120,7 +1120,7 @@ CEngine::PdrgpocOptimizeChildren
 
 		CExpressionHandle exprhdlChild(m_mp);
 		exprhdlChild.Attach(pccChildBest);
-		exprhdlChild.DerivePlanProps();
+		exprhdlChild.DerivePlanPropsForCostContext();
 		exprhdlChild.Pdp()->AddRef();
 		pdrgpdp->Append(exprhdlChild.Pdp());
 
@@ -2108,8 +2108,8 @@ CEngine::FCheckEnfdProps
 	pcc->SetChildContexts(pdrgpoc);
 	CExpressionHandle exprhdl(mp);
 	exprhdl.Attach(pcc);
-	exprhdl.DerivePlanProps();
-	pcc->Release();
+	exprhdl.DerivePlanPropsForCostContext();
+
 
 	CPhysical *popPhysical = CPhysical::PopConvert(exprhdl.Pop());
 	CReqdPropPlan *prpp = poc->Prpp();
@@ -2118,6 +2118,7 @@ CEngine::FCheckEnfdProps
 	// and whether it is a motion over unresolved part consumers
 	if (!FValidCTEAndPartitionProperties(mp, exprhdl, prpp))
 	{
+		pcc->Release();
 		return false;
 	}
 
@@ -2166,6 +2167,7 @@ CEngine::FCheckEnfdProps
 	// G and H as its child.
 	if (FProhibited(epetOrder, epetDistribution, epetRewindability, epetPartitionPropagation))
 	{
+		pcc->Release();
 		return false;
 	}
 
@@ -2189,6 +2191,7 @@ CEngine::FCheckEnfdProps
 	}
 	pdrgpexprEnforcers->Release();
 	pexpr->Release();
+	pcc->Release();
 	
 	return FOptimize(epetOrder, epetDistribution, epetRewindability, epetPartitionPropagation);
 }

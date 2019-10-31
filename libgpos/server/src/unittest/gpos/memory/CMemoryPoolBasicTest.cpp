@@ -62,8 +62,7 @@ CMemoryPoolBasicTest::EresUnittest()
 #ifdef GPOS_DEBUG
 		GPOS_UNITTEST_FUNC(CMemoryPoolBasicTest::EresUnittest_Print),
 #endif // GPOS_DEBUG
-		GPOS_UNITTEST_FUNC(CMemoryPoolBasicTest::EresUnittest_TestTracker),
-		GPOS_UNITTEST_FUNC(CMemoryPoolBasicTest::EresUnittest_TestStack),
+		GPOS_UNITTEST_FUNC(CMemoryPoolBasicTest::EresUnittest_TestTracker)
 		};
 
 	CAutoTraceFlag atf(EtraceTestMemoryPools, true /*value*/);
@@ -112,22 +111,7 @@ CMemoryPoolBasicTest::EresUnittest_Print()
 GPOS_RESULT
 CMemoryPoolBasicTest::EresUnittest_TestTracker()
 {
-	return EresTestType(CMemoryPoolManager::EatTracker);
-}
-
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::EresUnittest_TestStack
-//
-//	@doc:
-//		Run tests for pool using stack allocation
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMemoryPoolBasicTest::EresUnittest_TestStack()
-{
-	return EresTestType(CMemoryPoolManager::EatStack);
+	return EresTestType();
 }
 
 
@@ -141,18 +125,15 @@ CMemoryPoolBasicTest::EresUnittest_TestStack()
 //---------------------------------------------------------------------------
 GPOS_RESULT
 CMemoryPoolBasicTest::EresTestType
-	(
-	CMemoryPoolManager::AllocType eat
-	)
+	()
 {
-	if (GPOS_OK != EresNewDelete(eat) ||
-	    GPOS_OK != EresTestExpectedError(EresOOM, eat, CException::ExmiOOM) ||
-	    GPOS_OK != EresTestExpectedError(EresThrowingCtor, eat, CException::ExmiOOM)
+	if (GPOS_OK != EresNewDelete() ||
+	    GPOS_OK != EresTestExpectedError(EresThrowingCtor, CException::ExmiOOM)
 
 #ifdef GPOS_DEBUG
 		||
-	    GPOS_OK != EresTestExpectedError(EresLeak, eat, CException::ExmiAssert) ||
-	    GPOS_OK != EresTestExpectedError(EresLeakByException, eat, CException::ExmiAssert)
+	    GPOS_OK != EresTestExpectedError(EresLeak, CException::ExmiAssert) ||
+	    GPOS_OK != EresTestExpectedError(EresLeakByException, CException::ExmiAssert)
 #endif // GPOS_DEBUG
 	    )
 	{
@@ -174,15 +155,14 @@ CMemoryPoolBasicTest::EresTestType
 GPOS_RESULT
 CMemoryPoolBasicTest::EresTestExpectedError
 	(
-	GPOS_RESULT (*pfunc)(CMemoryPoolManager::AllocType),
-	CMemoryPoolManager::AllocType eat,
+	GPOS_RESULT (*pfunc)(),
 	ULONG minor
 	)
 {
 	CErrorHandlerStandard errhdl;
 	GPOS_TRY_HDL(&errhdl)
 	{
-		pfunc(eat);
+		pfunc();
 	}
 	GPOS_CATCH_EX(ex)
 	{
@@ -211,14 +191,11 @@ CMemoryPoolBasicTest::EresTestExpectedError
 //
 //---------------------------------------------------------------------------
 GPOS_RESULT
-CMemoryPoolBasicTest::EresNewDelete
-	(
-	CMemoryPoolManager::AllocType eat
-	)
+CMemoryPoolBasicTest::EresNewDelete()
 {
 	// create memory pool
 	CAutoTimer at("NewDelete test", true /*fPrint*/);
-	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, false /*fThreadSafe*/);
+	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc);
 	CMemoryPool *mp = amp.Pmp();
 
 	WCHAR rgwszText[] = GPOS_WSZ_LIT(
@@ -260,40 +237,6 @@ CMemoryPoolBasicTest::EresNewDelete
 	return GPOS_OK;
 }
 
-
-//---------------------------------------------------------------------------
-//	@function:
-//		CMemoryPoolBasicTest::EresOOM
-//
-//	@doc:
-//		Basic tests for OOM situation
-//
-//---------------------------------------------------------------------------
-GPOS_RESULT
-CMemoryPoolBasicTest::EresOOM
-	(
-	CMemoryPoolManager::AllocType eat
-	)
-{
-	CAutoTimer at("OOM test", true /*fPrint*/);
-
-	// create memory pool
-	CAutoMemoryPool amp
-		(
-		CAutoMemoryPool::ElcExc,
-		eat,
-		false /*fThreadSafe*/,
-		4 * 1024 * 1024 /*ullMaxSize*/
-		);
-	CMemoryPool *mp = amp.Pmp();
-
-	// OOM
-	GPOS_NEW_ARRAY(mp, BYTE, 128 * 1024 * 1024);
-
-	return GPOS_FAILED;
-}
-
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CMemoryPoolBasicTest::EresThrowingCtor
@@ -303,15 +246,12 @@ CMemoryPoolBasicTest::EresOOM
 //
 //---------------------------------------------------------------------------
 GPOS_RESULT
-CMemoryPoolBasicTest::EresThrowingCtor
-	(
-	CMemoryPoolManager::AllocType eat
-	)
+CMemoryPoolBasicTest::EresThrowingCtor()
 {
 	CAutoTimer at("ThrowingCtor test", true /*fPrint*/);
 
 	// create memory pool
-	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc, eat, false /*fThreadSafe*/);
+	CAutoMemoryPool amp(CAutoMemoryPool::ElcExc);
 	CMemoryPool *mp = amp.Pmp();
 
 	// malicious test class
@@ -345,10 +285,7 @@ CMemoryPoolBasicTest::EresThrowingCtor
 //
 //---------------------------------------------------------------------------
 GPOS_RESULT
-CMemoryPoolBasicTest::EresLeak
-	(
-	CMemoryPoolManager::AllocType eat
-	)
+CMemoryPoolBasicTest::EresLeak()
 {
 	CAutoTraceFlag atfDump(EtracePrintMemoryLeakDump, true);
 	CAutoTraceFlag atfStackTrace(EtracePrintMemoryLeakStackTrace, true);
@@ -358,10 +295,7 @@ CMemoryPoolBasicTest::EresLeak
 	{
 		CAutoMemoryPool amp
 			(
-			CAutoMemoryPool::ElcStrict,
-			eat,
-			false /*fThreadSafe*/,
-			4 * 1024 * 1024 /*ullMaxSize*/
+			CAutoMemoryPool::ElcStrict
 			);
 		CMemoryPool *mp = amp.Pmp();
 
@@ -391,10 +325,7 @@ CMemoryPoolBasicTest::EresLeak
 //
 //---------------------------------------------------------------------------
 GPOS_RESULT
-CMemoryPoolBasicTest::EresLeakByException
-	(
-	CMemoryPoolManager::AllocType eat
-	)
+CMemoryPoolBasicTest::EresLeakByException()
 {
 	CAutoTraceFlag atfDump(EtracePrintMemoryLeakDump, true);
 	CAutoTraceFlag atfStackTrace(EtracePrintMemoryLeakStackTrace, true);
@@ -405,10 +336,7 @@ CMemoryPoolBasicTest::EresLeakByException
 		// create memory pool
 		CAutoMemoryPool amp
 			(
-			CAutoMemoryPool::ElcExc,
-			eat,
-			false /*fThreadSafe*/,
-			4 * 1024 * 1024 /*ullMaxSize*/
+			CAutoMemoryPool::ElcExc
 			);
 		CMemoryPool *mp = amp.Pmp();
 

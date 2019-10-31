@@ -360,12 +360,7 @@ CXformFactory::Init()
 	GPOS_RESULT eres = GPOS_OK;
 
 	// create xform factory memory pool
-	CMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->Create
-							(
-							CMemoryPoolManager::EatTracker,
-							true /*fThreadSafe*/,
-							gpos::ullong_max
-							);
+	CMemoryPool *mp = CMemoryPoolManager::GetMemoryPoolMgr()->CreateMemoryPool();
 	GPOS_TRY
 	{
 		// create xform factory instance

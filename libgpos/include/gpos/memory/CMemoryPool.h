@@ -42,6 +42,9 @@ GPOS_CPL_ASSERT(GPOS_MEM_ALIGNED_STRUCT_SIZE(gpos::ULONG) == GPOS_MEM_ARCH);
 
 // static pattern to init memory
 #define GPOS_MEM_INIT_PATTERN_CHAR	(0xCC)
+// pattern used to mark deallocated memory, this must match
+// GPOS_WIPED_MEM_PATTERN defined in CRefCount.h
+#define GPOS_MEM_FREED_PATTERN_CHAR	(0xCD)
 
 // max allocation per request: 1GB
 #define GPOS_MEM_ALLOC_MAX			(0x40000000)
@@ -80,20 +83,8 @@ namespace gpos
 				ULONG m_alloc;
 			};
 
-			// reference counter
-			ULONG m_ref_counter;
-
 			// hash key is only set by pool manager
 			ULONG_PTR m_hash_key;
-
-			// underlying memory pool - optional
-			CMemoryPool *m_underlying_memory_pool;
-
-			// flag indicating if this pool owns the underlying pool
-			const BOOL m_owns_underlying_memory_pool;
-
-			// flag indicating if memory pool is thread-safe
-			const BOOL m_thread_safe;
 
 #ifdef GPOS_DEBUG
 			// stack where pool is created
@@ -104,20 +95,6 @@ namespace gpos
 			SLink m_link;
 
 		protected:
-
-			// ctor
-			CMemoryPool
-				(
-				CMemoryPool *underlying_memory_pool,
-				BOOL owns_underlying_memory_pool,
-				BOOL thread_safe
-				);
-
-			// underlying pool accessor
-			CMemoryPool *GetUnderlyingMemoryPool() const
-			{
-				return m_underlying_memory_pool;
-			}
 
 			// invalid memory pool key
 			static
@@ -133,24 +110,11 @@ namespace gpos
 
 			// dtor
 			virtual
-			~CMemoryPool() = 0;
+			~CMemoryPool()
+			{}
 
 			// prepare the memory pool to be deleted
-			virtual
-			void TearDown()
-			{
-				if (m_owns_underlying_memory_pool)
-				{
-					m_underlying_memory_pool->TearDown();
-				}
-			}
-
-			// check if memory pool is thread-safe
-			virtual
-			BOOL IsThreadSafe() const
-			{
-				return m_thread_safe;
-			}
+			virtual void TearDown() = 0;
 
 			// hash key accessor
 			virtual
@@ -250,14 +214,6 @@ namespace gpos
 			void Free(void *memory) = 0;
 
 
-			// check if the pool stores a pointer to itself at the end of
-			// the header of each allocated object;
-			virtual
-			BOOL StoresPoolPointer() const
-			{
-				return false;
-			}
-
 			// return total allocated size
 			virtual
 			ULLONG TotalAllocatedSize() const
@@ -285,23 +241,6 @@ namespace gpos
 			void WalkLiveObjects
 				(
 				IMemoryVisitor *
-				)
-			{
-				GPOS_ASSERT(!"not supported");
-			}
-
-			// check if statistics tracking is supported
-			virtual
-			BOOL SupportsStatistics() const
-			{
-				return false;
-			}
-
-			// return the current statistics
-			virtual
-			void UpdateStatistics
-				(
-				CMemoryPoolStatistics &
 				)
 			{
 				GPOS_ASSERT(!"not supported");

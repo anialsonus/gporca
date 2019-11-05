@@ -35,7 +35,7 @@ CScalar::PdpCreate
 	)
 	const
 {
-	return GPOS_NEW(mp) CDrvdPropScalar();
+	return GPOS_NEW(mp) CDrvdPropScalar(mp);
 }
 
 
@@ -85,8 +85,7 @@ CScalar::FHasSubquery
 	{
 		if (exprhdl.FScalarChild(i))
 		{
-			CDrvdPropScalar *pdpscalar = exprhdl.GetDrvdScalarProps(i);
-			if (pdpscalar->FHasSubquery())
+			if (exprhdl.DeriveHasSubquery(i))
 			{
 				return true;
 			}
@@ -114,35 +113,29 @@ CScalar::EberConjunction
 	GPOS_ASSERT(NULL != pdrgpulChildren);
 	GPOS_ASSERT(1 < pdrgpulChildren->Size());
 
+	// Here are the rules:
+	// - if any child is FALSE, the result is FALSE
+	// - else if all children are TRUE, the result is TRUE
+	// - else if all children are ANY or TRUE, the result is ANY
+	// - else if all children are NULL or TRUE, the result is NULL
+	// - else (a mix of TRUE, ANY and NULL), the result is NotTrue
 	BOOL fAllChildrenTrue = true;
-	BOOL fNullChild = false;
-	BOOL fUnknownChild = false;
+	BOOL fAllChildrenAnyOrTrue = true;
+	BOOL fAllChildrenNullOrTrue = true;
 
 	const ULONG ulChildren = pdrgpulChildren->Size();
 	for (ULONG ul = 0; ul < ulChildren; ul++)
 	{
 		EBoolEvalResult eber = (EBoolEvalResult) *((*pdrgpulChildren)[ul]);
-		switch (eber)
+
+		if (EberFalse == eber)
 		{
-			case EberFalse:
-				// if any child is False, conjunction returns False
-				return EberFalse;
-
-			case EberNull:
-				// if a child is NULL, we cannot return here yet since another child
-				// might be False, which yields the conjunction to False
-				fNullChild = true;
-				break;
-
-			case EberUnknown:
-				fUnknownChild = true;
-				break;
-
-			default:
-				break;
+			return EberFalse;
 		}
 
 		fAllChildrenTrue = fAllChildrenTrue && (EberTrue == eber);
+		fAllChildrenAnyOrTrue = fAllChildrenAnyOrTrue && (EberAny == eber || EberTrue == eber);
+		fAllChildrenNullOrTrue = fAllChildrenNullOrTrue && (EberNull == eber || EberTrue == eber);
 	}
 
 	if (fAllChildrenTrue)
@@ -151,22 +144,17 @@ CScalar::EberConjunction
 		return EberTrue;
 	}
 
-	if (fUnknownChild)
+	if (fAllChildrenAnyOrTrue)
 	{
-		// at least one Unknown child yields conjunction Unknown
-		// for example,
-		//   (Unknown AND True) = Unknown
-		//   (Unknown AND Null) = Unknown
-		return EberUnknown;
+		return EberAny;
 	}
 
-	if (fNullChild)
+	if (fAllChildrenNullOrTrue)
 	{
-		// all children are either True or Null, conjunction returns Null
 		return EberNull;
 	}
 
-	return EberUnknown;
+	return EberNotTrue;
 }
 
 
@@ -189,7 +177,8 @@ CScalar::EberDisjunction
 
 	BOOL fAllChildrenFalse = true;
 	BOOL fNullChild = false;
-	BOOL fUnknownChild = false;
+	BOOL fNotTrueChild = false;
+	BOOL fAnyChild = false;
 
 	const ULONG ulChildren = pdrgpulChildren->Size();
 	for (ULONG ul = 0; ul < ulChildren; ul++)
@@ -207,8 +196,12 @@ CScalar::EberDisjunction
 				fNullChild = true;
 				break;
 
-			case EberUnknown:
-				fUnknownChild = true;
+			case EberNotTrue:
+				fNotTrueChild = true;
+				break;
+
+			case EberAny:
+				fAnyChild = true;
 				break;
 
 			default:
@@ -224,14 +217,23 @@ CScalar::EberDisjunction
 		return EberFalse;
 	}
 
-	if (fUnknownChild)
+	if (fAnyChild)
 	{
-		// at least one Unknown child yields disjunction Unknown
+		// at least one "any" child yields disjunction Unknown
 		// for example,
-		//   (Unknown OR False) = Unknown
-		//   (Unknown OR Null) = Unknown
+		//   (Any OR False) = Any
+		//   (Any OR Null) = Any (really NULL or TRUE, FALSE is excluded)
 
-		return EberUnknown;
+		return EberAny;
+	}
+
+	if (fNotTrueChild)
+	{
+		// a NotTrue child, with zero or more NULLs or FALSEs yields NotTrue
+		//   (NotTrue OR False) = NotTrue
+		//   (NotTrue OR Null) = NotTrue
+
+		return EberNotTrue;
 	}
 
 	if (fNullChild)
@@ -240,7 +242,7 @@ CScalar::EberDisjunction
 		return EberNull;
 	}
 
-	return EberUnknown;
+	return EberAny;
 }
 
 
@@ -249,7 +251,7 @@ CScalar::EberDisjunction
 //		CScalar::EberNullOnAnyNullChild
 //
 //	@doc:
-//		Return Null if any child is Null
+//		Return Null if any child is Null, return Any otherwise
 //
 //---------------------------------------------------------------------------
 CScalar::EBoolEvalResult
@@ -270,7 +272,7 @@ CScalar::EberNullOnAnyNullChild
 		}
 	}
 
-	return EberUnknown;
+	return EberAny;
 }
 
 
@@ -296,7 +298,7 @@ CScalar::EberNullOnAllNullChildren
 		EBoolEvalResult eber = (EBoolEvalResult) *((*pdrgpulChildren)[ul]);
 		if (EberNull != eber)
 		{
-			return EberUnknown;
+			return EberAny;
 		}
 	}
 
@@ -376,8 +378,7 @@ CScalar::FHasNonScalarFunction
 	{
 		if (exprhdl.FScalarChild(i))
 		{
-			CDrvdPropScalar *pdpscalar = exprhdl.GetDrvdScalarProps(i);
-			if (pdpscalar->FHasNonScalarFunction())
+			if (exprhdl.DeriveHasNonScalarFunction(i))
 			{
 				return true;
 			}
@@ -412,7 +413,7 @@ CScalar::PpartinfoDeriveCombineScalar
 	{
 		if (exprhdl.FScalarChild(ul))
 		{
-			CPartInfo *ppartinfoChild = exprhdl.GetDrvdScalarProps(ul)->Ppartinfo();
+			CPartInfo *ppartinfoChild = exprhdl.DeriveScalarPartitionInfo(ul);
 			GPOS_ASSERT(NULL != ppartinfoChild);
 			CPartInfo *ppartinfoCombined = CPartInfo::PpartinfoCombine(mp, ppartinfo, ppartinfoChild);
 			ppartinfo->Release();
@@ -441,8 +442,7 @@ CScalar::FHasScalarArrayCmp
 	{
 		if (exprhdl.FScalarChild(i))
 		{
-			CDrvdPropScalar *pdpscalar = exprhdl.GetDrvdScalarProps(i);
-			if (pdpscalar->FHasScalarArrayCmp())
+			if (exprhdl.DeriveHasScalarArrayCmp(i))
 			{
 				return true;
 			}

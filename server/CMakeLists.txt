@@ -91,10 +91,14 @@ CTypeModifierTest:
 TypeModifierColumn TypeModifierCast TypeModifierConst TypeModifierDoubleMappableConst TypeModifierArrayRef;
 
 CIndexScanTest:
-IndexedNLJBitmap BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery BitmapIndex-Against-InList
+BTreeIndex-Against-InList BTreeIndex-Against-ScalarSubquery
 IndexScan-AOTable IndexScan-DroppedColumns IndexScan-BoolTrue IndexScan-BoolFalse
-IndexScan-Relabel IndexGet-OuterRefs LogicalIndexGetDroppedCols NewBtreeIndexScanCost
-BitmapIndex-ChooseHashJoin;
+IndexScan-Relabel IndexGet-OuterRefs LogicalIndexGetDroppedCols NewBtreeIndexScanCost;
+
+CBitmapScanTest:
+IndexedNLJBitmap BitmapIndex-ChooseHashJoin BitmapTableScan-AO-Btree-PickOnlyHighNDV
+BitmapIndex-Against-InList BitmapTableScan-AO-Btree-PickIndexWithNoGap
+BitmapTableScan-ComplexConjDisj BitmapTableScan-ConjDisjWithOuterRefs;
 
 CIndexApplyTest:
 IndexNLJ-IndexGet-OuterRef IndexApply_NestLoopWithNestParamTrue IndexApply1
@@ -239,7 +243,8 @@ LOJ_dont_convert_to_inner_with_inner_predicate_IDF_const LOJ_dont_convert_to_inn
 LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
 LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
-LOJ-HashJoin-MultiDistKeys-WithComplexPreds;
+LOJ-HashJoin-MultiDistKeys-WithComplexPreds LOJ_convert_to_inner_with_and_predicate
+LOJ_convert_to_inner_with_or_predicate;
 
 CFullJoinTest:
 FOJ-Condition-False ExpandFullOuterJoin ExpandFullOuterJoin2 FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2

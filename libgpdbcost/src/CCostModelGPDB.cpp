@@ -601,7 +601,7 @@ CCostModelGPDB::CostScalarAgg
 	const DOUBLE dWidthOuter = pci->GetWidth()[0];
 
 	// get the number of aggregate columns
-	const ULONG ulAggCols = exprhdl.GetDrvdScalarProps(1)->PcrsUsed()->Size();
+	const ULONG ulAggCols = exprhdl.DeriveUsedColumns(1)->Size();
 	// get the number of aggregate functions
 	const ULONG ulAggFunctions = exprhdl.PexprScalarChild(1)->Arity();
 
@@ -923,7 +923,7 @@ CCostModelGPDB::CostHashJoin
 
 	// get the number of columns used in join condition
 	CExpression *pexprJoinCond= exprhdl.PexprScalarChild(2);
-	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprJoinCond->PdpDerive())->PcrsUsed();
+	CColRefSet *pcrsUsed = pexprJoinCond->DeriveUsedColumns();
 	const ULONG ulColsUsed = pcrsUsed->Size();
 
 	// TODO 2014-03-14
@@ -1071,7 +1071,7 @@ CCostModelGPDB::CostMergeJoin
 
 	// get the number of columns used in join condition
 	CExpression *pexprJoinCond= exprhdl.PexprScalarChild(2);
-	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprJoinCond->PdpDerive())->PcrsUsed();
+	CColRefSet *pcrsUsed = pexprJoinCond->DeriveUsedColumns();
 	const ULONG ulColsUsed = pcrsUsed->Size();
 
 	// We assume for costing, that the outer tuples are unique. This means that
@@ -1128,7 +1128,7 @@ CCostModelGPDB::CostIndexNLJoin
 
 	// get the number of columns used in join condition
 	CExpression *pexprJoinCond= exprhdl.PexprScalarChild(2);
-	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprJoinCond->PdpDerive())->PcrsUsed();
+	CColRefSet *pcrsUsed = pexprJoinCond->DeriveUsedColumns();
 	const ULONG ulColsUsed = pcrsUsed->Size();
 
 	// cost of Index apply contains three parts:
@@ -1212,7 +1212,7 @@ CCostModelGPDB::CostNLJoin
 
 	// get the number of columns used in join condition
 	CExpression *pexprJoinCond= exprhdl.PexprScalarChild(2);
-	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprJoinCond->PdpDerive())->PcrsUsed();
+	CColRefSet *pcrsUsed = pexprJoinCond->DeriveUsedColumns();
 	const ULONG ulColsUsed = pcrsUsed->Size();
 
 	// cost of nested loop join contains three parts:
@@ -1503,7 +1503,7 @@ CCostModelGPDB::CostBitmapTableScan
 
 	CCost result(0.0);
 	CExpression *pexprIndexCond = exprhdl.PexprScalarChild(1 /*child_index*/);
-	CColRefSet *pcrsUsed = CDrvdPropScalar::GetDrvdScalarProps(pexprIndexCond->PdpDerive())->PcrsUsed();
+	CColRefSet *pcrsUsed = pexprIndexCond->DeriveUsedColumns();
 	CColRefSet *outerRefs = exprhdl.DeriveOuterReferences();
 	CColRefSet *pcrsLocalUsed = GPOS_NEW(mp) CColRefSet(mp, *pcrsUsed);
 
@@ -1520,8 +1520,9 @@ CCostModelGPDB::CostBitmapTableScan
 
 		// check whether the user specified overriding values in gucs
 		CDouble dInitScan = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpInitScanFactor)->Get();
+		CDouble dInitRebind = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpBitmapScanRebindCost)->Get();
 
-		GPOS_ASSERT(dInitScan >= 0);
+		GPOS_ASSERT(dInitScan >= 0 && dInitRebind >= 0);
 
 		// For now we are trying to cost Bitmap Scan similar to Index Scan. dIndexFilterCostUnit is
 		// the dominant factor in costing Index Scan so we are using it in our model. Also we are giving
@@ -1532,9 +1533,10 @@ CCostModelGPDB::CostBitmapTableScan
 		// Conceptually the cost of evaluating index qual is also linear in the
 		// number of index columns, but we're only accounting for the dominant cost
 
-		result = CCost(
-					   pci->NumRebinds() * (dInitScan + pci->Rows() * pci->Width() * dIndexFilterCostUnit)
-					  );
+		result = CCost(// cost for each byte returned by the index scan plus cost for incremental rebinds
+					   pci->NumRebinds() * (pci->Rows() * pci->Width() * dIndexFilterCostUnit + dInitRebind) +
+					   // init cost
+					   dInitScan);
 	}
 	else
 	{
@@ -1711,7 +1713,7 @@ CCostModelGPDB::CostFilter
 	GPOS_ASSERT(COperator::EopPhysicalFilter == exprhdl.Pop()->Eopid());
 
 	const DOUBLE dInput = pci->PdRows()[0];
-	const ULONG ulFilterCols = exprhdl.GetDrvdScalarProps(1 /*child_index*/)->PcrsUsed()->Size();
+	const ULONG ulFilterCols = exprhdl.DeriveUsedColumns(1)->Size();
 
 	const CDouble dFilterColCostUnit = pcmgpdb->GetCostModelParams()->PcpLookup(CCostModelParamsGPDB::EcpFilterColCostUnit)->Get();
 	GPOS_ASSERT(0 < dFilterColCostUnit);

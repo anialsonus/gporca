@@ -287,35 +287,6 @@ CPredicateUtils::FHasNegatedChild
 	return false;
 }
 
-// append logical and scalar children of the given expression to the given arrays
-void
-CPredicateUtils::CollectChildren
-	(
-	CExpression *pexpr,
-	CExpressionArray *pdrgpexprLogical,
-	CExpressionArray *pdrgpexprScalar
-	)
-{
-	GPOS_ASSERT(pexpr->Pop()->FLogical());
-
-	const ULONG arity = pexpr->Arity();
-	for (ULONG ul = 0; ul < arity; ul++)
-	{
-		CExpression *pexprChild = (*pexpr) [ul];
-		pexprChild->AddRef();
-		if (pexprChild->Pop()->FLogical())
-		{
-			pdrgpexprLogical->Append(pexprChild);
-		}
-		else
-		{
-			GPOS_ASSERT(pexprChild->Pop()->FScalar());
-
-			pdrgpexprScalar->Append(pexprChild);
-		}
-	}
-}
-
 // recursively collect conjuncts
 void
 CPredicateUtils::CollectConjuncts
@@ -2057,7 +2028,8 @@ CPredicateUtils::PexprIndexLookup
 	CExpression *pexprScalar,
 	const IMDIndex *pmdindex,
 	CColRefArray *pdrgpcrIndex,
-	CColRefSet *outer_refs
+	CColRefSet *outer_refs,
+	BOOL allowArrayCmpForBTreeIndexes
 	)
 {
 	GPOS_ASSERT(NULL != pexprScalar);
@@ -2069,8 +2041,11 @@ CPredicateUtils::PexprIndexLookup
 	{
 		cmptype = CScalarCmp::PopConvert(pexprScalar->Pop())->ParseCmpType();
 	}
-	else if (CUtils::FScalarArrayCmp(pexprScalar))
+	else if (CUtils::FScalarArrayCmp(pexprScalar) &&
+			 (IMDIndex::EmdindBitmap == pmdindex->IndexType() ||
+			  (allowArrayCmpForBTreeIndexes && IMDIndex::EmdindBtree == pmdindex->IndexType())))
 	{
+		// array cmps are always allowed on bitmap indexes and when requested on btree indexes
 		cmptype = CUtils::ParseCmpType(CScalarArrayCmp::PopConvert(pexprScalar->Pop())->MdIdOp());
 	}
 
@@ -2110,7 +2085,8 @@ CPredicateUtils::ExtractIndexPredicates
 	CColRefArray *pdrgpcrIndex,
 	CExpressionArray *pdrgpexprIndex,
 	CExpressionArray *pdrgpexprResidual,
-	CColRefSet *pcrsAcceptedOuterRefs // outer refs that are acceptable in an index predicate
+	CColRefSet *pcrsAcceptedOuterRefs, // outer refs that are acceptable in an index predicate
+	BOOL allowArrayCmpForBTreeIndexes
 	)
 {
 	const ULONG length = pdrgpexprPredicate->Size();
@@ -2157,7 +2133,13 @@ CPredicateUtils::ExtractIndexPredicates
 		else
 		{
 			// attempt building index lookup predicate
-			CExpression *pexprLookupPred = PexprIndexLookup(mp, md_accessor, pexprCond, pmdindex, pdrgpcrIndex, pcrsAcceptedOuterRefs);
+			CExpression *pexprLookupPred = PexprIndexLookup(mp,
+															md_accessor,
+															pexprCond,
+															pmdindex,
+															pdrgpcrIndex,
+															pcrsAcceptedOuterRefs,
+															allowArrayCmpForBTreeIndexes);
 			if (NULL != pexprLookupPred)
 			{
 				pexprCond->Release();

@@ -2048,7 +2048,7 @@ select * from v2 left outer join v1 on v2.i_item_sk = v1.ss_item_sk limit 5;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -2063,7 +2063,7 @@ select * from v2 left outer join v1 on v2.i_item_sk = v1.ss_item_sk limit 5;
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1054.1.0"/>
         <dxl:InequalityOp Mdid="0.1057.1.0"/>
         <dxl:LessThanOp Mdid="0.1058.1.0"/>
@@ -9142,11 +9142,11 @@ select * from v2 left outer join v1 on v2.i_item_sk = v1.ss_item_sk limit 5;
         <dxl:OpFunc Mdid="0.65.1.0"/>
         <dxl:Commutator Mdid="0.96.1.0"/>
         <dxl:InverseOp Mdid="0.518.1.0"/>
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.1978.1.0"/>
-          <dxl:OpClass Mdid="0.1979.1.0"/>
-          <dxl:OpClass Mdid="0.3027.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.1978.1.0"/>
+          <dxl:Opfamily Mdid="0.1979.1.0"/>
+          <dxl:Opfamily Mdid="0.3027.1.0"/>
+        </dxl:Opfamilies>
       </dxl:GPDBScalarOp>
       <dxl:RelationStatistics Mdid="2.17281135.1.1" Name="item" Rows="17877.000000" EmptyRelation="false"/>
       <dxl:Relation Mdid="0.17281135.1.1" Name="item" IsTemporary="false" HasOids="false" StorageType="Heap" DistributionPolicy="Hash" DistributionColumns="0" Keys="0;28,22">

@@ -70,7 +70,7 @@ AddEqualityPredicates AddPredsInSubqueries ExtractPredicateFromDisjWithComputedC
 Join-With-Subq-Preds-1 Non-Hashjoinable-Pred Non-Hashjoinable-Pred-2 Factorized-Preds IN OR AvoidConstraintDerivationForLike
 NLJ-DistCol-No-Broadcast NLJ-EqAllCol-No-Broadcast NLJ-EqDistCol-InEqNonDistCol-No-Broadcast
 NLJ-InEqDistCol-EqNonDistCol-Redistribute CorrelatedNLJWithTrueCondition InferPredicatesInnerOfLOJ
-InferredPredicatesConstraintSimplification;
+InferredPredicatesConstraintSimplification NoPushdownPredicateWithCTEAnchor;
 
 CLikeIDFTest:
 LIKE-Pattern-green LIKE-Pattern-green-2 LIKE-Pattern-Empty Nested-Or-Predicates Join-IDF
@@ -146,7 +146,7 @@ CICGMiscTest:
 BroadcastSkewedHashjoin OrderByNullsFirst ConvertHashToRandomSelect ConvertHashToRandomInsert HJN-DeeperOuter CTAS CTAS-Random CheckAsUser
 ProjectRepeatedColumn1 ProjectRepeatedColumn2 NLJ-BC-Outer-Spool-Inner Self-Comparison Self-Comparison-Nullable
 SelectCheckConstraint ExpandJoinOrder SelectOnBpchar EqualityJoin EffectsOfJoinFilter InnerJoin-With-OuterRefs
-UDA-AnyElement-1 UDA-AnyElement-2 MinCardinalityNaryJoin Project-With-NonScalar-Func SixWayDPv2;
+UDA-AnyElement-1 UDA-AnyElement-2 MinCardinalityNaryJoin Project-With-NonScalar-Func SixWayDPv2 MultipleDampedPredJoinCardinality MultipleIndependentPredJoinCardinality;
 
 CArrayCmpTest:
 ArrayConcat ArrayRef FoldedArrayCmp IN-ArrayCmp NOT-IN-ArrayCmp ArrayCmpAll UDA-AnyArray InClauseWithMCV
@@ -230,7 +230,7 @@ Equiv-HashedDistr-1 Equiv-HashedDistr-2 EquivClassesAndOr EquivClassesLimit Inde
 COuterJoin1Test:
 ExpandNAryJoinGreedyWithLOJOnly NaryWithLojAndNonLojChilds LOJ_bb_mpph LOJ-Condition-False
 LeftJoin-With-Pred-On-Inner LeftJoin-With-Pred-On-Inner2
-LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred;
+LeftJoin-With-Col-Const-Pred LeftJoin-With-Coalesce LOJWithFalsePred LeftJoin-DPv2-With-Select;
 
 COuterJoin2Test:
 LOJ-IsNullPred Select-Proj-OuterJoin OuterJoin-With-OuterRefs Join-Disj-Subqs
@@ -245,7 +245,7 @@ LOJ_dont_convert_to_inner_with_outer_predicate_INDF_const LOJ-With-Agg
 LOJReorderWithComplexPredicate LOJReorderComplexNestedLOJs LOJReorderWithIDF
 LOJReorderWithNestedLOJAndFilter LOJReorderWithSimplePredicate LOJReorderWithOneSidedFilter
 LOJ-HashJoin-MultiDistKeys-WithComplexPreds LOJ_convert_to_inner_with_and_predicate
-LOJ_convert_to_inner_with_or_predicate;
+LOJ_convert_to_inner_with_or_predicate LOJNonNullRejectingPredicates LOJNullRejectingPredicates;
 
 CFullJoinTest:
 FOJ-Condition-False ExpandFullOuterJoin ExpandFullOuterJoin2 FullOuterJoin-NullRejectingLHS1 FullOuterJoin-NullRejectingLHS2
@@ -282,7 +282,7 @@ Gist-PartTable-Lossy-IndexPlan Gist-PartTable-NonLossy-BitmapIndexPlan Gist-Part
 Gist-NestedLoopJoin-Lossy-IndexPlan Gist-NestedLoopJoin-Postgis-IndexPlan Gist-OrderBy-BitmapPlan Gist-OrderBy-IndexPlan;
 
 CGinIndexTest:
-GinIndex GinIndexPathOpClass GinIndexSearchModeAll;
+GinIndex GinIndexPathOpfamily GinIndexSearchModeAll;
 
 CReplicatedTableTest:
 ReplicatedTableSelect ReplicatedTableInsert ReplicatedTable-CTAS ReplicatedHashJoinReplicated ReplicatedJoinHashDistributedTable ReplicatedJoinRandomDistributedTable ReplicatedLOJHashDistributedTable ReplicatedLOJRandomDistributedTable ReplicatedLOJReplicated ReplicatedNLJReplicated ReplicatedTableAggregate ReplicatedTableCTE ReplicatedTableGroupBy ReplicatedJoinPartitionedTable ReplicatedTableInClause;
@@ -291,7 +291,7 @@ CDqaTest:
 DqaHavingMax DqaMax DqaMin DqaSubqueryMax DqaNoRedistribute;
 
 CMCVCardinalityTest:
-BpCharMCVCardinalityEquals BpCharMCVCardinalityGreaterThan TextMCVCardinalityEquals TextMCVCardinalityGreaterThan VarcharMCVCardinalityEquals VarcharMCVCardinalityGreaterThan
+BpCharMCVCardinalityEquals BpCharMCVCardinalityGreaterThan TextMCVCardinalityEquals TextMCVCardinalityGreaterThan VarcharMCVCardinalityEquals VarcharMCVCardinalityGreaterThan Citext-Cardinality Name-Cardinality Char-Cardinality 
 ")
 
 set(mdp_dir "../data/dxl/minidump/")

@@ -70,7 +70,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1054.1.0"/>
         <dxl:InequalityOp Mdid="0.1057.1.0"/>
         <dxl:LessThanOp Mdid="0.1058.1.0"/>
@@ -167,15 +167,15 @@
         <dxl:OpFunc Mdid="0.1048.1.0"/>
         <dxl:Commutator Mdid="0.1054.1.0"/>
         <dxl:InverseOp Mdid="0.1057.1.0"/>
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.426.1.0"/>
-          <dxl:OpClass Mdid="0.427.1.0"/>
-          <dxl:OpClass Mdid="0.2097.1.0"/>
-          <dxl:OpClass Mdid="0.2231.1.0"/>
-          <dxl:OpClass Mdid="0.7018.1.0"/>
-          <dxl:OpClass Mdid="0.7044.1.0"/>
-          <dxl:OpClass Mdid="0.7106.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.426.1.0"/>
+          <dxl:Opfamily Mdid="0.427.1.0"/>
+          <dxl:Opfamily Mdid="0.2097.1.0"/>
+          <dxl:Opfamily Mdid="0.2231.1.0"/>
+          <dxl:Opfamily Mdid="0.7018.1.0"/>
+          <dxl:Opfamily Mdid="0.7044.1.0"/>
+          <dxl:Opfamily Mdid="0.7106.1.0"/>
+        </dxl:Opfamilies>
       </dxl:GPDBScalarOp>
       <dxl:ColumnStatistics Mdid="1.19598.1.0.0" Name="a" Width="3.000000" NullFreq="0.000000" NdvRemain="992.000000" FreqRemain="0.495500" ColStatsMissing="false">
         <dxl:StatsBucket Frequency="0.050500" DistinctValues="1.000000">

@@ -627,6 +627,7 @@ CTranslatorDXLToExpr::PexprLogicalGet
 		// copy key
 		ULONG *pulKey = GPOS_NEW(m_mp) ULONG(pdxlcd->Id());
 		BOOL fres = m_phmulcr->Insert(pulKey, colref);
+		colref->SetMdidTable(ptabdesc->MDId());
 
 		if (!fres)
 		{
@@ -2041,7 +2042,7 @@ CTranslatorDXLToExpr::PexprLogicalJoin
 	CExpression *pexprCond = PexprScalar(pdxlnCond);
 	pdrgpexprChildren->Append(pexprCond);
 
-	// TODO: Remove this check once opclass handling is fully implemented
+	// TODO: Remove this check once opfamily handling is fully implemented
 	if (ContainsHeterogenousCitextPredicate(pexprCond))
 	{
 		GPOS_RAISE(gpopt::ExmaGPOPT, gpopt::ExmiUnsupportedOp,

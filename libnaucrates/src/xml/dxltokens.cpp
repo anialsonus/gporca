@@ -543,8 +543,8 @@ CDXLTokens::Init
 			{EdxltokenIndexTypeGin, GPOS_WSZ_LIT("Gin")},
 			{EdxltokenIndexItemType, GPOS_WSZ_LIT("IndexItemType")},
 
-			{EdxltokenOpClass, GPOS_WSZ_LIT("OpClass")},
-			{EdxltokenOpClasses, GPOS_WSZ_LIT("OpClasses")},
+			{EdxltokenOpfamily, GPOS_WSZ_LIT("Opfamily")},
+			{EdxltokenOpfamilies, GPOS_WSZ_LIT("Opfamilies")},
 
 			{EdxltokenPartitions, GPOS_WSZ_LIT("Partitions")},
 			{EdxltokenPartition, GPOS_WSZ_LIT("Partition")},
@@ -564,6 +564,7 @@ CDXLTokens::Init
 			{EdxltokenMDTypeHashable, GPOS_WSZ_LIT("IsHashable")},
 			{EdxltokenMDTypeMergeJoinable, GPOS_WSZ_LIT("IsMergeJoinable")},
 			{EdxltokenMDTypeComposite, GPOS_WSZ_LIT("IsComposite")},
+			{EdxltokenMDTypeIsTextRelated, GPOS_WSZ_LIT("IsTextRelated")},
 			{EdxltokenMDTypeFixedLength, GPOS_WSZ_LIT("IsFixedLength")},
 			{EdxltokenMDTypeLength, GPOS_WSZ_LIT("Length")},
 			{EdxltokenMDTypeByValue, GPOS_WSZ_LIT("PassByValue")},

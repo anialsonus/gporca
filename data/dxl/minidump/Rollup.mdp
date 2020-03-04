@@ -70,14 +70,14 @@
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
       <dxl:Index Mdid="0.67041.1.0" Name="index_67041" IsClustered="false" KeyColumns="1" IncludedColumns="1">
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.3027.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.3027.1.0"/>
+        </dxl:Opfamilies>
       </dxl:Index>
       <dxl:Index Mdid="0.66697.1.0" Name="index_66697" IsClustered="false" KeyColumns="1" IncludedColumns="1">
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.3027.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.3027.1.0"/>
+        </dxl:Opfamilies>
       </dxl:Index>
       <dxl:ColumnStatistics Mdid="1.66674.1.1.19" Name="gp_segment_id" Width="4.000000"/>
       <dxl:ColumnStatistics Mdid="1.66674.1.1.18" Name="tableoid" Width="4.000000"/>
@@ -226,7 +226,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1042.1.0" Name="bpchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.1054.1.0"/>
         <dxl:InequalityOp Mdid="0.1057.1.0"/>
         <dxl:LessThanOp Mdid="0.1058.1.0"/>
@@ -989,7 +989,7 @@
           <dxl:UpperBound Closed="false" TypeMdid="0.23.1.0" Value="49999"/>
         </dxl:StatsBucket>
       </dxl:ColumnStatistics>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>

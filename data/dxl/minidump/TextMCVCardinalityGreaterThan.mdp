@@ -54,7 +54,7 @@
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
       <dxl:RelationStatistics Mdid="2.19610.1.0" Name="text_table" Rows="2000.000000" EmptyRelation="false"/>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -137,11 +137,11 @@
         <dxl:OpFunc Mdid="0.742.1.0"/>
         <dxl:Commutator Mdid="0.664.1.0"/>
         <dxl:InverseOp Mdid="0.665.1.0"/>
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.1994.1.0"/>
-          <dxl:OpClass Mdid="0.4017.1.0"/>
-          <dxl:OpClass Mdid="0.7035.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.1994.1.0"/>
+          <dxl:Opfamily Mdid="0.4017.1.0"/>
+          <dxl:Opfamily Mdid="0.7035.1.0"/>
+        </dxl:Opfamilies>
       </dxl:GPDBScalarOp>
       <dxl:Type Mdid="0.29.1.0" Name="cid" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="true" Length="4" PassByValue="true">
         <dxl:EqualityOp Mdid="0.385.1.0"/>

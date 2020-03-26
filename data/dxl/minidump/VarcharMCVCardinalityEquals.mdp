@@ -38,7 +38,7 @@
         <dxl:SumAgg Mdid="0.0.0.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.1043.1.0" Name="varchar" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -68,7 +68,7 @@
         <dxl:SumAgg Mdid="0.2108.1.0"/>
         <dxl:CountAgg Mdid="0.2147.1.0"/>
       </dxl:Type>
-      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsFixedLength="false" Length="-1" PassByValue="false">
+      <dxl:Type Mdid="0.25.1.0" Name="text" IsRedistributable="true" IsHashable="true" IsMergeJoinable="true" IsComposite="false" IsTextRelated="true" IsFixedLength="false" Length="-1" PassByValue="false">
         <dxl:EqualityOp Mdid="0.98.1.0"/>
         <dxl:InequalityOp Mdid="0.531.1.0"/>
         <dxl:LessThanOp Mdid="0.664.1.0"/>
@@ -225,16 +225,16 @@
         <dxl:OpFunc Mdid="0.67.1.0"/>
         <dxl:Commutator Mdid="0.98.1.0"/>
         <dxl:InverseOp Mdid="0.531.1.0"/>
-        <dxl:OpClasses>
-          <dxl:OpClass Mdid="0.1994.1.0"/>
-          <dxl:OpClass Mdid="0.1995.1.0"/>
-          <dxl:OpClass Mdid="0.2095.1.0"/>
-          <dxl:OpClass Mdid="0.2229.1.0"/>
-          <dxl:OpClass Mdid="0.4017.1.0"/>
-          <dxl:OpClass Mdid="0.7035.1.0"/>
-          <dxl:OpClass Mdid="0.7042.1.0"/>
-          <dxl:OpClass Mdid="0.7105.1.0"/>
-        </dxl:OpClasses>
+        <dxl:Opfamilies>
+          <dxl:Opfamily Mdid="0.1994.1.0"/>
+          <dxl:Opfamily Mdid="0.1995.1.0"/>
+          <dxl:Opfamily Mdid="0.2095.1.0"/>
+          <dxl:Opfamily Mdid="0.2229.1.0"/>
+          <dxl:Opfamily Mdid="0.4017.1.0"/>
+          <dxl:Opfamily Mdid="0.7035.1.0"/>
+          <dxl:Opfamily Mdid="0.7042.1.0"/>
+          <dxl:Opfamily Mdid="0.7105.1.0"/>
+        </dxl:Opfamilies>
       </dxl:GPDBScalarOp>
     </dxl:Metadata>
     <dxl:Query>

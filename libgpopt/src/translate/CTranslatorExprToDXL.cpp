@@ -327,10 +327,9 @@ CTranslatorExprToDXL::PdxlnTranslate
 
 	if (0 == ulNonGatherMotions)
 	{
-
 		CTranslatorExprToDXLUtils::SetDirectDispatchInfo(m_mp, m_pmda, dxlnode, pexpr, pdrgpdsBaseTables);
 	}
-	
+
 	pdrgpdsBaseTables->Release();
 	return dxlnode;
 }
@@ -535,6 +534,8 @@ CTranslatorExprToDXL::PdxlnIndexScan
 {
 	GPOS_ASSERT(NULL != pexprIndexScan);
 	CDXLPhysicalProperties *dxl_properties = GetProperties(pexprIndexScan);
+
+	COptCtxt::PoctxtFromTLS()->AddDirectDispatchableFilterCandidate(pexprIndexScan);
 
 	CDistributionSpec *pds = pexprIndexScan->GetDrvdPropPlan()->Pds();
 	pds->AddRef();
@@ -830,6 +831,8 @@ CTranslatorExprToDXL::PdxlnBitmapTableScan
 {
 	GPOS_ASSERT(NULL != pexprBitmapTableScan);
 	CPhysicalBitmapTableScan *pop = CPhysicalBitmapTableScan::PopConvert(pexprBitmapTableScan->Pop());
+
+	COptCtxt::PoctxtFromTLS()->AddDirectDispatchableFilterCandidate(pexprBitmapTableScan);
 
 	// translate table descriptor
 	CDXLTableDescr *table_descr = MakeDXLTableDescr(pop->Ptabdesc(), pop->PdrgpcrOutput(), pexprBitmapTableScan->Prpp());
@@ -1485,6 +1488,12 @@ CTranslatorExprToDXL::PdxlnFromFilter
 	// extract components
 	CExpression *pexprRelational = (*pexprFilter)[0];
 	CExpression *pexprScalar = (*pexprFilter)[1];
+
+	if (CTranslatorExprToDXLUtils::FDirectDispatchableFilter(pexprFilter))
+
+	{
+		COptCtxt::PoctxtFromTLS()->AddDirectDispatchableFilterCandidate(pexprFilter);
+	}
 
 	// if the filter predicate is a constant TRUE, skip to translating relational child
 	if (CUtils::FScalarConstTrue(pexprScalar))
@@ -4058,20 +4067,21 @@ CTranslatorExprToDXL::PdxlnHashJoin
 		{
 			CExpression *pexprPredOuter;
 			CExpression *pexprPredInner;
+			IMDId *mdid_scop;
 			CPhysicalJoin::AlignJoinKeyOuterInner(pexprPred, pexprOuterChild, pexprInnerChild,
-												   &pexprPredOuter, &pexprPredInner);
+												   &pexprPredOuter, &pexprPredInner, &mdid_scop);
 
 			pexprPredOuter->AddRef();
 			pexprPredInner->AddRef();
 			// create hash join predicate based on conjunct type
 			if (CPredicateUtils::IsEqualityOp(pexprPred))
 			{
-				pexprPred = CUtils::PexprScalarEqCmp(m_mp, pexprPredOuter, pexprPredInner);
+				pexprPred = CUtils::PexprScalarCmp(m_mp, pexprPredOuter, pexprPredInner, mdid_scop);
 			}
 			else
 			{
 				GPOS_ASSERT(CPredicateUtils::FINDF(pexprPred));
-				pexprPred = CUtils::PexprINDF(m_mp, pexprPredOuter, pexprPredInner);
+				pexprPred = CUtils::PexprINDF(m_mp, pexprPredOuter, pexprPredInner, mdid_scop);
 			}
 
 			CDXLNode *pdxlnPred = PdxlnScalar(pexprPred);

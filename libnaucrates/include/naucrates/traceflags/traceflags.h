@@ -187,6 +187,19 @@ namespace gpos
 
 		// Expand LOJs in N-aryjoin
 		EopttraceEnableLOJInNAryJoin = 103033,
+
+		// Generate only query join order in DPv2 transform
+		EopttraceQueryOnlyInDPv2 = 103034,
+
+		// Generate only Greedy join order in DPv2 transform
+		EopttraceGreedyOnlyInDPv2 = 103035,
+
+		// Generate only MinCard join order in DPv2 transform
+		EopttraceMinCardOnlyInDPv2 = 103036,
+
+		// Consider non-equality predicates in Dynamic partition selection
+		EopttraceAllowGeneralPredicatesforDPE = 103037,
+
 		///////////////////////////////////////////////////////
 		///////////////////// statistics flags ////////////////
 		//////////////////////////////////////////////////////
@@ -212,6 +225,8 @@ namespace gpos
 		// Penalize HashJoins with a skewed hash distribute under them
 		EopttracePenalizeSkewedHashJoin = 104006,
 
+		// Use calibrated bitmap index cost model
+		EopttraceCalibratedBitmapIndexCostModel = 104007,
 		///////////////////////////////////////////////////////
 		/////////// constant expression evaluator flags ///////
 		///////////////////////////////////////////////////////

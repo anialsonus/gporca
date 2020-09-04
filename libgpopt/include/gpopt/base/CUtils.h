@@ -527,7 +527,7 @@ namespace gpopt
 			// add an equivalence class (col ref set) to the array. If the new equiv
 			// class contains columns from existing equiv classes, then these are merged
 			static
-			CColRefSetArray *PdrgpcrsAddEquivClass(CMemoryPool *mp, CColRefSet *pcrsNew, CColRefSetArray *pdrgpcrs);
+			CColRefSetArray *AddEquivClassToArray(CMemoryPool *mp, const CColRefSet *pcrsNew, const CColRefSetArray *pdrgpcrs);
 
 			// merge 2 arrays of equivalence classes
 			static
@@ -1051,6 +1051,10 @@ namespace gpopt
 			// compares two Idatums, useful for sorting functions
 			static
 			INT IDatumCmp(const void *val1, const void *val2);
+
+			// compares two CPoints, useful for sorting functions
+			static
+			INT CPointCmp(const void *val1, const void *val2);
 
 			// check if the equivalance classes are disjoint
 			static

@@ -2263,10 +2263,17 @@ CUtils::PexprLogicalSelect
 	GPOS_ASSERT(NULL != pexpr);
 	GPOS_ASSERT(NULL != pexprPredicate);
 
+	CTableDescriptor *ptabdesc = NULL;
+	if (pexpr->Pop()->Eopid() == CLogical::EopLogicalSelect || pexpr->Pop()->Eopid() == CLogical::EopLogicalGet || pexpr->Pop()->Eopid() == CLogical::EopLogicalDynamicGet)
+	{
+		ptabdesc = pexpr->DeriveTableDescriptor();
+		// there are some cases where we don't populate LogicalSelect currently
+		GPOS_ASSERT_IMP(pexpr->Pop()->Eopid() != CLogical::EopLogicalSelect,NULL != ptabdesc);
+	}
 	return GPOS_NEW(mp) CExpression
 						(
 						mp,
-						GPOS_NEW(mp) CLogicalSelect(mp),
+						GPOS_NEW(mp) CLogicalSelect(mp, ptabdesc),
 						pexpr,
 						pexprPredicate
 						);
@@ -2727,31 +2734,32 @@ CUtils::PdrgpcrGroupingKey
 // columns from separate equiv classes, then these are merged. Returns a new
 // array of equivalence classes
 CColRefSetArray *
-CUtils::PdrgpcrsAddEquivClass
+CUtils::AddEquivClassToArray
 	(
 	CMemoryPool *mp,
-	CColRefSet *pcrsNew,
-	CColRefSetArray *pdrgpcrs
+	const CColRefSet *pcrsNew,
+	const CColRefSetArray *pdrgpcrs
 	)
 {
 	CColRefSetArray *pdrgpcrsNew = GPOS_NEW(mp) CColRefSetArray(mp);
+	CColRefSet *pcrsCopy = GPOS_NEW(mp) CColRefSet(mp, *pcrsNew);
 
 	const ULONG length = pdrgpcrs->Size();
 	for (ULONG ul = 0; ul < length; ul++)
 	{
 		CColRefSet *pcrs = (*pdrgpcrs)[ul];
-		if (pcrsNew->IsDisjoint(pcrs))
+		if (pcrsCopy->IsDisjoint(pcrs))
 		{
 			pcrs->AddRef();
 			pdrgpcrsNew->Append(pcrs);
 		}
 		else
 		{
-			pcrsNew->Include(pcrs);
+			pcrsCopy->Include(pcrs);
 		}
 	}
 
-	pdrgpcrsNew->Append(pcrsNew);
+	pdrgpcrsNew->Append(pcrsCopy);
 
 	return pdrgpcrsNew;
 }
@@ -2772,9 +2780,8 @@ CUtils::PdrgpcrsMergeEquivClasses
 	for (ULONG ul = 0; ul < length; ul++)
 	{
 		CColRefSet *pcrs = (*pdrgpcrsSnd)[ul];
-		pcrs->AddRef();
 
-		CColRefSetArray *pdrgpcrs = PdrgpcrsAddEquivClass(mp, pcrs, pdrgpcrsMerged);
+		CColRefSetArray *pdrgpcrs = AddEquivClassToArray(mp, pcrs, pdrgpcrsMerged);
 		pdrgpcrsMerged->Release();
 		pdrgpcrsMerged = pdrgpcrs;
 	}
@@ -4715,6 +4722,29 @@ INT CUtils::IDatumCmp
 		return -1;
 	}
 
+	return 1;
+}
+
+// compares two points. Takes pointer pointer to a CPoint.
+INT CUtils::CPointCmp
+		(
+		const void *val1,
+		const void *val2
+		)
+{
+	const CPoint *p1 = *(CPoint**)(val1);
+	const CPoint *p2 = *(CPoint**)(val2);
+
+	if (p1->Equals(p2))
+	{
+		return 0;
+	}
+	else if (p1->IsLessThan(p2))
+	{
+		return -1;
+	}
+
+	GPOS_ASSERT(p1->IsGreaterThan(p2));
 	return 1;
 }
 

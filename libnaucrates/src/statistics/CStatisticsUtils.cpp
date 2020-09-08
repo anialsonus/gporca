@@ -188,11 +188,11 @@ CStatisticsUtils::MergeMCVHist
 	GPOS_ASSERT(NULL != histogram);
 	GPOS_ASSERT(mcv_histogram->IsWellDefined());
 	GPOS_ASSERT(histogram->IsWellDefined());
-	GPOS_ASSERT(0 < mcv_histogram->Buckets());
-	GPOS_ASSERT(0 < histogram->Buckets());
+	GPOS_ASSERT(0 < mcv_histogram->GetNumBuckets());
+	GPOS_ASSERT(0 < histogram->GetNumBuckets());
 
-	const CBucketArray *mcv_buckets = mcv_histogram->ParseDXLToBucketsArray();
-	const CBucketArray *histogram_buckets = histogram->ParseDXLToBucketsArray();
+	const CBucketArray *mcv_buckets = mcv_histogram->GetBuckets();
+	const CBucketArray *histogram_buckets = histogram->GetBuckets();
 
 	IDatum *datum = (*mcv_buckets)[0]->GetLowerBound()->GetDatum();
 
@@ -1288,7 +1288,7 @@ CStatisticsUtils::DeriveStatsForBitmapTableGet
 {
 	GPOS_ASSERT(CLogical::EopLogicalBitmapTableGet == expr_handle.Pop()->Eopid() ||
 				CLogical::EopLogicalDynamicBitmapTableGet == expr_handle.Pop()->Eopid());
-	CTableDescriptor *table_descriptor = CLogical::PtabdescFromTableGet(expr_handle.Pop());
+	CTableDescriptor *table_descriptor = expr_handle.DeriveTableDescriptor();
 
 	// the index of the condition
 	ULONG child_cond_index = 0;

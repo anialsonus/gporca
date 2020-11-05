@@ -41,6 +41,10 @@
 #define GPOS_ASMFP asm volatile("stx %%fp, %0" : "=g"(ulp));
 #define GPOS_ASMSP asm volatile("stx %%sp, %0" : "=g"(ulp));
 
+#elif (GPOS_ppc64le)
+// stack and frame pointer on PPC are the same
+#define GPOS_ASMFP asm volatile ("stx %%gpr1, %0" : "=g" (ulp));
+#define GPOS_ASMSP asm volatile ("stx %%gpr1, %0" : "=g" (ulp));
 #endif
 
 #define ALIGNED_16(x) \

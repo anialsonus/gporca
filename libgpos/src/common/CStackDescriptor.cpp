@@ -20,7 +20,6 @@ using namespace gpos;
 
 #if (GPOS_sparc)
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CStackDescriptor::GetStackFrames
@@ -149,7 +148,18 @@ CStackDescriptor::BackTrace(ULONG top_frames_to_skip)
 	}
 }
 
-#else  // unsupported platform
+#elif (GPOS_ppc64le)
+
+void
+CStackDescriptor::BackTrace
+	(
+	ULONG
+	)
+{
+	// pass
+}
+
+#else // unsupported platform
 
 void CStackDescriptor::BackTrace(ULONG)
 {
@@ -186,6 +196,7 @@ CStackDescriptor::AppendSymbolInfo(CWString *ws, CHAR *demangling_symbol_buffer,
 		GPOS_ASSERT(size <= GPOS_STACK_SYMBOL_SIZE);
 
 		if (0 == status)
+
 		{
 			// skip args and template symbol_info
 			for (ULONG ul = 0; ul < size; ul++)
@@ -239,10 +250,12 @@ CStackDescriptor::AppendTrace(CWString *ws, ULONG depth) const
 
 
 	// buffer for symbol demangling
+
 	CHAR demangling_symbol_buffer[GPOS_STACK_SYMBOL_SIZE];
 
 	// print symbol_info for frames in stack
 	for (ULONG i = 0; i < m_depth && i < depth; i++)
+
 	{
 		// resolve address
 		clib::Dladdr(m_array_of_addresses[i], &symbol_info);

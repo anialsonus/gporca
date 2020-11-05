@@ -21,6 +21,7 @@
 #cmakedefine GPOS_i686 1
 #cmakedefine GPOS_x86_64 1
 #cmakedefine GPOS_sparc 1
+#cmakedefine GPOS_ppc64le 1
 
 // These come from CMAKE_ARCH_BITS (based on CMAKE_SIZEOF_VOID_P)
 #cmakedefine GPOS_32BIT 1

@@ -2289,7 +2289,10 @@ CXformUtils::FIndexApplicable(CMemoryPool *mp, const IMDIndex *pmdindex,
 		 altindtype !=
 			 pmdindex
 				 ->IndexType()) ||	// otherwise make sure the index matches the given type(s)
-		0 == pcrsScalar->Size())  // no columns to match index against
+		0 == pcrsScalar->Size() ||	// no columns to match index against
+		(emdindtype != IMDIndex::EmdindBitmap &&
+		 pmdrel
+			 ->IsAORowOrColTable()))  // only bitmap scans are supported on AO tables
 	{
 		return false;
 	}
@@ -4188,7 +4191,8 @@ CXformUtils::FJoinPredOnSingleChild(CMemoryPool *mp, CExpressionHandle &exprhdl)
 
 	GPOS_ASSERT(NULL != exprhdl.PexprScalarExactChild(arity - 1));
 	CExpressionArray *pdrgpexprPreds = CPredicateUtils::PdrgpexprConjuncts(
-		mp, exprhdl.PexprScalarExactChild(arity - 1));
+		mp, exprhdl.PexprScalarExactChild(arity - 1,
+										  true /*error_on_null_return*/));
 	const ULONG ulPreds = pdrgpexprPreds->Size();
 	BOOL fPredUsesSingleChild = false;
 	for (ULONG ulPred = 0; !fPredUsesSingleChild && ulPred < ulPreds; ulPred++)
